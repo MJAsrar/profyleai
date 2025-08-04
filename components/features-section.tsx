@@ -1,0 +1,66 @@
+import { FileText, Linkedin, MessageSquare, Users, Download, Sparkles } from "lucide-react"
+
+export function FeaturesSection() {
+  const features = [
+    {
+      icon: FileText,
+      title: "Resume Builder",
+      description: "Create professional resumes with step-by-step guidance and real-time preview.",
+    },
+    {
+      icon: MessageSquare,
+      title: "Cover Letter Generator",
+      description: "Generate personalized cover letters that match your resume and target job.",
+    },
+    {
+      icon: Linkedin,
+      title: "LinkedIn Optimizer",
+      description: "Optimize your LinkedIn profile to attract recruiters and opportunities.",
+    },
+    {
+      icon: Users,
+      title: "Interview Prep",
+      description: "Practice with AI-generated interview questions tailored to your field.",
+    },
+    {
+      icon: Download,
+      title: "PDF Export",
+      description: "Export your resume as a polished PDF ready for applications.",
+    },
+    {
+      icon: Sparkles,
+      title: "AI Enhancement",
+      description: "Improve your content with AI suggestions and industry best practices.",
+    },
+  ]
+
+  return (
+    <section id="features" className="py-20 bg-muted/50">
+      <div className="container">
+        <div className="text-center mb-16">
+          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Everything you need to land your dream job</h2>
+          <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
+            Our comprehensive suite of tools helps you create, optimize, and perfect your job application materials.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+          {features.map((feature) => (
+            <div
+              key={feature.title}
+              className="relative rounded-lg border bg-background p-6 hover:shadow-md transition-shadow"
+            >
+              <div className="flex items-center space-x-3 mb-4">
+                <div className="rounded-md bg-primary/10 p-2">
+                  <feature.icon className="h-5 w-5 text-primary" />
+                </div>
+                <h3 className="font-semibold">{feature.title}</h3>
+              </div>
+              <p className="text-sm text-muted-foreground">{feature.description}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}

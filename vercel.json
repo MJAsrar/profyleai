@@ -1,24 +1,7 @@
 {
-  "env": {
-    "DATABASE_URL": "@database_url",
-    "NEXTAUTH_SECRET": "@nextauth_secret",
-    "NEXTAUTH_URL": "@nextauth_url",
-    "GEMINI_API_KEY": "@gemini_api_key",
-    "GOOGLE_FONTS_API_KEY": "@google_fonts_api_key"
-  },
-  "build": {
-    "env": {
-      "DATABASE_URL": "@database_url",
-      "NEXTAUTH_SECRET": "@nextauth_secret",
-      "NEXTAUTH_URL": "@nextauth_url",
-      "GEMINI_API_KEY": "@gemini_api_key",
-      "GOOGLE_FONTS_API_KEY": "@google_fonts_api_key"
-    }
-  },
   "functions": {
     "app/api/**": {
       "maxDuration": 30
     }
-  },
-  "outputFileTracing": false
+  }
 }

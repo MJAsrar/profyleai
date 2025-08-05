@@ -1,7 +1,9 @@
 "use client"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { ChevronLeft, ChevronRight } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { ChevronLeft, ChevronRight, Edit3 } from "lucide-react"
 import { PersonalInfoForm } from "./forms/personal-info-form"
 import { SummaryForm } from "./forms/summary-form"
 import { ExperienceForm } from "./forms/experience-form"
@@ -22,7 +24,7 @@ const steps = [
 ]
 
 export function ResumeForm() {
-  const { currentStep, setCurrentStep } = useResumeStore()
+  const { currentStep, setCurrentStep, resumeData, updateTitle } = useResumeStore()
   const CurrentStepComponent = steps[currentStep].component
 
   const nextStep = () => {
@@ -45,6 +47,20 @@ export function ResumeForm() {
           <div className="text-sm text-muted-foreground">
             Step {currentStep + 1} of {steps.length}
           </div>
+        </div>
+        {/* Resume Title Input */}
+        <div className="space-y-2">
+          <Label htmlFor="resumeTitle" className="text-sm font-medium flex items-center gap-2">
+            <Edit3 className="h-4 w-4" />
+            Resume Name
+          </Label>
+          <Input
+            id="resumeTitle"
+            value={resumeData.title}
+            onChange={(e) => updateTitle(e.target.value)}
+            placeholder="Enter resume name..."
+            className="text-sm"
+          />
         </div>
         <div className="w-full bg-muted rounded-full h-2">
           <div

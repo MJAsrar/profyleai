@@ -6,7 +6,7 @@ import { StaggeredContainer } from "@/components/ui/motion-wrapper"
 
 export function HeroSection() {
   return (
-    <Section spacing="xl" className="relative overflow-hidden">
+    <Section spacing="lg" className="relative overflow-hidden">
       {/* Background gradient */}
       <div className="absolute inset-0 -z-10 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5" />
       

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { GeistSans } from 'geist/font/sans'
 import { GeistMono } from 'geist/font/mono'
+import { Analytics } from '@vercel/analytics/next'
 import { SessionProviderWrapper } from '@/components/providers/session-provider'
 import { Toaster } from '@/components/ui/toaster'
 import './globals.css'
@@ -31,6 +32,7 @@ html {
           {children}
           <Toaster />
         </SessionProviderWrapper>
+        <Analytics />
       </body>
     </html>
   )

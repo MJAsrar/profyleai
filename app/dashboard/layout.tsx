@@ -1,29 +1,28 @@
 "use client"
 
 import type React from "react"
-import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { useEffect } from "react"
 import { DashboardSidebar } from "@/components/dashboard/dashboard-sidebar"
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
+import { useMobileSession } from "@/hooks/use-mobile-session"
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const { data: session, status } = useSession()
+  const { session, isLoading } = useMobileSession()
   const router = useRouter()
 
   useEffect(() => {
-    if (status === "loading") return // Still loading
+    if (isLoading) return // Still loading or waiting for mobile session
     if (!session) {
-      // Redirect to login with return URL
       router.push(`/login?callbackUrl=${encodeURIComponent(window.location.pathname)}`)
     }
-  }, [session, status, router])
+  }, [session, isLoading, router])
 
-  if (status === "loading") {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>

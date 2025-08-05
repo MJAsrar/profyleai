@@ -24,8 +24,8 @@ export function SessionProviderWrapper({ children }: SessionProviderWrapperProps
   return (
     <SessionProvider 
       basePath="/api/auth"
-      refetchInterval={0}
-      refetchOnWindowFocus={false}
+      refetchInterval={5 * 60} // Refetch every 5 minutes
+      refetchOnWindowFocus={true} // Refetch when window gains focus (important for mobile)
       refetchWhenOffline={false}
     >
       {children}

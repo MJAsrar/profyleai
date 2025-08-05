@@ -33,6 +33,7 @@ export function LoginForm() {
         email,
         password,
         redirect: false,
+        callbackUrl: callbackUrl,
       })
 
       if (result?.error) {
@@ -70,7 +71,20 @@ export function LoginForm() {
             router.push('/dashboard?extension-login=success')
           }
         } else {
-          router.push(callbackUrl)
+          // Add a small delay to ensure session is properly set on mobile
+          const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+          
+          if (isMobile) {
+            // On mobile, use window.location.href for better session persistence
+            setTimeout(() => {
+              window.location.href = callbackUrl
+            }, 800)
+          } else {
+            // On desktop, router.push is fine
+            setTimeout(() => {
+              router.push(callbackUrl)
+            }, 300)
+          }
         }
       }
     } catch (error) {

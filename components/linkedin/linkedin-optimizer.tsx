@@ -14,6 +14,29 @@ import { useToast } from "@/hooks/use-toast"
 
 export function LinkedInOptimizer() {
   const { toast } = useToast()
+  
+  // Coming Soon overlay component
+  const ComingSoonOverlay = () => (
+    <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-10 flex items-center justify-center rounded-lg">
+      <Card className="max-w-md mx-4">
+        <CardContent className="pt-6 text-center">
+          <div className="mb-4">
+            <Sparkles className="h-12 w-12 mx-auto text-blue-500 mb-3" />
+            <h3 className="text-xl font-semibold mb-2">LinkedIn Optimization</h3>
+            <p className="text-muted-foreground mb-4">
+              We're putting the finishing touches on our LinkedIn profile optimization features.
+            </p>
+            <Badge variant="secondary" className="mb-2">
+              Coming Soon
+            </Badge>
+            <p className="text-sm text-muted-foreground">
+              Get ready to supercharge your LinkedIn presence with AI-powered suggestions!
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  )
   const [profileData, setProfileData] = useState({
     headline: "",
     summary: "",
@@ -85,7 +108,8 @@ I'm always open to connecting with like-minded professionals and exploring new o
   }
 
   return (
-    <div className="space-y-6">
+    <div className="relative space-y-6">
+      <ComingSoonOverlay />
       {/* Launching Soon Card */}
       <Card className="text-center">
         <CardContent className="pt-12 pb-12">

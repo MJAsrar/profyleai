@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
+import { getAuthenticatedUser, createAuthError } from '@/lib/auth-utils'
 import { getInterviewPrep, deleteInterviewPrep } from '@/lib/db/interview-prep'
 
 interface RouteParams {
@@ -11,19 +11,16 @@ interface RouteParams {
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     // Check authentication
-    const session = await getServerSession()
-    if (!session?.user?.email) {
-      return NextResponse.json(
-        { success: false, error: 'Authentication required' },
-        { status: 401 }
-      )
+    const user = await getAuthenticatedUser(request)
+    if (!user) {
+      return createAuthError()
     }
 
     const { id } = params
 
     console.log('🎯 Fetching interview prep:', id)
 
-    const interviewPrep = await getInterviewPrep(id, session.user.email)
+    const interviewPrep = await getInterviewPrep(id, user.id)
 
     if (!interviewPrep) {
       return NextResponse.json(
@@ -51,19 +48,16 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
     // Check authentication
-    const session = await getServerSession()
-    if (!session?.user?.email) {
-      return NextResponse.json(
-        { success: false, error: 'Authentication required' },
-        { status: 401 }
-      )
+    const user = await getAuthenticatedUser(request)
+    if (!user) {
+      return createAuthError()
     }
 
     const { id } = params
 
     console.log('🎯 Deleting interview prep:', id)
 
-    await deleteInterviewPrep(id, session.user.email)
+    await deleteInterviewPrep(id, user.id)
 
     console.log('✅ Successfully deleted interview prep')
 

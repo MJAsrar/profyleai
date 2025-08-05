@@ -1,17 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
+import { getAuthenticatedUser, createAuthError } from '@/lib/auth-utils'
 import { generateBehavioralCoaching } from '@/lib/services/interview-service'
 import { updateInterviewPrepCoaching } from '@/lib/db/interview-prep'
 
 export async function POST(request: NextRequest) {
   try {
     // Check authentication
-    const session = await getServerSession()
-    if (!session?.user?.email) {
-      return NextResponse.json(
-        { success: false, error: 'Authentication required' },
-        { status: 401 }
-      )
+    const user = await getAuthenticatedUser(request)
+    if (!user) {
+      return createAuthError()
     }
 
     const body = await request.json()
@@ -38,7 +35,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Save coaching to database
-    await updateInterviewPrepCoaching(interviewPrepId, session.user.email, result.data!)
+    await updateInterviewPrepCoaching(interviewPrepId, user.id, result.data!)
 
     console.log('✅ Successfully generated behavioral coaching content')
 

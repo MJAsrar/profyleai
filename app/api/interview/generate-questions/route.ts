@@ -1,17 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
+import { getAuthenticatedUser, createAuthError } from '@/lib/auth-utils'
 import { generatePracticeQuestions, InterviewJobData } from '@/lib/services/interview-service'
 import { createInterviewPrep } from '@/lib/db/interview-prep'
 
 export async function POST(request: NextRequest) {
   try {
     // Check authentication
-    const session = await getServerSession()
-    if (!session?.user?.email) {
-      return NextResponse.json(
-        { success: false, error: 'Authentication required' },
-        { status: 401 }
-      )
+    const user = await getAuthenticatedUser(request)
+    if (!user) {
+      return createAuthError()
     }
 
     const body = await request.json()
@@ -49,7 +46,7 @@ export async function POST(request: NextRequest) {
 
     // Save to database
     const interviewPrep = await createInterviewPrep(
-      session.user.email, // Using email as userId for now
+      user.id,
       jobData,
       result.data!.questions
     )

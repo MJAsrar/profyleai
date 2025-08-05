@@ -1,26 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
+import { getAuthenticatedUser, createAuthError } from '@/lib/auth-utils'
 import { getUserInterviewProgress } from '@/lib/db/interview-prep'
 
 export async function GET(request: NextRequest) {
   try {
     // Check authentication
-    const session = await getServerSession()
-    if (!session?.user?.email) {
-      return NextResponse.json(
-        { success: false, error: 'Authentication required' },
-        { status: 401 }
-      )
+    const user = await getAuthenticatedUser(request)
+    if (!user) {
+      return createAuthError()
     }
 
-    console.log('🎯 Fetching interview progress for user:', session.user.email)
+    console.log('🎯 Fetching interview progress for user:', user.email)
 
-    const progress = await getUserInterviewProgress(session.user.email)
+    const progress = await getUserInterviewProgress(user.id)
 
     if (!progress) {
       // Return default progress if none exists
       const defaultProgress = {
-        userId: session.user.email,
+        userId: user.id,
         sessionsCompleted: 0,
         totalQuestions: 0,
         averageScore: 0,

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
+import { getAuthenticatedUser, createAuthError } from '@/lib/auth-utils'
 import { 
   createMockInterview,
   getMockInterview,
@@ -13,12 +13,9 @@ import { evaluateAnswer } from '@/lib/services/interview-service'
 export async function POST(request: NextRequest) {
   try {
     // Check authentication
-    const session = await getServerSession()
-    if (!session?.user?.email) {
-      return NextResponse.json(
-        { success: false, error: 'Authentication required' },
-        { status: 401 }
-      )
+    const user = await getAuthenticatedUser(request)
+    if (!user) {
+      return createAuthError()
     }
 
     const body = await request.json()
@@ -39,7 +36,7 @@ export async function POST(request: NextRequest) {
       const sessionId = `mock_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
 
       const mockInterview = await createMockInterview(
-        session.user.email,
+        user.id,
         interviewPrepId,
         sessionId,
         selectedQuestions
@@ -128,7 +125,7 @@ export async function POST(request: NextRequest) {
       }
 
       // Get the mock interview with all answers
-      const mockInterview = await getMockInterview(mockInterviewId, session.user.email)
+      const mockInterview = await getMockInterview(mockInterviewId, user.id)
       if (!mockInterview) {
         return NextResponse.json(
           { success: false, error: 'Mock interview not found' },
@@ -167,12 +164,9 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     // Check authentication
-    const session = await getServerSession()
-    if (!session?.user?.email) {
-      return NextResponse.json(
-        { success: false, error: 'Authentication required' },
-        { status: 401 }
-      )
+    const user = await getAuthenticatedUser(request)
+    if (!user) {
+      return createAuthError()
     }
 
     const { searchParams } = new URL(request.url)
@@ -180,7 +174,7 @@ export async function GET(request: NextRequest) {
 
     if (mockInterviewId) {
       // Get specific mock interview
-      const mockInterview = await getMockInterview(mockInterviewId, session.user.email)
+      const mockInterview = await getMockInterview(mockInterviewId, user.id)
       if (!mockInterview) {
         return NextResponse.json(
           { success: false, error: 'Mock interview not found' },
@@ -194,7 +188,7 @@ export async function GET(request: NextRequest) {
       })
     } else {
       // Get all mock interviews for user
-      const mockInterviews = await getUserMockInterviews(session.user.email)
+      const mockInterviews = await getUserMockInterviews(user.id)
 
       return NextResponse.json({
         success: true,

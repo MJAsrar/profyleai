@@ -181,18 +181,27 @@ export class FontLoader {
 
       // Check if we're running in Node.js (server-side) or browser (client-side)
       if (typeof window === 'undefined') {
-        // Server-side: Use Node.js fs to read font files
-        const fs = await import('fs')
-        const path = await import('path')
-        
-        // Convert web path to file system path
-        const publicPath = path.join(process.cwd(), 'public', fontPath)
-        
+        // Server-side: Use fetch to get fonts from static assets (works on Vercel)
         try {
-          const buffer = fs.readFileSync(publicPath)
-          arrayBuffer = buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength)
-        } catch (fsError) {
-          console.warn(`Server-side font loading failed: ${fontPath}`, fsError)
+          // Build the full URL for the font
+          const baseUrl = process.env.VERCEL_URL 
+            ? `https://${process.env.VERCEL_URL}` 
+            : process.env.NODE_ENV === 'development'
+            ? 'http://localhost:3000'
+            : 'https://www.profyleai.com' // fallback to production domain
+          
+          const fontUrl = `${baseUrl}${fontPath}`
+          console.log(`🔤 Server-side loading font from: ${fontUrl}`)
+          
+          const response = await fetch(fontUrl)
+          if (!response.ok) {
+            console.warn(`Server-side font fetch failed: ${fontPath} (${response.status})`)
+            return null
+          }
+          arrayBuffer = await response.arrayBuffer()
+          console.log(`✅ Server-side font loaded successfully: ${fontPath}`)
+        } catch (fetchError) {
+          console.warn(`Server-side font loading failed: ${fontPath}`, fetchError)
           return null
         }
       } else {

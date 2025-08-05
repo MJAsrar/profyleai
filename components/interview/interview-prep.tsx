@@ -163,323 +163,79 @@ export function InterviewPrep() {
 
   return (
     <div className="space-y-6">
-      {/* Practice Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Questions Answered</CardTitle>
-            <MessageSquare className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{practiceStats.questionsAnswered}</div>
-            <p className="text-xs text-muted-foreground">+3 this week</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg. Response Time</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{practiceStats.averageTime}s</div>
-            <p className="text-xs text-muted-foreground">-5s from last week</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Improvement Score</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{practiceStats.improvementScore}%</div>
-            <Progress value={practiceStats.improvementScore} className="mt-2" />
-          </CardContent>
-        </Card>
-      </div>
-
-      <Tabs defaultValue="setup" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="setup">Setup</TabsTrigger>
-          <TabsTrigger value="questions">Questions</TabsTrigger>
-          <TabsTrigger value="practice">Practice</TabsTrigger>
-          <TabsTrigger value="resources">Resources</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="setup" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Interview Setup</CardTitle>
-              <CardDescription>Provide details about your interview to get personalized questions</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="jobRole">Job Role</Label>
-                  <Input
-                    id="jobRole"
-                    value={jobRole}
-                    onChange={(e) => setJobRole(e.target.value)}
-                    placeholder="Software Engineer"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="company">Company</Label>
-                  <Input
-                    id="company"
-                    value={company}
-                    onChange={(e) => setCompany(e.target.value)}
-                    placeholder="Tech Company Inc."
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="experience">Experience Level</Label>
-                <Select value={experience} onValueChange={setExperience}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select your experience level" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="entry">Entry Level (0-2 years)</SelectItem>
-                    <SelectItem value="mid">Mid Level (3-5 years)</SelectItem>
-                    <SelectItem value="senior">Senior Level (6+ years)</SelectItem>
-                    <SelectItem value="lead">Lead/Manager (8+ years)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <Button onClick={generateQuestions} className="w-full">
-                <Sparkles className="mr-2 h-4 w-4" />
-                Generate Personalized Questions
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="questions" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Interview Questions</CardTitle>
-              <CardDescription>Practice with these AI-generated questions tailored to your role</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {questions.map((question) => (
-                  <Card key={question.id} className="p-4">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex-1">
-                        <h4 className="font-medium mb-2">{question.question}</h4>
-                        <div className="flex gap-2 mb-2">
-                          <Badge variant="outline">{question.category}</Badge>
-                          <Badge className={getDifficultyColor(question.difficulty)}>{question.difficulty}</Badge>
-                        </div>
-                      </div>
-                      <Button onClick={() => startPractice(question)}>
-                        <Play className="mr-2 h-4 w-4" />
-                        Practice
-                      </Button>
-                    </div>
-
-                    <div className="text-sm text-muted-foreground">
-                      <strong>Tips:</strong>
-                      <ul className="list-disc list-inside mt-1 space-y-1">
-                        {question.tips.map((tip, index) => (
-                          <li key={index}>{tip}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="practice" className="space-y-4">
-          {currentQuestion ? (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  Practice Session
-                  <div className="flex items-center gap-2">
-                    <Badge className={getDifficultyColor(currentQuestion.difficulty)}>
-                      {currentQuestion.difficulty}
-                    </Badge>
-                    <Badge variant="outline">{currentQuestion.category}</Badge>
-                  </div>
-                </CardTitle>
-                <CardDescription>{currentQuestion.question}</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
-                  <div className="flex items-center gap-4">
-                    <Button variant={isRecording ? "destructive" : "default"} onClick={toggleRecording}>
-                      {isRecording ? (
-                        <>
-                          <Pause className="mr-2 h-4 w-4" />
-                          Stop Recording
-                        </>
-                      ) : (
-                        <>
-                          <Play className="mr-2 h-4 w-4" />
-                          Start Recording
-                        </>
-                      )}
-                    </Button>
-                    <Button variant="outline" onClick={() => setRecordingTime(0)}>
-                      <RotateCcw className="mr-2 h-4 w-4" />
-                      Reset
-                    </Button>
-                  </div>
-                  <div className="text-2xl font-mono">{formatTime(recordingTime)}</div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="answer">Your Answer</Label>
-                  <Textarea
-                    id="answer"
-                    value={answer}
-                    onChange={(e) => setAnswer(e.target.value)}
-                    placeholder="Type your answer here or use voice recording..."
-                    className="min-h-[150px]"
-                  />
-                </div>
-
-                <div className="p-4 bg-blue-50 rounded-lg">
-                  <h4 className="font-medium mb-2 flex items-center gap-2">
-                    <Target className="h-4 w-4" />
-                    Tips for this question:
-                  </h4>
-                  <ul className="text-sm space-y-1">
-                    {currentQuestion.tips.map((tip, index) => (
-                      <li key={index} className="flex items-start gap-2">
-                        <CheckCircle className="h-3 w-3 text-green-500 mt-1 flex-shrink-0" />
-                        {tip}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </CardContent>
-            </Card>
-          ) : (
-            <Card>
-              <CardContent className="p-12 text-center">
-                <h3 className="text-xl font-semibold mb-2">No Question Selected</h3>
-                <p className="text-muted-foreground mb-4">
-                  Go to the Questions tab and select a question to start practicing.
-                </p>
-                <Button onClick={() => startPractice(questions[0])}>
-                  <Play className="mr-2 h-4 w-4" />
-                  Start with First Question
-                </Button>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
-
-        <TabsContent value="resources" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <BookOpen className="h-5 w-5" />
-                  Interview Frameworks
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-3">
-                  <div className="p-3 border rounded-lg">
-                    <h4 className="font-medium">STAR Method</h4>
-                    <p className="text-sm text-muted-foreground">
-                      <strong>S</strong>ituation, <strong>T</strong>ask, <strong>A</strong>ction, <strong>R</strong>
-                      esult
-                    </p>
-                  </div>
-                  <div className="p-3 border rounded-lg">
-                    <h4 className="font-medium">CAR Method</h4>
-                    <p className="text-sm text-muted-foreground">
-                      <strong>C</strong>hallenge, <strong>A</strong>ction, <strong>R</strong>esult
-                    </p>
-                  </div>
-                  <div className="p-3 border rounded-lg">
-                    <h4 className="font-medium">SOAR Method</h4>
-                    <p className="text-sm text-muted-foreground">
-                      <strong>S</strong>ituation, <strong>O</strong>bjective, <strong>A</strong>ction,{" "}
-                      <strong>R</strong>esult
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Common Question Categories</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {[
-                    { category: "Behavioral", count: 15, color: "bg-blue-100 text-blue-800" },
-                    { category: "Technical", count: 12, color: "bg-green-100 text-green-800" },
-                    { category: "Company", count: 8, color: "bg-purple-100 text-purple-800" },
-                    { category: "Role-Specific", count: 10, color: "bg-orange-100 text-orange-800" },
-                    { category: "General", count: 6, color: "bg-gray-100 text-gray-800" },
-                  ].map((item, index) => (
-                    <div key={index} className="flex items-center justify-between p-2 border rounded">
-                      <span className="font-medium">{item.category}</span>
-                      <Badge className={item.color}>{item.count} questions</Badge>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="md:col-span-2">
-              <CardHeader>
-                <CardTitle>Interview Preparation Checklist</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <h4 className="font-medium">Before the Interview</h4>
-                    {[
-                      "Research the company and role",
-                      "Practice common questions",
-                      "Prepare questions to ask",
-                      "Review your resume",
-                      "Plan your outfit",
-                      "Test your technology (for virtual interviews)",
-                    ].map((item, index) => (
-                      <div key={index} className="flex items-center gap-2">
-                        <CheckCircle className="h-4 w-4 text-green-500" />
-                        <span className="text-sm">{item}</span>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="space-y-2">
-                    <h4 className="font-medium">During the Interview</h4>
-                    {[
-                      "Arrive 10-15 minutes early",
-                      "Maintain good eye contact",
-                      "Listen actively",
-                      "Ask thoughtful questions",
-                      "Show enthusiasm",
-                      "Take notes if appropriate",
-                    ].map((item, index) => (
-                      <div key={index} className="flex items-center gap-2">
-                        <CheckCircle className="h-4 w-4 text-green-500" />
-                        <span className="text-sm">{item}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+      {/* Launching Soon Card */}
+      <Card className="text-center">
+        <CardContent className="pt-12 pb-12">
+          <div className="mx-auto w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mb-6">
+            <Sparkles className="h-8 w-8 text-white" />
           </div>
-        </TabsContent>
-      </Tabs>
+          <h2 className="text-2xl font-bold mb-4">AI Interview Prep - Launching Soon!</h2>
+          <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+            We're working on an amazing AI-powered interview preparation tool that will help you practice with personalized questions, get real-time feedback, and boost your confidence.
+          </p>
+          <div className="flex flex-wrap justify-center gap-4 text-sm text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <MessageSquare className="h-4 w-4" />
+              <span>AI-Generated Questions</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Target className="h-4 w-4" />
+              <span>Personalized Feedback</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <TrendingUp className="h-4 w-4" />
+              <span>Progress Tracking</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Coming Soon Features Preview */}
+      <Card>
+        <CardHeader>
+          <CardTitle>What's Coming</CardTitle>
+          <CardDescription>Preview of features that will be available soon</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="p-4 border rounded-lg bg-muted/50">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2 bg-blue-100 rounded-md">
+                  <MessageSquare className="h-4 w-4 text-blue-600" />
+                </div>
+                <h4 className="font-medium">AI Question Generator</h4>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Get personalized interview questions based on your role, company, and experience level.
+              </p>
+            </div>
+            
+            <div className="p-4 border rounded-lg bg-muted/50">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2 bg-green-100 rounded-md">
+                  <Play className="h-4 w-4 text-green-600" />
+                </div>
+                <h4 className="font-medium">Practice Sessions</h4>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Record your answers and get timing feedback to improve your interview performance.
+              </p>
+            </div>
+            
+            <div className="p-4 border rounded-lg bg-muted/50">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2 bg-purple-100 rounded-md">
+                  <TrendingUp className="h-4 w-4 text-purple-600" />
+                </div>
+                <h4 className="font-medium">Progress Tracking</h4>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Track your improvement over time with detailed analytics and insights.
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }

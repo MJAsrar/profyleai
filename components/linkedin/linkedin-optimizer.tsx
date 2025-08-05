@@ -86,279 +86,115 @@ I'm always open to connecting with like-minded professionals and exploring new o
 
   return (
     <div className="space-y-6">
-      {/* Optimization Score */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="h-5 w-5" />
-            LinkedIn Profile Optimization Score
-          </CardTitle>
-          <CardDescription>Your current profile strength based on LinkedIn best practices</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-2xl font-bold">{optimizationScore}%</span>
-              <Badge
-                variant={optimizationScore >= 80 ? "default" : optimizationScore >= 60 ? "secondary" : "destructive"}
-              >
-                {optimizationScore >= 80 ? "Excellent" : optimizationScore >= 60 ? "Good" : "Needs Improvement"}
-              </Badge>
+      {/* Launching Soon Card */}
+      <Card className="text-center">
+        <CardContent className="pt-12 pb-12">
+          <div className="mx-auto w-16 h-16 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-full flex items-center justify-center mb-6">
+            <Sparkles className="h-8 w-8 text-white" />
+          </div>
+          <h2 className="text-2xl font-bold mb-4">LinkedIn Optimizer - Launching Soon!</h2>
+          <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+            We're building a powerful AI-driven LinkedIn optimization tool that will help you create compelling headlines, summaries, and profiles that get noticed by recruiters.
+          </p>
+          <div className="flex flex-wrap justify-center gap-4 text-sm text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="h-4 w-4" />
+              <span>Profile Optimization</span>
             </div>
-            <Progress value={optimizationScore} className="w-full" />
-
-            <div className="space-y-2">
-              {suggestions.map((suggestion, index) => (
-                <div key={index} className="flex items-start gap-2">
-                  {suggestion.type === "success" ? (
-                    <CheckCircle className="h-4 w-4 text-green-500 mt-0.5" />
-                  ) : (
-                    <AlertCircle className="h-4 w-4 text-yellow-500 mt-0.5" />
-                  )}
-                  <span className="text-sm">{suggestion.text}</span>
-                </div>
-              ))}
+            <div className="flex items-center gap-2">
+              <Eye className="h-4 w-4" />
+              <span>Visibility Analytics</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              <span>Network Growth</span>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      <Tabs defaultValue="headline" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="headline">Headline</TabsTrigger>
-          <TabsTrigger value="summary">Summary</TabsTrigger>
-          <TabsTrigger value="skills">Skills</TabsTrigger>
-          <TabsTrigger value="analytics">Analytics</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="headline" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>LinkedIn Headline Optimizer</CardTitle>
-              <CardDescription>Create a compelling headline that showcases your value proposition</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="currentPosition">Current Position</Label>
-                <Input
-                  id="currentPosition"
-                  value={profileData.currentPosition}
-                  onChange={(e) => setProfileData({ ...profileData, currentPosition: e.target.value })}
-                  placeholder="Senior Software Engineer"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="headline">LinkedIn Headline</Label>
-                  <Button variant="outline" size="sm" onClick={generateAIHeadline}>
-                    <Sparkles className="mr-2 h-4 w-4" />
-                    Generate with AI
-                  </Button>
+      {/* Coming Soon Features Preview */}
+      <Card>
+        <CardHeader>
+          <CardTitle>What's Coming</CardTitle>
+          <CardDescription>Preview of features that will be available soon</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="p-4 border rounded-lg bg-muted/50">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2 bg-blue-100 rounded-md">
+                  <Sparkles className="h-4 w-4 text-blue-600" />
                 </div>
-                <Textarea
-                  id="headline"
-                  value={profileData.headline}
-                  onChange={(e) => setProfileData({ ...profileData, headline: e.target.value })}
-                  placeholder="Your compelling LinkedIn headline..."
-                  className="min-h-[80px]"
-                />
-                <div className="flex items-center justify-between text-sm text-muted-foreground">
-                  <span>{profileData.headline.length}/220 characters</span>
-                  {profileData.headline && (
-                    <Button variant="ghost" size="sm" onClick={() => copyToClipboard(profileData.headline)}>
-                      <Copy className="mr-2 h-4 w-4" />
-                      Copy
-                    </Button>
-                  )}
-                </div>
+                <h4 className="font-medium">AI Headline Generator</h4>
               </div>
-
-              <div className="p-4 bg-muted rounded-lg">
-                <h4 className="font-medium mb-2">Tips for a Great Headline:</h4>
-                <ul className="text-sm space-y-1 text-muted-foreground">
-                  <li>• Include your current role and key skills</li>
-                  <li>• Use industry keywords for better searchability</li>
-                  <li>• Highlight your unique value proposition</li>
-                  <li>• Keep it under 220 characters</li>
-                </ul>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="summary" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>LinkedIn Summary Optimizer</CardTitle>
-              <CardDescription>Craft a compelling summary that tells your professional story</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="summary">LinkedIn Summary</Label>
-                  <Button variant="outline" size="sm" onClick={generateAISummary}>
-                    <Sparkles className="mr-2 h-4 w-4" />
-                    Generate with AI
-                  </Button>
+              <p className="text-sm text-muted-foreground">
+                Create compelling LinkedIn headlines that grab recruiters' attention and improve searchability.
+              </p>
+            </div>
+            
+            <div className="p-4 border rounded-lg bg-muted/50">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2 bg-green-100 rounded-md">
+                  <Copy className="h-4 w-4 text-green-600" />
                 </div>
-                <Textarea
-                  id="summary"
-                  value={profileData.summary}
-                  onChange={(e) => setProfileData({ ...profileData, summary: e.target.value })}
-                  placeholder="Write your professional summary..."
-                  className="min-h-[200px]"
-                />
-                <div className="flex items-center justify-between text-sm text-muted-foreground">
-                  <span>{profileData.summary.length}/2600 characters</span>
-                  {profileData.summary && (
-                    <Button variant="ghost" size="sm" onClick={() => copyToClipboard(profileData.summary)}>
-                      <Copy className="mr-2 h-4 w-4" />
-                      Copy
-                    </Button>
-                  )}
-                </div>
+                <h4 className="font-medium">Summary Optimizer</h4>
               </div>
-
-              <div className="p-4 bg-muted rounded-lg">
-                <h4 className="font-medium mb-2">Summary Best Practices:</h4>
-                <ul className="text-sm space-y-1 text-muted-foreground">
-                  <li>• Start with a strong opening statement</li>
-                  <li>• Include quantifiable achievements</li>
-                  <li>• Use bullet points for key skills</li>
-                  <li>• End with a call-to-action</li>
-                  <li>• Include relevant keywords for your industry</li>
-                </ul>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="skills" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Skills Optimization</CardTitle>
-              <CardDescription>Add and organize your skills to improve profile visibility</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="skill">Add Skills</Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="skill"
-                    value={currentSkill}
-                    onChange={(e) => setCurrentSkill(e.target.value)}
-                    placeholder="Type a skill and press Enter"
-                    onKeyPress={(e) => e.key === "Enter" && addSkill()}
-                  />
-                  <Button onClick={addSkill}>Add</Button>
+              <p className="text-sm text-muted-foreground">
+                Generate professional summaries that tell your story and showcase your unique value proposition.
+              </p>
+            </div>
+            
+            <div className="p-4 border rounded-lg bg-muted/50">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2 bg-purple-100 rounded-md">
+                  <TrendingUp className="h-4 w-4 text-purple-600" />
                 </div>
+                <h4 className="font-medium">Profile Analytics</h4>
               </div>
-
-              {profileData.skills.length > 0 && (
-                <div className="space-y-2">
-                  <Label>Your Skills ({profileData.skills.length}/50)</Label>
-                  <div className="flex flex-wrap gap-2">
-                    {profileData.skills.map((skill, index) => (
-                      <Badge key={index} variant="secondary" className="flex items-center gap-1">
-                        {skill}
-                        <button onClick={() => removeSkill(skill)} className="ml-1 text-xs hover:text-destructive">
-                          ×
-                        </button>
-                      </Badge>
-                    ))}
-                  </div>
+              <p className="text-sm text-muted-foreground">
+                Track your profile performance with insights on views, search appearances, and engagement.
+              </p>
+            </div>
+            
+            <div className="p-4 border rounded-lg bg-muted/50">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2 bg-orange-100 rounded-md">
+                  <CheckCircle className="h-4 w-4 text-orange-600" />
                 </div>
-              )}
-
-              <div className="p-4 bg-muted rounded-lg">
-                <h4 className="font-medium mb-2">Recommended Skills for Your Industry:</h4>
-                <div className="flex flex-wrap gap-2">
-                  {["JavaScript", "React", "Node.js", "Python", "AWS", "Docker", "Git", "Agile"].map((skill) => (
-                    <Badge
-                      key={skill}
-                      variant="outline"
-                      className="cursor-pointer hover:bg-primary hover:text-primary-foreground"
-                      onClick={() => {
-                        if (!profileData.skills.includes(skill)) {
-                          setProfileData({
-                            ...profileData,
-                            skills: [...profileData.skills, skill],
-                          })
-                        }
-                      }}
-                    >
-                      + {skill}
-                    </Badge>
-                  ))}
-                </div>
+                <h4 className="font-medium">Skills Optimization</h4>
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="analytics" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Profile Views</CardTitle>
-                <Eye className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">1,234</div>
-                <p className="text-xs text-muted-foreground">+12% from last month</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Search Appearances</CardTitle>
-                <TrendingUp className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">856</div>
-                <p className="text-xs text-muted-foreground">+8% from last month</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Connections</CardTitle>
-                <Users className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">2,341</div>
-                <p className="text-xs text-muted-foreground">+23 new this month</p>
-              </CardContent>
-            </Card>
+              <p className="text-sm text-muted-foreground">
+                Get recommendations for relevant skills and optimize your skills section for better visibility.
+              </p>
+            </div>
+            
+            <div className="p-4 border rounded-lg bg-muted/50">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2 bg-cyan-100 rounded-md">
+                  <Eye className="h-4 w-4 text-cyan-600" />
+                </div>
+                <h4 className="font-medium">Visibility Score</h4>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Get a comprehensive score of your profile's visibility and actionable tips for improvement.
+              </p>
+            </div>
+            
+            <div className="p-4 border rounded-lg bg-muted/50">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2 bg-pink-100 rounded-md">
+                  <Users className="h-4 w-4 text-pink-600" />
+                </div>
+                <h4 className="font-medium">Network Growth</h4>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Strategies and tools to grow your professional network and increase your LinkedIn reach.
+              </p>
+            </div>
           </div>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Profile Optimization Checklist</CardTitle>
-              <CardDescription>Complete these items to improve your profile visibility</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {[
-                  { task: "Add a professional profile photo", completed: true },
-                  { task: "Write a compelling headline", completed: profileData.headline.length > 0 },
-                  { task: "Create a detailed summary", completed: profileData.summary.length > 100 },
-                  { task: "Add at least 5 skills", completed: profileData.skills.length >= 5 },
-                  { task: "Include work experience", completed: false },
-                  { task: "Add education details", completed: false },
-                  { task: "Get recommendations", completed: false },
-                ].map((item, index) => (
-                  <div key={index} className="flex items-center gap-3">
-                    <CheckCircle className={`h-4 w-4 ${item.completed ? "text-green-500" : "text-muted-foreground"}`} />
-                    <span className={item.completed ? "line-through text-muted-foreground" : ""}>{item.task}</span>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+        </CardContent>
+      </Card>
     </div>
   )
 }

@@ -124,11 +124,11 @@ INPUTS:
 - Projects: ${currentProjects}
 
 INSTRUCTIONS:
-1. Optimize the professional title to match the job requirements. Create a title that:
-   - Directly aligns with the job title or closely related role names mentioned in the job description
-   - Uses industry-standard terminology from the job posting
-   - Reflects the seniority level and specialization mentioned in the job requirements
-   - Examples: "Full Stack Developer" → "Senior Full Stack Engineer", "Software Engineer" → "AI/ML Engineer", etc.
+1. Optimize the professional title to be general and broad. Create a title that:
+   - Uses general, widely-recognized role categories rather than specific job titles
+   - Avoids overly specific technologies, frameworks, or niche specializations
+   - Maintains appropriate seniority level (Junior, Mid-level, Senior, Lead, etc.)
+   - Examples: "AI/ML Engineer" → "AI Engineer", "Senior React Frontend Developer" → "Frontend Developer", "WordPress Developer" → "Web Developer", "DevOps Engineer - Kubernetes Specialist" → "DevOps Engineer", etc.
 2. Rewrite the professional summary (max 3 sentences) to emphasize relevant experience for this role.
 3. COMPLETELY RESTRUCTURE the skills section:
    - Extract 8-12 most relevant skills from the job description

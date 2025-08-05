@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getAuthenticatedUser, createAuthError, checkResourceOwnership, createOwnershipError } from "@/lib/auth-utils"
 import { generateResumePDFBlob } from "@/lib/pdf-export-utils"
+import { FontSizeConfig } from "@/lib/font-config"
 
 interface RouteParams {
   params: Promise<{

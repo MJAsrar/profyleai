@@ -137,7 +137,13 @@ export function TailoredResumePreview({
 
     setIsDownloading(true)
     try {
-      console.log('Downloading tailored resume:', resumeData.id)
+      console.log('🚀 Starting tailored resume download:', {
+        resumeId: resumeData.id,
+        jobTitle: jobData.jobTitle,
+        companyName: jobData.companyName,
+        hasPersonalInfo: !!resumeData.personalInfo,
+        fontConfig: fontConfig
+      })
       
       // Use the tailored resume download endpoint
       const response = await fetch(`/api/tailored-resumes/${resumeData.id}/download`, {
@@ -150,12 +156,45 @@ export function TailoredResumePreview({
         })
       })
       
+      console.log('📡 Download response received:', {
+        status: response.status,
+        statusText: response.statusText,
+        contentType: response.headers.get('content-type'),
+        contentLength: response.headers.get('content-length')
+      })
+      
       if (!response.ok) {
-        throw new Error('Failed to download resume')
+        // Try to get error details from response
+        let errorMessage = `HTTP ${response.status}: ${response.statusText}`
+        try {
+          const errorData = await response.json()
+          errorMessage = errorData.error || errorMessage
+        } catch {
+          // If response is not JSON, use the default error message
+        }
+        throw new Error(errorMessage)
+      }
+      
+      // Check if response is actually a PDF
+      const contentType = response.headers.get('content-type')
+      if (contentType && !contentType.includes('application/pdf')) {
+        console.warn('⚠️ Unexpected content type:', contentType)
+        // Try to read as text to see if it's an error response
+        const text = await response.text()
+        console.error('❌ Response content:', text)
+        throw new Error('Server returned invalid response format')
       }
       
       // Get the PDF blob
       const blob = await response.blob()
+      console.log('📄 PDF blob created:', {
+        size: blob.size,
+        type: blob.type
+      })
+      
+      if (blob.size === 0) {
+        throw new Error('PDF file is empty')
+      }
       
       // Create download link
       const url = window.URL.createObjectURL(blob)
@@ -163,6 +202,12 @@ export function TailoredResumePreview({
       link.href = url
       const fileName = `${resumeData.personalInfo?.fullName || 'Tailored_Resume'}_${jobData.companyName}_${jobData.jobTitle}`.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_')
       link.download = `${fileName}_Resume.pdf`
+      
+      console.log('💾 Triggering download:', {
+        fileName: link.download,
+        blobUrl: url.substring(0, 50) + '...'
+      })
+      
       document.body.appendChild(link)
       link.click()
       
@@ -177,7 +222,7 @@ export function TailoredResumePreview({
       
       console.log('✅ Tailored resume downloaded successfully')
     } catch (error) {
-      console.error('Failed to download tailored resume:', error)
+      console.error('❌ Failed to download tailored resume:', error)
       toast({
         title: "Download failed",
         description: error instanceof Error ? error.message : "Failed to download resume. Please try again.",

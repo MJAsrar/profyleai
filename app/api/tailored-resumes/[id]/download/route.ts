@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getAuthenticatedUser, createAuthError, checkResourceOwnership, createOwnershipError } from "@/lib/auth-utils"
 import { generateResumePDFBlob } from "@/lib/pdf-export-utils"
+import { FontSizeConfig } from "@/lib/font-config"
 
 interface RouteParams {
   params: Promise<{
@@ -15,13 +16,21 @@ interface RouteParams {
  */
 async function handleDownload(req: NextRequest, { params }: RouteParams, fontConfig?: FontSizeConfig) {
   try {
+    console.log('🔍 Starting tailored resume download process...')
+    
     // Check authentication
     const user = await getAuthenticatedUser(req)
     if (!user) {
+      console.log('❌ Authentication failed - no user found')
       return createAuthError()
     }
 
     const { id } = await params
+    console.log('📋 Download request details:', {
+      userId: user.id,
+      tailoredResumeId: id,
+      hasFontConfig: !!fontConfig
+    })
 
     // Fetch tailored resume with template information
     const tailoredResume = await (prisma as any).tailoredResume.findUnique({
@@ -40,14 +49,28 @@ async function handleDownload(req: NextRequest, { params }: RouteParams, fontCon
     })
 
     if (!tailoredResume) {
+      console.log('❌ Tailored resume not found:', id)
       return NextResponse.json(
         { error: "Tailored resume not found" },
         { status: 404 }
       )
     }
 
+    console.log('✅ Tailored resume found:', {
+      id: tailoredResume.id,
+      title: tailoredResume.title,
+      userId: tailoredResume.userId,
+      templateId: tailoredResume.templateId,
+      hasTemplate: !!tailoredResume.template,
+      templateName: tailoredResume.template?.name
+    })
+
     // Check ownership (user can only download their own resumes)
     if (!checkResourceOwnership(tailoredResume.userId, user.id)) {
+      console.log('❌ Ownership check failed:', {
+        resumeUserId: tailoredResume.userId,
+        requestUserId: user.id
+      })
       return createOwnershipError()
     }
 
@@ -69,18 +92,49 @@ async function handleDownload(req: NextRequest, { params }: RouteParams, fontCon
       template: tailoredResume.template
     }
 
+    console.log('🎨 Resume data prepared for PDF generation:', {
+      hasPersonalInfo: !!resumeData.personalInfo,
+      hasTemplate: !!resumeData.template,
+      templateId: resumeData.templateId,
+      summaryLength: resumeData.summary?.length || 0,
+      experienceCount: Array.isArray(resumeData.experience) ? resumeData.experience.length : 0,
+      skillsCount: Array.isArray(resumeData.skills) ? resumeData.skills.length : 0
+    })
+
     // Generate PDF using the same method as Resume Builder
+    console.log('🔧 Starting PDF generation with options:', {
+      templateId: tailoredResume.template?.id || 'modern',
+      pageSize: 'LETTER',
+      margins: [40, 60, 40, 60],
+      hasFontConfig: !!fontConfig
+    })
+    
     const pdfBlob = await generateResumePDFBlob(resumeData, {
       templateId: tailoredResume.template?.id || 'modern',
       pageSize: 'LETTER', // Same as Resume Builder
       margins: [40, 60, 40, 60], // Same as Resume Builder
       fontConfig // Pass through the user's font configuration
     })
+    
+    console.log('📄 PDF blob generated:', {
+      size: pdfBlob.size,
+      type: pdfBlob.type
+    })
+    
     const pdfBuffer = Buffer.from(await pdfBlob.arrayBuffer())
+    console.log('💾 PDF buffer created:', {
+      bufferSize: pdfBuffer.length
+    })
 
     // Create a safe filename with job info
     const safeTitle = tailoredResume.title.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_').substring(0, 50)
     const filename = `${safeTitle}_Resume.pdf`
+    
+    console.log('✅ Sending PDF response:', {
+      filename,
+      contentLength: pdfBuffer.length,
+      contentType: 'application/pdf'
+    })
 
     // Return PDF as download
     return new NextResponse(pdfBuffer, {

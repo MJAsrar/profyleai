@@ -391,7 +391,7 @@ export function InterviewPrep() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'complete',
-          mockInterviewId: mockSession.id,
+          mockInterviewId: mockSession.sessionId,
           totalTime: interviewTimer
         })
       })

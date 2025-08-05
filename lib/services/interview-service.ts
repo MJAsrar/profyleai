@@ -264,7 +264,7 @@ Return ONLY the JSON object. Ensure all questions are unique and relevant to the
     }
 
     const result = await client.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-2.5-pro",
       contents: prompt,
       config: {
         temperature: 0.7, // Higher creativity for diverse questions
@@ -442,7 +442,7 @@ Return ONLY the JSON object.`.trim()
     }
 
     const result = await client.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-2.5-pro",
       contents: prompt,
       config: {
         temperature: 0.3, // Lower temperature for consistent evaluation
@@ -610,7 +610,7 @@ Return ONLY the JSON object with accurate, interview-relevant information.`.trim
     }
 
     const result = await client.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-2.5-pro",
       contents: prompt,
       config: {
         temperature: 0.4, // Balanced creativity for research
@@ -743,13 +743,13 @@ Return ONLY the JSON object.`.trim()
     }
 
     const result = await client.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-2.5-pro",
       contents: prompt,
       config: {
         temperature: 0.5, // Balanced for coaching content
         topP: 0.8,
         topK: 40,
-        maxOutputTokens: 2048, // Reduced to prevent overly long responses
+        maxOutputTokens: 1536, // Further reduced to prevent truncation
         thinkingConfig: {
           thinkingBudget: 0,
         }
@@ -788,6 +788,24 @@ Return ONLY the JSON object.`.trim()
       
       if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
         cleanedResponse = cleanedResponse.substring(jsonStart, jsonEnd + 1)
+      }
+      
+      // Check if JSON appears to be truncated (common issue with large responses)
+      if (!cleanedResponse.trim().endsWith('}')) {
+        console.warn('⚠️ JSON appears to be truncated, attempting to fix...')
+        // Try to close any open structures
+        const openBraces = (cleanedResponse.match(/{/g) || []).length
+        const closeBraces = (cleanedResponse.match(/}/g) || []).length
+        const openBrackets = (cleanedResponse.match(/\[/g) || []).length
+        const closeBrackets = (cleanedResponse.match(/\]/g) || []).length
+        
+        // Add missing closing braces/brackets
+        for (let i = 0; i < (openBrackets - closeBrackets); i++) {
+          cleanedResponse += ']'
+        }
+        for (let i = 0; i < (openBraces - closeBraces); i++) {
+          cleanedResponse += '}'
+        }
       }
       
       // Attempt to fix unterminated strings by finding unmatched quotes

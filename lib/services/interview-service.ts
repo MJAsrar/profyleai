@@ -272,7 +272,7 @@ Return ONLY the JSON object. Ensure all questions are unique and relevant to the
         topK: 40,
         maxOutputTokens: 4096,
         thinkingConfig: {
-          thinkingBudget: 0,
+          thinkingBudget: 8192,
         }
       }
     })
@@ -450,7 +450,7 @@ Return ONLY the JSON object.`.trim()
         topK: 40,
         maxOutputTokens: 2048,
         thinkingConfig: {
-          thinkingBudget: 0,
+          thinkingBudget: 8192,
         }
       }
     })
@@ -618,7 +618,7 @@ Return ONLY the JSON object with accurate, interview-relevant information.`.trim
         topK: 40,
         maxOutputTokens: 3072,
         thinkingConfig: {
-          thinkingBudget: 0,
+          thinkingBudget: 8192,
         }
       }
     })
@@ -751,7 +751,7 @@ Return ONLY the JSON object.`.trim()
         topK: 40,
         maxOutputTokens: 1536, // Further reduced to prevent truncation
         thinkingConfig: {
-          thinkingBudget: 0,
+          thinkingBudget: 8192,
         }
       }
     })

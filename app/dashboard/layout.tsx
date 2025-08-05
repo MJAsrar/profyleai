@@ -38,7 +38,9 @@ export default function DashboardLayout({
   return (
     <SidebarProvider>
       <DashboardSidebar />
-      <SidebarInset>{children}</SidebarInset>
+      <SidebarInset className="flex flex-col min-h-screen">
+        {children}
+      </SidebarInset>
     </SidebarProvider>
   )
 }

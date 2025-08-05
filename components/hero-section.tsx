@@ -35,7 +35,7 @@ export function HeroSection() {
           </p>
 
           {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 animate-fade-in-up">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 md:gap-6 animate-fade-in-up">
             <Link href="/signup">
               <Button size="lg" className="text-base touch-target hover-lift w-full sm:w-auto">
                 Start Building Free
@@ -52,7 +52,7 @@ export function HeroSection() {
           {/* Feature highlights */}
           <StaggeredContainer 
             staggerDelay={150}
-            className="grid grid-cols-1 gap-8 sm:grid-cols-3 max-w-4xl mx-auto"
+            className="grid grid-cols-1 gap-6 sm:gap-8 sm:grid-cols-2 lg:grid-cols-3 max-w-4xl mx-auto"
           >
             {[
               {

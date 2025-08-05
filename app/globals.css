@@ -70,9 +70,27 @@
     padding-bottom: env(safe-area-inset-bottom);
   }
   
+  /* Mobile-specific padding and margins */
+  .mobile-spacing {
+    @apply p-3 sm:p-6 md:p-8;
+  }
+  
+  .mobile-gap {
+    @apply gap-3 sm:gap-4 md:gap-6;
+  }
+  
   /* Interactive element improvements */
   .touch-target {
     @apply min-h-[44px] min-w-[44px];
+  }
+  
+  /* Mobile-friendly button sizes */
+  .mobile-button {
+    @apply min-h-[44px] px-4 py-2 sm:min-h-auto sm:px-3 sm:py-1.5;
+  }
+  
+  .mobile-button-sm {
+    @apply min-h-[40px] px-3 py-2 text-sm sm:min-h-auto sm:px-2 sm:py-1;
   }
   
   /* Smooth transitions for interactive elements */
@@ -320,7 +338,7 @@
   
   /* Better default button styles */
   button {
-    @apply focus-ring;
+    @apply focus-ring touch-target;
   }
   
   /* Improved form elements */

@@ -147,7 +147,7 @@ export function CertificationsForm() {
             <CardTitle>Add Certification</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="certName">Certification Name *</Label>
                 <Input
@@ -168,7 +168,7 @@ export function CertificationsForm() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="certIssueDate">Issue Date *</Label>
                 <Input
@@ -200,7 +200,7 @@ export function CertificationsForm() {
               <Label htmlFor="isLifetime">This certification has no expiry date (Lifetime)</Label>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="certCredentialId">Credential ID (Optional)</Label>
                 <Input

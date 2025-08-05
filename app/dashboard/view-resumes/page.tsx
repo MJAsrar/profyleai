@@ -258,7 +258,7 @@ export default function ViewResumesPage() {
             {[1, 2].map((section) => (
               <div key={section} className="space-y-4">
                 <div className="h-6 bg-gray-200 rounded w-1/4"></div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                   {[1, 2, 3].map((i) => (
                     <Card key={i} className="animate-pulse">
                       <CardHeader>
@@ -315,7 +315,7 @@ export default function ViewResumesPage() {
                   </CardContent>
                 </Card>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                   {resumes.map((resume, index) => (
                     <MotionWrapper key={resume.id} animation="slide-in-up" delay={index * 50}>
                       <Card className="h-full hover:shadow-md transition-shadow">
@@ -426,7 +426,7 @@ export default function ViewResumesPage() {
                   </CardContent>
                 </Card>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                   {tailoredResumes.map((resume, index) => (
                     <MotionWrapper key={resume.id} animation="slide-in-up" delay={index * 50}>
                       <Card className="h-full hover:shadow-md transition-shadow">

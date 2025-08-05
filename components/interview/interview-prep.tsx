@@ -81,6 +81,29 @@ interface InterviewPrepData {
 export function InterviewPrep() {
   const { toast } = useToast()
   
+  // Coming Soon overlay component
+  const ComingSoonOverlay = () => (
+    <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-50 flex items-center justify-center rounded-lg">
+      <Card className="max-w-md mx-4">
+        <CardContent className="pt-6 text-center">
+          <div className="mb-4">
+            <Target className="h-12 w-12 mx-auto text-blue-500 mb-3" />
+            <h3 className="text-xl font-semibold mb-2">Interview Preparation</h3>
+            <p className="text-muted-foreground mb-4">
+              We're putting the finishing touches on our AI-powered interview preparation features.
+            </p>
+            <Badge variant="secondary" className="mb-2">
+              Coming Soon
+            </Badge>
+            <p className="text-sm text-muted-foreground">
+              Get ready to ace your interviews with personalized practice questions and mock interviews!
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  )
+  
   // Main state
   const [currentView, setCurrentView] = useState<'list' | 'new' | 'existing'>('list')
   const [existingPreps, setExistingPreps] = useState<InterviewPrepData[]>([])
@@ -527,7 +550,8 @@ export function InterviewPrep() {
   const currentQuestion = questions[currentQuestionIndex]
 
   return (
-    <div className="space-y-6">
+    <div className="relative space-y-6">
+      <ComingSoonOverlay />
       {/* Interview Prep List/Selection */}
       {currentView === 'list' && (
         <Card>

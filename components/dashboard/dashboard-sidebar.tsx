@@ -78,12 +78,8 @@ export function DashboardSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild className="py-3 px-3 hover:bg-sidebar-accent/50">
               <Link href="/dashboard">
-                <div className="flex aspect-square size-9 items-center justify-center rounded-xl bg-gradient-to-br from-slate-600 to-slate-700 text-white shadow-sm p-1">
-                  <img src="/logo.png" alt="Profyle" className="w-full h-full object-contain" />
-                </div>
-                <div className="grid flex-1 text-left text-sm leading-tight ml-1">
-                  <span className="truncate font-bold text-lg">Profyle</span>
-                  <span className="truncate text-xs text-sidebar-foreground/60 font-medium">AI Resume Builder</span>
+                <div className="flex items-center justify-center w-full">
+                  <img src="/logo.png" alt="ProfyleAI" className="h-10 w-auto" />
                 </div>
               </Link>
             </SidebarMenuButton>

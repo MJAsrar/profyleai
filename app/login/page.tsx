@@ -10,9 +10,8 @@ export default function LoginPage() {
         <div className="w-full max-w-md space-y-8">
           <div className="text-center space-y-4">
             <MotionWrapper animation="bounce-in" delay={200}>
-              <Link href="/" className="inline-flex items-center space-x-2 mb-6 hover-lift">
-                <img src="/logo.png" alt="Profyle" className="h-8 w-8" />
-                <span className="text-2xl font-bold">Profyle</span>
+              <Link href="/" className="inline-flex items-center mb-6 hover-lift">
+                <img src="/logo.png" alt="ProfyleAI" className="h-16 w-auto" />
               </Link>
             </MotionWrapper>
             <div className="space-y-2">

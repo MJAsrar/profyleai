@@ -1,8 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
 import { generatePracticeQuestions, InterviewJobData } from '@/lib/services/interview-service'
+import { createInterviewPrep } from '@/lib/db/interview-prep'
 
 export async function POST(request: NextRequest) {
   try {
+    // Check authentication
+    const session = await getServerSession()
+    if (!session?.user?.email) {
+      return NextResponse.json(
+        { success: false, error: 'Authentication required' },
+        { status: 401 }
+      )
+    }
+
     const body = await request.json()
     const { companyName, jobTitle, jobDescription, industry, experienceLevel, questionCount } = body
 
@@ -36,9 +47,19 @@ export async function POST(request: NextRequest) {
 
     console.log('✅ Successfully generated', result.data?.questions.length, 'questions')
 
+    // Save to database
+    const interviewPrep = await createInterviewPrep(
+      session.user.email, // Using email as userId for now
+      jobData,
+      result.data!.questions
+    )
+
     return NextResponse.json({
       success: true,
-      data: result.data
+      data: {
+        ...result.data,
+        interviewPrepId: interviewPrep.id
+      }
     })
 
   } catch (error) {

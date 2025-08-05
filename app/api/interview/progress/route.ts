@@ -1,21 +1,41 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getInterviewProgress } from '@/lib/services/interview-service'
+import { getServerSession } from 'next-auth'
+import { getUserInterviewProgress } from '@/lib/db/interview-prep'
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url)
-    const userId = searchParams.get('userId')
-
-    if (!userId) {
+    // Check authentication
+    const session = await getServerSession()
+    if (!session?.user?.email) {
       return NextResponse.json(
-        { success: false, error: 'User ID is required' },
-        { status: 400 }
+        { success: false, error: 'Authentication required' },
+        { status: 401 }
       )
     }
 
-    console.log('🎯 Fetching interview progress for user:', userId)
+    console.log('🎯 Fetching interview progress for user:', session.user.email)
 
-    const progress = getInterviewProgress(userId)
+    const progress = await getUserInterviewProgress(session.user.email)
+
+    if (!progress) {
+      // Return default progress if none exists
+      const defaultProgress = {
+        userId: session.user.email,
+        sessionsCompleted: 0,
+        totalQuestions: 0,
+        averageScore: 0,
+        confidenceScore: 0,
+        improvementAreas: [],
+        strengths: [],
+        lastSessionDate: '',
+        weeklyProgress: []
+      }
+
+      return NextResponse.json({
+        success: true,
+        data: defaultProgress
+      })
+    }
 
     console.log('✅ Successfully fetched progress data')
 

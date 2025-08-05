@@ -54,6 +54,8 @@ model User {
   resumes       Resume[]
   tailoredResumes TailoredResume[]
   coverLetters  CoverLetter[]
+  interviewPreps InterviewPrep[]
+  mockInterviews MockInterview[]
 }
 
 model VerificationToken {
@@ -174,4 +176,117 @@ model CoverLetter {
 
   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   template      Template @relation(fields: [templateId], references: [id])
+}
+
+// Interview Preparation Models
+model InterviewPrep {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId        String   @db.ObjectId
+  title         String   // e.g., "Software Engineer at Google"
+  
+  // Job details
+  companyName   String
+  jobTitle      String
+  jobDescription String
+  industry      String?
+  experienceLevel String @default("mid") // entry, mid, senior, executive
+  
+  // Generated content
+  questions     Json     // Array of PracticeQuestion objects
+  companyResearch Json?  // CompanyResearch object
+  behavioralCoaching Json? // BehavioralCoaching object
+  
+  // Metadata
+  questionsGenerated Boolean @default(false)
+  researchCompleted Boolean @default(false)
+  coachingLoaded Boolean @default(false)
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mockInterviews MockInterview[]
+}
+
+model MockInterview {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId        String   @db.ObjectId
+  interviewPrepId String @db.ObjectId
+  
+  // Session details
+  sessionId     String   @unique
+  title         String   // e.g., "Mock Interview #1 - Software Engineer"
+  status        String   @default("active") // active, completed, paused
+  
+  // Interview configuration
+  questions     Json     // Array of selected questions for this mock interview
+  currentQuestionIndex Int @default(0)
+  
+  // Timing
+  startedAt     DateTime @default(now())
+  completedAt   DateTime?
+  totalTime     Int?     // Total time in seconds
+  
+  // Results and analysis
+  overallScore  Int?     // 0-100
+  summary       Json?    // MockInterviewSummary object
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  interviewPrep InterviewPrep @relation(fields: [interviewPrepId], references: [id], onDelete: Cascade)
+  answers       InterviewAnswer[]
+}
+
+model InterviewAnswer {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  mockInterviewId String @db.ObjectId
+  
+  // Question and answer details
+  questionId    String   // ID of the question from the practice questions
+  question      String   // The actual question text
+  answer        String   // User's answer
+  category      String   // behavioral, technical, situational, etc.
+  difficulty    String   // easy, medium, hard
+  
+  // AI Analysis and feedback
+  score         Int      // 0-100 score for this answer
+  feedback      Json     // AnswerFeedback object with detailed analysis
+  timeSpent     Int      // Time spent on this question in seconds
+  
+  // STAR framework analysis
+  starAnalysis  Json     // Detailed STAR framework breakdown
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  mockInterview MockInterview @relation(fields: [mockInterviewId], references: [id], onDelete: Cascade)
+}
+
+// Progress tracking and analytics
+model InterviewProgress {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId        String   @db.ObjectId @unique
+  
+  // Overall statistics
+  totalSessions Int      @default(0)
+  totalQuestions Int     @default(0)
+  averageScore  Float    @default(0.0)
+  confidenceScore Int    @default(0)
+  
+  // Improvement tracking
+  strengths     Json     // Array of identified strengths
+  improvementAreas Json  // Array of areas needing improvement
+  
+  // Weekly progress data
+  weeklyStats   Json     // Array of weekly progress objects
+  
+  // Last activity
+  lastSessionDate DateTime?
+  lastUpdated   DateTime @updatedAt
+  
+  createdAt     DateTime @default(now())
+
+  @@map("interview_progress")
 }

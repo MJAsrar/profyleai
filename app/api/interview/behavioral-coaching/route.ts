@@ -1,15 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
 import { generateBehavioralCoaching } from '@/lib/services/interview-service'
+import { updateInterviewPrepCoaching } from '@/lib/db/interview-prep'
 
 export async function POST(request: NextRequest) {
   try {
+    // Check authentication
+    const session = await getServerSession()
+    if (!session?.user?.email) {
+      return NextResponse.json(
+        { success: false, error: 'Authentication required' },
+        { status: 401 }
+      )
+    }
+
     const body = await request.json()
-    const { jobTitle, experienceLevel } = body
+    const { jobTitle, experienceLevel, interviewPrepId } = body
 
     // Validate required fields
-    if (!jobTitle) {
+    if (!jobTitle || !interviewPrepId) {
       return NextResponse.json(
-        { success: false, error: 'Job title is required' },
+        { success: false, error: 'Job title and interview prep ID are required' },
         { status: 400 }
       )
     }
@@ -25,6 +36,9 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       )
     }
+
+    // Save coaching to database
+    await updateInterviewPrepCoaching(interviewPrepId, session.user.email, result.data!)
 
     console.log('✅ Successfully generated behavioral coaching content')
 

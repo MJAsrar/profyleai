@@ -1,15 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
 import { conductCompanyResearch } from '@/lib/services/interview-service'
+import { updateInterviewPrepResearch } from '@/lib/db/interview-prep'
 
 export async function POST(request: NextRequest) {
   try {
+    // Check authentication
+    const session = await getServerSession()
+    if (!session?.user?.email) {
+      return NextResponse.json(
+        { success: false, error: 'Authentication required' },
+        { status: 401 }
+      )
+    }
+
     const body = await request.json()
-    const { companyName, jobTitle, industry } = body
+    const { companyName, jobTitle, industry, interviewPrepId } = body
 
     // Validate required fields
-    if (!companyName || !jobTitle) {
+    if (!companyName || !jobTitle || !interviewPrepId) {
       return NextResponse.json(
-        { success: false, error: 'Company name and job title are required' },
+        { success: false, error: 'Company name, job title, and interview prep ID are required' },
         { status: 400 }
       )
     }
@@ -25,6 +36,9 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       )
     }
+
+    // Save research to database
+    await updateInterviewPrepResearch(interviewPrepId, session.user.email, result.data!)
 
     console.log('✅ Successfully researched company:', companyName)
 

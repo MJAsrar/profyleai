@@ -60,8 +60,33 @@ interface JobFormData {
   experienceLevel: 'entry' | 'mid' | 'senior' | 'executive'
 }
 
+interface InterviewPrepData {
+  id: string
+  title: string
+  companyName: string
+  jobTitle: string
+  jobDescription: string
+  industry?: string
+  experienceLevel: string
+  questions: PracticeQuestion[]
+  companyResearch?: CompanyResearch
+  behavioralCoaching?: BehavioralCoaching
+  questionsGenerated: boolean
+  researchCompleted: boolean
+  coachingLoaded: boolean
+  createdAt: string
+  updatedAt: string
+}
+
 export function InterviewPrep() {
   const { toast } = useToast()
+  
+  // Main state
+  const [currentView, setCurrentView] = useState<'list' | 'new' | 'existing'>('list')
+  const [existingPreps, setExistingPreps] = useState<InterviewPrepData[]>([])
+  const [selectedPrep, setSelectedPrep] = useState<InterviewPrepData | null>(null)
+  const [isLoadingPreps, setIsLoadingPreps] = useState(true)
+  const [currentInterviewPrepId, setCurrentInterviewPrepId] = useState<string | null>(null)
   
   // Job setup state
   const [jobData, setJobData] = useState<JobFormData>({
@@ -96,6 +121,11 @@ export function InterviewPrep() {
   // Answer feedback state
   const [answerFeedback, setAnswerFeedback] = useState<AnswerFeedback | null>(null)
   
+  // Load existing interview preps on component mount
+  useEffect(() => {
+    loadExistingPreps()
+  }, [])
+
   // Timer effect for mock interviews
   useEffect(() => {
     let interval: NodeJS.Timeout
@@ -106,6 +136,83 @@ export function InterviewPrep() {
     }
     return () => clearInterval(interval)
   }, [isInterviewActive])
+
+  const loadExistingPreps = async () => {
+    setIsLoadingPreps(true)
+    try {
+      const response = await fetch('/api/interview/list')
+      const result = await response.json()
+      
+      if (result.success) {
+        setExistingPreps(result.data)
+        if (result.data.length === 0) {
+          setCurrentView('new')
+        }
+      } else {
+        console.error('Failed to load interview preps:', result.error)
+        toast({
+          title: "Loading Failed",
+          description: "Could not load your interview preparations.",
+          variant: "destructive"
+        })
+      }
+    } catch (error) {
+      console.error('Error loading interview preps:', error)
+      toast({
+        title: "Loading Failed",
+        description: "Could not load your interview preparations.",
+        variant: "destructive"
+      })
+    } finally {
+      setIsLoadingPreps(false)
+    }
+  }
+
+  const selectExistingPrep = async (prep: InterviewPrepData) => {
+    setSelectedPrep(prep)
+    setCurrentInterviewPrepId(prep.id)
+    setJobData({
+      companyName: prep.companyName,
+      jobTitle: prep.jobTitle,
+      jobDescription: prep.jobDescription,
+      industry: prep.industry || '',
+      experienceLevel: prep.experienceLevel as any
+    })
+    setQuestions(prep.questions)
+    setCompanyResearch(prep.companyResearch || null)
+    setBehavioralCoaching(prep.behavioralCoaching || null)
+    setCurrentView('existing')
+    
+    // Reset other states
+    setCurrentQuestionIndex(0)
+    setCurrentAnswer('')
+    setAnswerFeedback(null)
+    setMockSession(null)
+    setMockSummary(null)
+  }
+
+  const startNewPrep = () => {
+    setSelectedPrep(null)
+    setCurrentInterviewPrepId(null)
+    setJobData({
+      companyName: '',
+      jobTitle: '',
+      jobDescription: '',
+      industry: '',
+      experienceLevel: 'mid'
+    })
+    setQuestions([])
+    setCompanyResearch(null)
+    setBehavioralCoaching(null)
+    setCurrentView('new')
+    
+    // Reset other states
+    setCurrentQuestionIndex(0)
+    setCurrentAnswer('')
+    setAnswerFeedback(null)
+    setMockSession(null)
+    setMockSummary(null)
+  }
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
@@ -154,9 +261,14 @@ export function InterviewPrep() {
       
       if (result.success) {
         setQuestions(result.data.questions)
+        setCurrentInterviewPrepId(result.data.interviewPrepId)
         setCurrentQuestionIndex(0)
         setCurrentAnswer('')
         setAnswerFeedback(null)
+        
+        // Refresh the list of existing preps
+        await loadExistingPreps()
+        
         toast({
           title: "Questions Generated!",
           description: `Generated ${result.data.questions.length} personalized interview questions.`
@@ -222,7 +334,7 @@ export function InterviewPrep() {
   }
 
   const startMockInterview = async () => {
-    if (questions.length === 0) {
+    if (questions.length === 0 || !currentInterviewPrepId) {
       toast({
         title: "No Questions",
         description: "Please generate questions first.",
@@ -237,14 +349,15 @@ export function InterviewPrep() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'create',
-          questions: questions.slice(0, 5) // Use first 5 questions for mock interview
+          interviewPrepId: currentInterviewPrepId,
+          questions: questions
         })
       })
       
       const result = await response.json()
       
       if (result.success) {
-        setMockSession(result.data.session)
+        setMockSession(result.data)
         setMockSummary(null)
         setInterviewTimer(0)
         setIsInterviewActive(true)
@@ -252,7 +365,7 @@ export function InterviewPrep() {
         setCurrentAnswer('')
         toast({
           title: "Mock Interview Started!",
-          description: "Answer each question as if in a real interview."
+          description: `Starting ${result.data.questions.length} question mock interview.`
         })
       } else {
         throw new Error(result.error)
@@ -272,52 +385,43 @@ export function InterviewPrep() {
 
     setIsInterviewActive(false)
     
-    // Create a mock summary for demonstration
-    const mockSummary: MockInterviewSummary = {
-      overallScore: 78,
-      strengths: [
-        "Clear communication style",
-        "Good use of specific examples",
-        "Professional demeanor"
-      ],
-      weaknesses: [
-        "Could improve STAR framework usage",
-        "Add more quantified results"
-      ],
-      improvements: [
-        "Practice structuring answers with STAR method",
-        "Include more specific metrics and numbers",
-        "Expand on the impact of your actions"
-      ],
-      categoryScores: {
-        behavioral: 75,
-        technical: 82,
-        situational: 76
-      },
-      timeAnalysis: {
-        totalTime: interviewTimer,
-        averageTimePerQuestion: Math.floor(interviewTimer / 5),
-        fastestQuestion: 45,
-        slowestQuestion: 180
-      },
-      starFrameworkUsage: {
-        overall: 65,
-        byQuestion: []
+    try {
+      const response = await fetch('/api/interview/mock-interview', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'complete',
+          mockInterviewId: mockSession.id,
+          totalTime: interviewTimer
+        })
+      })
+      
+      const result = await response.json()
+      
+      if (result.success) {
+        setMockSummary(result.data.summary)
+        toast({
+          title: "Interview Complete!",
+          description: `Overall score: ${result.data.summary.overallScore}/100`
+        })
+      } else {
+        throw new Error(result.error)
       }
+    } catch (error) {
+      console.error('Error completing mock interview:', error)
+      toast({
+        title: "Completion Failed",
+        description: "Could not complete interview analysis.",
+        variant: "destructive"
+      })
     }
-    
-    setMockSummary(mockSummary)
-    toast({
-      title: "Interview Complete!",
-      description: `Overall score: ${mockSummary.overallScore}/100`
-    })
   }
 
   const researchCompany = async () => {
-    if (!jobData.companyName || !jobData.jobTitle) {
+    if (!jobData.companyName || !jobData.jobTitle || !currentInterviewPrepId) {
       toast({
         title: "Missing Information",
-        description: "Please provide company name and job title.",
+        description: "Please generate questions first or provide company name and job title.",
         variant: "destructive"
       })
       return
@@ -331,7 +435,8 @@ export function InterviewPrep() {
         body: JSON.stringify({
           companyName: jobData.companyName,
           jobTitle: jobData.jobTitle,
-          industry: jobData.industry
+          industry: jobData.industry,
+          interviewPrepId: currentInterviewPrepId
         })
       })
       
@@ -359,10 +464,10 @@ export function InterviewPrep() {
   }
 
   const loadBehavioralCoaching = async () => {
-    if (!jobData.jobTitle) {
+    if (!jobData.jobTitle || !currentInterviewPrepId) {
       toast({
-        title: "Missing Job Title",
-        description: "Please provide a job title first.",
+        title: "Missing Information",
+        description: "Please generate questions first or provide a job title.",
         variant: "destructive"
       })
       return
@@ -375,7 +480,8 @@ export function InterviewPrep() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           jobTitle: jobData.jobTitle,
-          experienceLevel: jobData.experienceLevel
+          experienceLevel: jobData.experienceLevel,
+          interviewPrepId: currentInterviewPrepId
         })
       })
       
@@ -422,8 +528,99 @@ export function InterviewPrep() {
 
   return (
     <div className="space-y-6">
-      {/* Job Setup Card */}
-      <Card>
+      {/* Interview Prep List/Selection */}
+      {currentView === 'list' && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Target className="h-5 w-5" />
+              Your Interview Preparations
+            </CardTitle>
+            <CardDescription>
+              Continue with an existing prep or start a new one
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {isLoadingPreps ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin" />
+                <span className="ml-2">Loading your interview preparations...</span>
+              </div>
+            ) : existingPreps.length === 0 ? (
+              <div className="text-center py-8">
+                <Target className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <h3 className="text-lg font-medium mb-2">No Interview Preparations Yet</h3>
+                <p className="text-muted-foreground mb-4">
+                  Create your first interview preparation to get started with AI-powered practice.
+                </p>
+                <Button onClick={startNewPrep}>
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  Start New Interview Prep
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {existingPreps.map((prep) => (
+                    <Card key={prep.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => selectExistingPrep(prep)}>
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between mb-2">
+                          <h4 className="font-medium">{prep.title}</h4>
+                          <div className="flex gap-1">
+                            {prep.questionsGenerated && (
+                              <Badge variant="secondary" className="text-xs">
+                                <MessageSquare className="h-3 w-3 mr-1" />
+                                Questions
+                              </Badge>
+                            )}
+                            {prep.researchCompleted && (
+                              <Badge variant="secondary" className="text-xs">
+                                <Building className="h-3 w-3 mr-1" />
+                                Research
+                              </Badge>
+                            )}
+                            {prep.coachingLoaded && (
+                              <Badge variant="secondary" className="text-xs">
+                                <Brain className="h-3 w-3 mr-1" />
+                                Coaching
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-2">
+                          {prep.companyName} • {prep.experienceLevel} level
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Created {new Date(prep.createdAt).toLocaleDateString()}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+                
+                <div className="flex justify-center pt-4">
+                  <Button variant="outline" onClick={startNewPrep}>
+                    <Sparkles className="mr-2 h-4 w-4" />
+                    Start New Interview Prep
+                  </Button>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Back Button for existing/new views */}
+      {(currentView === 'existing' || currentView === 'new') && (
+        <Button variant="outline" onClick={() => setCurrentView('list')} className="mb-4">
+          <ChevronLeft className="mr-2 h-4 w-4" />
+          Back to Interview Preparations
+        </Button>
+      )}
+
+      {/* Job Setup Card - Only show in new or existing view */}
+      {(currentView === 'new' || currentView === 'existing') && (
+        <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Target className="h-5 w-5" />
@@ -514,9 +711,11 @@ export function InterviewPrep() {
           </Button>
         </CardContent>
       </Card>
+      )}
 
-      {/* Main Interview Prep Tabs */}
-      <Tabs defaultValue="practice" className="space-y-4">
+      {/* Main Interview Prep Tabs - Only show in new or existing view */}
+      {(currentView === 'new' || currentView === 'existing') && (
+        <Tabs defaultValue="practice" className="space-y-4">
         <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="practice">Practice Questions</TabsTrigger>
           <TabsTrigger value="mock">Mock Interview</TabsTrigger>
@@ -1310,6 +1509,7 @@ export function InterviewPrep() {
           </Card>
         </TabsContent>
       </Tabs>
+      )}
     </div>
   )
 }

@@ -54,12 +54,12 @@ export function LoginForm() {
           // Send a message to any listening extension content scripts
           try {
             window.postMessage({ 
-              type: 'RESUMEAID_LOGIN_SUCCESS',
-              source: 'resumeaid-web-app'
+              type: 'PROFYLE_LOGIN_SUCCESS',
+        source: 'profyle-web-app'
             }, '*')
             
             // Also store a flag in localStorage that the extension can check
-            localStorage.setItem('resumeaid-extension-login-success', Date.now().toString())
+            localStorage.setItem('profyle-extension-login-success', Date.now().toString())
             
             // Wait a moment then redirect to ensure extension has time to detect the login
             setTimeout(() => {

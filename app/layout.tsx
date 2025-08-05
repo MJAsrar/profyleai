@@ -6,7 +6,7 @@ import { Toaster } from '@/components/ui/toaster'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'resumAID - AI Resume Builder',
+  title: 'Profyle - AI Resume Builder',
   description: 'Build professional resumes with AI assistance',
 }
 

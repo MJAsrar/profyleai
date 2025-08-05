@@ -11,8 +11,8 @@ export default function LoginPage() {
           <div className="text-center space-y-4">
             <MotionWrapper animation="bounce-in" delay={200}>
               <Link href="/" className="inline-flex items-center space-x-2 mb-6 hover-lift">
-                <Sparkles className="h-8 w-8 text-primary" />
-                <span className="text-2xl font-bold">resumAID</span>
+                <img src="/logo.png" alt="Profyle" className="h-8 w-8" />
+                <span className="text-2xl font-bold">Profyle</span>
               </Link>
             </MotionWrapper>
             <div className="space-y-2">

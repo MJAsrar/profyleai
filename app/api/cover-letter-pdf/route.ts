@@ -410,7 +410,7 @@ function generateCoverLetterDocument(data: CoverLetterData) {
       title: `Cover Letter - ${data.personalInfo.fullName} - ${data.jobDetails.companyName}`,
       author: data.personalInfo.fullName,
       subject: `Cover Letter for ${data.jobDetails.jobTitle || 'Position'} at ${data.jobDetails.companyName}`,
-      creator: 'ResumeAid Cover Letter Generator'
+      creator: 'Profyle Cover Letter Generator'
     }
   }
 }

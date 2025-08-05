@@ -8,8 +8,8 @@ export function Footer() {
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-4">
           <div className="lg:col-span-2">
             <Link href="/" className="flex items-center space-x-2 mb-4">
-              <Sparkles className="h-6 w-6 text-primary" />
-              <span className="text-xl font-bold">resumAID</span>
+              <img src="/logo.png" alt="Profyle" className="h-8 w-8" />
+              <span className="text-xl font-bold">Profyle</span>
             </Link>
             <p className="text-muted-foreground max-w-md">
               Build professional resumes with AI assistance. Get hired faster with our comprehensive job application
@@ -61,7 +61,7 @@ export function Footer() {
         </div>
 
         <div className="border-t mt-8 pt-8 text-center text-sm text-muted-foreground">
-          <p>&copy; 2024 resumAID. All rights reserved.</p>
+          <p>&copy; 2024 Profyle. All rights reserved.</p>
         </div>
       </div>
     </footer>

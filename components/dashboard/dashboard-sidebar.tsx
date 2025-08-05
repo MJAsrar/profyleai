@@ -78,11 +78,11 @@ export function DashboardSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild className="py-3 px-3 hover:bg-sidebar-accent/50">
               <Link href="/dashboard">
-                <div className="flex aspect-square size-9 items-center justify-center rounded-xl bg-gradient-to-br from-slate-600 to-slate-700 text-white shadow-sm">
-                  <Sparkles className="size-5" />
+                <div className="flex aspect-square size-9 items-center justify-center rounded-xl bg-gradient-to-br from-slate-600 to-slate-700 text-white shadow-sm p-1">
+                  <img src="/logo.png" alt="Profyle" className="w-full h-full object-contain" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight ml-1">
-                  <span className="truncate font-bold text-lg">resumAID</span>
+                  <span className="truncate font-bold text-lg">Profyle</span>
                   <span className="truncate text-xs text-sidebar-foreground/60 font-medium">AI Resume Builder</span>
                 </div>
               </Link>
@@ -187,7 +187,7 @@ export function DashboardSidebar() {
                   
                   // Also set a logout flag that extension can check
                   try {
-                    localStorage.setItem('resumeaid-extension-logout', Date.now().toString())
+                    localStorage.setItem('profyle-extension-logout', Date.now().toString())
                   } catch (error) {
                     console.error('Failed to set logout flag:', error)
                   }

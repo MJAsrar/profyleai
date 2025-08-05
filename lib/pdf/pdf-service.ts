@@ -236,7 +236,7 @@ export class PDFService {
           title: data.title || 'Resume',
           author: data.personalInfo?.fullName || 'Resume Builder',
           subject: 'Professional Resume',
-          creator: 'ResumeAid App',
+          creator: 'Profyle App',
           creationDate: new Date()
         },
         defaultStyle: {

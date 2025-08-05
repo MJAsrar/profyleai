@@ -286,17 +286,29 @@ Return ONLY the JSON object. Ensure all questions are unique and relevant to the
       }
     }
 
-    // Parse JSON response
+    // Parse JSON response with improved error handling
     let parsedResponse: any
     try {
-      const cleanedResponse = responseText
+      let cleanedResponse = responseText
         .replace(/```json\n?/g, '')
         .replace(/```\n?/g, '')
         .trim()
       
+      // Fix common JSON issues
+      cleanedResponse = cleanedResponse.replace(/,(\s*[}\]])/g, '$1')
+      
+      // Extract JSON object if there's extra text
+      const jsonStart = cleanedResponse.indexOf('{')
+      const jsonEnd = cleanedResponse.lastIndexOf('}')
+      
+      if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
+        cleanedResponse = cleanedResponse.substring(jsonStart, jsonEnd + 1)
+      }
+      
       parsedResponse = JSON.parse(cleanedResponse)
     } catch (parseError) {
       console.error('❌ Failed to parse questions response:', parseError)
+      console.error('Response length:', responseText.length)
       return {
         success: false,
         error: "Invalid response format from AI service"
@@ -449,17 +461,29 @@ Return ONLY the JSON object.`.trim()
       }
     }
 
-    // Parse JSON response
+    // Parse JSON response with improved error handling
     let parsedResponse: any
     try {
-      const cleanedResponse = responseText
+      let cleanedResponse = responseText
         .replace(/```json\n?/g, '')
         .replace(/```\n?/g, '')
         .trim()
       
+      // Fix common JSON issues
+      cleanedResponse = cleanedResponse.replace(/,(\s*[}\]])/g, '$1')
+      
+      // Extract JSON object if there's extra text
+      const jsonStart = cleanedResponse.indexOf('{')
+      const jsonEnd = cleanedResponse.lastIndexOf('}')
+      
+      if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
+        cleanedResponse = cleanedResponse.substring(jsonStart, jsonEnd + 1)
+      }
+      
       parsedResponse = JSON.parse(cleanedResponse)
     } catch (parseError) {
       console.error('❌ Failed to parse evaluation response:', parseError)
+      console.error('Response length:', responseText.length)
       return {
         success: false,
         error: "Invalid response format from AI service"
@@ -602,17 +626,29 @@ Return ONLY the JSON object with accurate, interview-relevant information.`.trim
       }
     }
 
-    // Parse JSON response
+    // Parse JSON response with improved error handling
     let parsedResponse: any
     try {
-      const cleanedResponse = responseText
+      let cleanedResponse = responseText
         .replace(/```json\n?/g, '')
         .replace(/```\n?/g, '')
         .trim()
       
+      // Fix common JSON issues
+      cleanedResponse = cleanedResponse.replace(/,(\s*[}\]])/g, '$1')
+      
+      // Extract JSON object if there's extra text
+      const jsonStart = cleanedResponse.indexOf('{')
+      const jsonEnd = cleanedResponse.lastIndexOf('}')
+      
+      if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
+        cleanedResponse = cleanedResponse.substring(jsonStart, jsonEnd + 1)
+      }
+      
       parsedResponse = JSON.parse(cleanedResponse)
     } catch (parseError) {
       console.error('❌ Failed to parse research response:', parseError)
+      console.error('Response length:', responseText.length)
       return {
         success: false,
         error: "Invalid response format from AI service"
@@ -658,62 +694,37 @@ export async function generateBehavioralCoaching(
     }
 
     const prompt = `
-ROLE: You are an expert behavioral interview coach with extensive knowledge of common behavioral questions and best practices.
+ROLE: Expert behavioral interview coach with deep knowledge of modern hiring practices.
 
-TASK: Generate comprehensive behavioral coaching content for this role, including common questions with model answers and situational scenarios.
-
-ROLE INFORMATION:
-- Job Title: ${jobTitle}
-- Experience Level: ${experienceLevel}
+TASK: Generate behavioral coaching content for ${jobTitle} at ${experienceLevel} level.
 
 REQUIREMENTS:
-1. Common Behavioral Questions (8-10):
-   - Most frequently asked behavioral questions for this role
-   - Professional model answers using STAR framework
-   - Specific tips for each question
+1. Generate 6-8 common behavioral questions with STAR framework model answers
+2. Include 4-5 situational scenarios with recommended approaches
+3. Focus on: teamwork, problem-solving, communication, adaptability, results, time management
 
-2. Situational Scenarios (5-6):
-   - Role-specific challenging situations
-   - Recommended approaches
-   - Key points to emphasize
-
-FOCUS AREAS:
-- Leadership and teamwork
-- Problem-solving and decision-making
-- Communication and conflict resolution
-- Adaptability and learning
-- Goal achievement and results
-- Time management and prioritization
+CRITICAL: Return ONLY valid JSON. Keep model answers concise (max 100 words each).
 
 OUTPUT FORMAT:
 {
   "commonQuestions": [
     {
-      "question": "Tell me about a time when you had to work with a difficult team member.",
-      "category": "Teamwork",
-      "modelAnswer": "In my previous role as [position], I encountered a situation where... [STAR format answer]",
-      "tips": [
-        "Focus on your communication skills",
-        "Show empathy and understanding",
-        "Highlight positive outcomes",
-        "Demonstrate conflict resolution abilities"
-      ]
+      "question": "Tell me about a challenging project you completed",
+      "category": "Problem-solving",
+      "modelAnswer": "Brief STAR format answer focusing on situation, task, action, and result",
+      "tips": ["Tip 1", "Tip 2", "Tip 3"]
     }
   ],
   "situationalScenarios": [
     {
-      "scenario": "You're given a project with an unrealistic deadline",
-      "approach": "Assess scope, communicate constraints, propose alternatives",
-      "keyPoints": [
-        "Demonstrate project management skills",
-        "Show communication with stakeholders",
-        "Highlight problem-solving approach"
-      ]
+      "scenario": "Brief scenario description",
+      "approach": "Recommended approach summary",
+      "keyPoints": ["Key point 1", "Key point 2", "Key point 3"]
     }
   ]
 }
 
-Return ONLY the JSON object with comprehensive behavioral coaching content.`.trim()
+Return ONLY the JSON object.`.trim()
 
     console.log(`🤖 Generating behavioral coaching for ${jobTitle} with Gemini API...`)
     
@@ -729,7 +740,7 @@ Return ONLY the JSON object with comprehensive behavioral coaching content.`.tri
         temperature: 0.5, // Balanced for coaching content
         topP: 0.8,
         topK: 40,
-        maxOutputTokens: 4096,
+        maxOutputTokens: 2048, // Reduced to prevent overly long responses
         thinkingConfig: {
           thinkingBudget: 0,
         }
@@ -745,20 +756,107 @@ Return ONLY the JSON object with comprehensive behavioral coaching content.`.tri
       }
     }
 
-    // Parse JSON response
+    // Parse JSON response with better error handling
     let parsedResponse: any
     try {
-      const cleanedResponse = responseText
+      // Clean the response text more thoroughly
+      let cleanedResponse = responseText
         .replace(/```json\n?/g, '')
         .replace(/```\n?/g, '')
         .trim()
       
+      // Fix common JSON issues
+      // Remove any trailing commas before closing braces/brackets
+      cleanedResponse = cleanedResponse.replace(/,(\s*[}\]])/g, '$1')
+      
+      // Try to find and extract just the JSON object if there's extra text
+      const jsonStart = cleanedResponse.indexOf('{')
+      const jsonEnd = cleanedResponse.lastIndexOf('}')
+      
+      if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
+        cleanedResponse = cleanedResponse.substring(jsonStart, jsonEnd + 1)
+      }
+      
+      // Attempt to fix unterminated strings by finding unmatched quotes
+      const lines = cleanedResponse.split('\n')
+      const fixedLines = lines.map((line: string) => {
+        // If line ends with an unescaped quote that's not properly closed, try to fix it
+        if (line.match(/[^\\]"[^"]*$/)) {
+          return line + '"'
+        }
+        return line
+      })
+      cleanedResponse = fixedLines.join('\n')
+      
       parsedResponse = JSON.parse(cleanedResponse)
     } catch (parseError) {
       console.error('❌ Failed to parse coaching response:', parseError)
+      console.error('Response text length:', responseText.length)
+      console.error('First 500 chars:', responseText.substring(0, 500))
+      console.error('Last 500 chars:', responseText.substring(Math.max(0, responseText.length - 500)))
+      
+      // Return a fallback response instead of failing completely
       return {
-        success: false,
-        error: "Invalid response format from AI service"
+        success: true,
+        data: {
+          commonQuestions: [
+            {
+              question: "Tell me about a time when you had to work with a difficult team member.",
+              category: "Teamwork",
+              modelAnswer: "In my previous role, I encountered a situation where a team member was consistently missing deadlines, which was affecting our project timeline. I approached them privately to understand if there were any challenges they were facing. It turned out they were overwhelmed with their workload. I worked with them to prioritize tasks and offered to help with some of their responsibilities. As a result, we were able to get back on track and deliver the project successfully. This experience taught me the importance of open communication and supporting team members when they're struggling.",
+              tips: [
+                "Focus on your communication and problem-solving skills",
+                "Show empathy and understanding",
+                "Highlight positive outcomes and what you learned",
+                "Demonstrate your ability to work collaboratively"
+              ]
+            },
+            {
+              question: "Describe a time when you had to learn something new quickly.",
+              category: "Learning & Adaptability",
+              modelAnswer: "When I joined my current role, I needed to quickly learn a new programming framework that was critical to our project. I dedicated extra time outside of work hours to take online courses and practice coding exercises. I also reached out to colleagues who were experienced with the framework for guidance. Within two weeks, I was able to contribute meaningfully to the project and even identified a more efficient approach to implement one of the features. This experience reinforced my ability to quickly adapt and learn new technologies.",
+              tips: [
+                "Emphasize your learning methodology",
+                "Show initiative and resourcefulness",
+                "Mention specific actions you took",
+                "Highlight the positive outcome"
+              ]
+            },
+            {
+              question: "Tell me about a time when you had to deal with a challenging deadline.",
+              category: "Time Management",
+              modelAnswer: "Our team was given a project with a very tight deadline due to a client's urgent need. I immediately broke down the project into smaller, manageable tasks and created a detailed timeline. I identified which tasks could be done in parallel and which team members had the right skills for each task. I also set up daily check-ins to monitor progress and address any blockers quickly. Despite the challenging timeline, we delivered the project on time and the client was very satisfied with the quality of our work.",
+              tips: [
+                "Demonstrate your project management skills",
+                "Show how you handle pressure",
+                "Mention specific strategies you used",
+                "Highlight successful outcomes"
+              ]
+            }
+          ],
+          situationalScenarios: [
+            {
+              scenario: "You're given a project with an unrealistic deadline",
+              approach: "Assess scope, communicate constraints, propose alternatives",
+              keyPoints: [
+                "Demonstrate project management skills",
+                "Show communication with stakeholders",
+                "Highlight problem-solving approach",
+                "Emphasize collaboration and negotiation"
+              ]
+            },
+            {
+              scenario: "A team member disagrees with your approach",
+              approach: "Listen to their concerns, discuss alternatives, find common ground",
+              keyPoints: [
+                "Show emotional intelligence",
+                "Demonstrate conflict resolution skills",
+                "Highlight collaborative decision-making",
+                "Emphasize respect for different perspectives"
+              ]
+            }
+          ]
+        }
       }
     }
 

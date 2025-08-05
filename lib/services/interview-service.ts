@@ -294,6 +294,9 @@ Return ONLY the JSON object. Ensure all questions are unique and relevant to the
         .replace(/```\n?/g, '')
         .trim()
       
+      // Remove or escape control characters that break JSON parsing
+      cleanedResponse = cleanedResponse.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, ' ')
+      
       // Fix common JSON issues
       cleanedResponse = cleanedResponse.replace(/,(\s*[}\]])/g, '$1')
       
@@ -469,6 +472,9 @@ Return ONLY the JSON object.`.trim()
         .replace(/```\n?/g, '')
         .trim()
       
+      // Remove or escape control characters that break JSON parsing
+      cleanedResponse = cleanedResponse.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, ' ')
+      
       // Fix common JSON issues
       cleanedResponse = cleanedResponse.replace(/,(\s*[}\]])/g, '$1')
       
@@ -634,6 +640,9 @@ Return ONLY the JSON object with accurate, interview-relevant information.`.trim
         .replace(/```\n?/g, '')
         .trim()
       
+      // Remove or escape control characters that break JSON parsing
+      cleanedResponse = cleanedResponse.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, ' ')
+      
       // Fix common JSON issues
       cleanedResponse = cleanedResponse.replace(/,(\s*[}\]])/g, '$1')
       
@@ -764,6 +773,10 @@ Return ONLY the JSON object.`.trim()
         .replace(/```json\n?/g, '')
         .replace(/```\n?/g, '')
         .trim()
+      
+      // Remove or escape control characters that break JSON parsing
+      // Replace problematic control characters (except for normal whitespace)
+      cleanedResponse = cleanedResponse.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, ' ')
       
       // Fix common JSON issues
       // Remove any trailing commas before closing braces/brackets

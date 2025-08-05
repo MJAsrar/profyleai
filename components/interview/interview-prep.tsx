@@ -148,9 +148,9 @@ export function InterviewPrep() {
         if (result.data.length === 0) {
           setCurrentView('new')
         }
-      } else {
+    } else {
         console.error('Failed to load interview preps:', result.error)
-        toast({
+      toast({
           title: "Loading Failed",
           description: "Could not load your interview preparations.",
           variant: "destructive"
@@ -545,7 +545,7 @@ export function InterviewPrep() {
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="h-8 w-8 animate-spin" />
                 <span className="ml-2">Loading your interview preparations...</span>
-              </div>
+          </div>
             ) : existingPreps.length === 0 ? (
               <div className="text-center py-8">
                 <Target className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
@@ -557,7 +557,7 @@ export function InterviewPrep() {
                   <Sparkles className="mr-2 h-4 w-4" />
                   Start New Interview Prep
                 </Button>
-              </div>
+            </div>
             ) : (
               <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -585,7 +585,7 @@ export function InterviewPrep() {
                                 Coaching
                               </Badge>
                             )}
-                          </div>
+            </div>
                         </div>
                         <p className="text-sm text-muted-foreground mb-2">
                           {prep.companyName} • {prep.experienceLevel} level
@@ -744,7 +744,7 @@ export function InterviewPrep() {
               <Card>
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2">
                       {getCategoryIcon(currentQuestion?.category)}
                       <Badge className={getDifficultyColor(currentQuestion?.difficulty)}>
                         {currentQuestion?.difficulty}
@@ -752,7 +752,7 @@ export function InterviewPrep() {
                       <span className="text-sm text-muted-foreground">
                         Question {currentQuestionIndex + 1} of {questions.length}
                       </span>
-                    </div>
+            </div>
                     <div className="flex gap-2">
                       <Button
                         variant="outline"
@@ -770,7 +770,7 @@ export function InterviewPrep() {
                       >
                         <ChevronRight className="h-4 w-4" />
                       </Button>
-                    </div>
+          </div>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -836,13 +836,13 @@ export function InterviewPrep() {
                       </>
                     )}
                   </Button>
-                </CardContent>
-              </Card>
+        </CardContent>
+      </Card>
 
               {/* Answer Feedback */}
               {answerFeedback && (
-                <Card>
-                  <CardHeader>
+      <Card>
+        <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <BarChart3 className="h-5 w-5" />
                       Answer Evaluation
@@ -939,27 +939,27 @@ export function InterviewPrep() {
                 <CardDescription>
                   Practice with a full interview simulation and get comprehensive feedback
                 </CardDescription>
-              </CardHeader>
-              <CardContent>
+        </CardHeader>
+        <CardContent>
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="p-4 border rounded-lg text-center">
                       <MessageSquare className="h-8 w-8 mx-auto mb-2 text-blue-500" />
                       <h4 className="font-medium">5 Questions</h4>
                       <p className="text-sm text-muted-foreground">Curated from your practice set</p>
-                    </div>
+                </div>
                     <div className="p-4 border rounded-lg text-center">
                       <Timer className="h-8 w-8 mx-auto mb-2 text-green-500" />
                       <h4 className="font-medium">Timed Practice</h4>
                       <p className="text-sm text-muted-foreground">Real interview conditions</p>
-                    </div>
+              </div>
                     <div className="p-4 border rounded-lg text-center">
                       <BarChart3 className="h-8 w-8 mx-auto mb-2 text-purple-500" />
                       <h4 className="font-medium">Detailed Report</h4>
                       <p className="text-sm text-muted-foreground">Comprehensive analysis</p>
                     </div>
-                  </div>
-                  
+            </div>
+            
                   <Button 
                     onClick={startMockInterview}
                     disabled={questions.length === 0}
@@ -1004,7 +1004,7 @@ export function InterviewPrep() {
                         </li>
                       ))}
                     </ul>
-                  </div>
+              </div>
                   <div>
                     <h4 className="font-medium mb-3 text-orange-600">Areas to Improve</h4>
                     <ul className="space-y-2">
@@ -1016,8 +1016,8 @@ export function InterviewPrep() {
                       ))}
                     </ul>
                   </div>
-                </div>
-                
+            </div>
+            
                 <Separator />
                 
                 <div>
@@ -1028,9 +1028,9 @@ export function InterviewPrep() {
                         <div className="flex justify-between items-center mb-1">
                           <span className="text-sm font-medium capitalize">{category}</span>
                           <span className="text-sm">{score}/100</span>
-                        </div>
+                </div>
                         <Progress value={score} className="h-2" />
-                      </div>
+              </div>
                     ))}
                   </div>
                 </div>
@@ -1205,8 +1205,8 @@ export function InterviewPrep() {
                           <h5 className="text-sm font-medium mb-1">Model Answer:</h5>
                           <p className="text-sm text-muted-foreground bg-muted p-3 rounded">
                             {item.modelAnswer}
-                          </p>
-                        </div>
+              </p>
+            </div>
                         <div>
                           <h5 className="text-sm font-medium mb-1">Tips:</h5>
                           <ul className="text-sm space-y-1">
@@ -1217,12 +1217,12 @@ export function InterviewPrep() {
                               </li>
                             ))}
                           </ul>
-                        </div>
+          </div>
                       </div>
                     </div>
                   ))}
-                </CardContent>
-              </Card>
+        </CardContent>
+      </Card>
 
               <Card>
                 <CardHeader>

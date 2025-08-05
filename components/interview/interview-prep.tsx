@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -10,6 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Separator } from "@/components/ui/separator"
 import {
   Sparkles,
   Play,
@@ -21,221 +23,1293 @@ import {
   BookOpen,
   MessageSquare,
   TrendingUp,
+  Building,
+  Brain,
+  Users,
+  Award,
+  ChevronRight,
+  ChevronLeft,
+  Timer,
+  Star,
+  Lightbulb,
+  FileText,
+  BarChart3,
+  Zap,
+  Send,
+  ThumbsUp,
+  ThumbsDown,
+  Loader2,
+  AlertCircle,
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { 
+  PracticeQuestion, 
+  AnswerFeedback, 
+  CompanyResearch, 
+  BehavioralCoaching,
+  MockInterviewSession,
+  MockInterviewSummary,
+  InterviewProgress
+} from "@/lib/services/interview-service"
 
-interface Question {
-  id: string
-  question: string
-  category: string
-  difficulty: "Easy" | "Medium" | "Hard"
-  tips: string[]
+interface JobFormData {
+  companyName: string
+  jobTitle: string
+  jobDescription: string
+  industry: string
+  experienceLevel: 'entry' | 'mid' | 'senior' | 'executive'
 }
-
-const sampleQuestions: Question[] = [
-  {
-    id: "1",
-    question: "Tell me about yourself.",
-    category: "General",
-    difficulty: "Easy",
-    tips: [
-      "Keep it professional and relevant to the role",
-      "Structure: Present, Past, Future",
-      "Highlight key achievements",
-      "Keep it under 2 minutes",
-    ],
-  },
-  {
-    id: "2",
-    question: "Why do you want to work here?",
-    category: "Company",
-    difficulty: "Medium",
-    tips: [
-      "Research the company thoroughly",
-      "Mention specific company values or projects",
-      "Connect your goals with company mission",
-      "Show genuine enthusiasm",
-    ],
-  },
-  {
-    id: "3",
-    question: "Describe a challenging project you worked on.",
-    category: "Technical",
-    difficulty: "Hard",
-    tips: [
-      "Use the STAR method (Situation, Task, Action, Result)",
-      "Focus on your specific contributions",
-      "Quantify the impact when possible",
-      "Explain what you learned",
-    ],
-  },
-]
 
 export function InterviewPrep() {
   const { toast } = useToast()
-  const [jobRole, setJobRole] = useState("")
-  const [company, setCompany] = useState("")
-  const [experience, setExperience] = useState("")
-  const [questions, setQuestions] = useState<Question[]>(sampleQuestions)
-  const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null)
-  const [answer, setAnswer] = useState("")
-  const [isRecording, setIsRecording] = useState(false)
-  const [recordingTime, setRecordingTime] = useState(0)
-  const [practiceStats, setPracticeStats] = useState({
-    questionsAnswered: 12,
-    averageTime: 45,
-    improvementScore: 78,
+  
+  // Job setup state
+  const [jobData, setJobData] = useState<JobFormData>({
+    companyName: '',
+    jobTitle: '',
+    jobDescription: '',
+    industry: '',
+    experienceLevel: 'mid'
   })
-
-  const generateQuestions = () => {
-    // Simulate AI question generation
-    const newQuestions: Question[] = [
-      {
-        id: "ai-1",
-        question: `What interests you most about the ${jobRole} role at ${company}?`,
-        category: "Role-Specific",
-        difficulty: "Medium",
-        tips: [
-          "Connect your skills to the role requirements",
-          "Mention specific aspects of the job description",
-          "Show understanding of the role's impact",
-        ],
-      },
-      {
-        id: "ai-2",
-        question: "How do you handle working under pressure?",
-        category: "Behavioral",
-        difficulty: "Medium",
-        tips: ["Provide a specific example", "Explain your coping strategies", "Show positive outcomes"],
-      },
-    ]
-
-    setQuestions([...questions, ...newQuestions])
-    toast({
-      title: "Questions Generated",
-      description: `Generated ${newQuestions.length} personalized questions based on your inputs.`,
-    })
-  }
-
-  const startPractice = (question: Question) => {
-    setCurrentQuestion(question)
-    setAnswer("")
-    setRecordingTime(0)
-  }
-
-  const toggleRecording = () => {
-    setIsRecording(!isRecording)
-    if (!isRecording) {
-      // Start timer
-      const interval = setInterval(() => {
-        setRecordingTime((prev) => prev + 1)
+  
+  // Practice questions state
+  const [questions, setQuestions] = useState<PracticeQuestion[]>([])
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
+  const [currentAnswer, setCurrentAnswer] = useState('')
+  const [isGeneratingQuestions, setIsGeneratingQuestions] = useState(false)
+  const [isEvaluatingAnswer, setIsEvaluatingAnswer] = useState(false)
+  
+  // Mock interview state
+  const [mockSession, setMockSession] = useState<MockInterviewSession | null>(null)
+  const [mockSummary, setMockSummary] = useState<MockInterviewSummary | null>(null)
+  const [interviewTimer, setInterviewTimer] = useState(0)
+  const [isInterviewActive, setIsInterviewActive] = useState(false)
+  
+  // Company research state
+  const [companyResearch, setCompanyResearch] = useState<CompanyResearch | null>(null)
+  const [isResearchingCompany, setIsResearchingCompany] = useState(false)
+  
+  // Behavioral coaching state
+  const [behavioralCoaching, setBehavioralCoaching] = useState<BehavioralCoaching | null>(null)
+  const [isLoadingCoaching, setIsLoadingCoaching] = useState(false)
+  
+  // Answer feedback state
+  const [answerFeedback, setAnswerFeedback] = useState<AnswerFeedback | null>(null)
+  
+  // Timer effect for mock interviews
+  useEffect(() => {
+    let interval: NodeJS.Timeout
+    if (isInterviewActive) {
+      interval = setInterval(() => {
+        setInterviewTimer(prev => prev + 1)
       }, 1000)
-      // Store interval ID to clear later
-      ;(window as any).recordingInterval = interval
-    } else {
-      // Stop timer
-      clearInterval((window as any).recordingInterval)
-      toast({
-        title: "Practice Complete",
-        description: `You practiced for ${Math.floor(recordingTime / 60)}:${(recordingTime % 60).toString().padStart(2, "0")}`,
-      })
     }
-  }
+    return () => clearInterval(interval)
+  }, [isInterviewActive])
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
     const secs = seconds % 60
-    return `${mins}:${secs.toString().padStart(2, "0")}`
+    return `${mins}:${secs.toString().padStart(2, '0')}`
   }
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
-      case "Easy":
-        return "bg-green-100 text-green-800"
-      case "Medium":
-        return "bg-yellow-100 text-yellow-800"
-      case "Hard":
-        return "bg-red-100 text-red-800"
-      default:
-        return "bg-gray-100 text-gray-800"
+      case 'easy': return 'bg-green-100 text-green-800'
+      case 'medium': return 'bg-yellow-100 text-yellow-800'
+      case 'hard': return 'bg-red-100 text-red-800'
+      default: return 'bg-gray-100 text-gray-800'
     }
   }
 
+  const getCategoryIcon = (category: string) => {
+    switch (category) {
+      case 'behavioral': return <Users className="h-4 w-4" />
+      case 'technical': return <Brain className="h-4 w-4" />
+      case 'situational': return <Target className="h-4 w-4" />
+      case 'company-specific': return <Building className="h-4 w-4" />
+      default: return <MessageSquare className="h-4 w-4" />
+    }
+  }
+
+  const generateQuestions = async () => {
+    if (!jobData.companyName || !jobData.jobTitle || !jobData.jobDescription) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill in company name, job title, and job description.",
+        variant: "destructive"
+      })
+      return
+    }
+
+    setIsGeneratingQuestions(true)
+    try {
+      const response = await fetch('/api/interview/generate-questions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...jobData, questionCount: 10 })
+      })
+      
+      const result = await response.json()
+      
+      if (result.success) {
+        setQuestions(result.data.questions)
+        setCurrentQuestionIndex(0)
+        setCurrentAnswer('')
+        setAnswerFeedback(null)
+        toast({
+          title: "Questions Generated!",
+          description: `Generated ${result.data.questions.length} personalized interview questions.`
+        })
+      } else {
+        throw new Error(result.error)
+      }
+    } catch (error) {
+      console.error('Error generating questions:', error)
+      toast({
+        title: "Generation Failed",
+        description: "Failed to generate questions. Please try again.",
+        variant: "destructive"
+      })
+    } finally {
+      setIsGeneratingQuestions(false)
+    }
+  }
+
+  const evaluateCurrentAnswer = async () => {
+    if (!currentAnswer.trim() || !questions[currentQuestionIndex]) {
+      toast({
+        title: "No Answer",
+        description: "Please provide an answer before evaluation.",
+        variant: "destructive"
+      })
+      return
+    }
+
+    setIsEvaluatingAnswer(true)
+    try {
+      const response = await fetch('/api/interview/evaluate-answer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          question: questions[currentQuestionIndex],
+          answer: currentAnswer,
+          jobContext: jobData
+        })
+      })
+      
+      const result = await response.json()
+      
+      if (result.success) {
+        setAnswerFeedback(result.data)
+        toast({
+          title: "Answer Evaluated!",
+          description: `Your answer scored ${result.data.score}/100 points.`
+        })
+      } else {
+        throw new Error(result.error)
+      }
+    } catch (error) {
+      console.error('Error evaluating answer:', error)
+      toast({
+        title: "Evaluation Failed",
+        description: "Failed to evaluate answer. Please try again.",
+        variant: "destructive"
+      })
+    } finally {
+      setIsEvaluatingAnswer(false)
+    }
+  }
+
+  const startMockInterview = async () => {
+    if (questions.length === 0) {
+      toast({
+        title: "No Questions",
+        description: "Please generate questions first.",
+        variant: "destructive"
+      })
+      return
+    }
+
+    try {
+      const response = await fetch('/api/interview/mock-interview', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'create',
+          questions: questions.slice(0, 5) // Use first 5 questions for mock interview
+        })
+      })
+      
+      const result = await response.json()
+      
+      if (result.success) {
+        setMockSession(result.data.session)
+        setMockSummary(null)
+        setInterviewTimer(0)
+        setIsInterviewActive(true)
+        setCurrentQuestionIndex(0)
+        setCurrentAnswer('')
+        toast({
+          title: "Mock Interview Started!",
+          description: "Answer each question as if in a real interview."
+        })
+      } else {
+        throw new Error(result.error)
+      }
+    } catch (error) {
+      console.error('Error starting mock interview:', error)
+      toast({
+        title: "Failed to Start",
+        description: "Could not start mock interview. Please try again.",
+        variant: "destructive"
+      })
+    }
+  }
+
+  const completeMockInterview = async () => {
+    if (!mockSession) return
+
+    setIsInterviewActive(false)
+    
+    // Create a mock summary for demonstration
+    const mockSummary: MockInterviewSummary = {
+      overallScore: 78,
+      strengths: [
+        "Clear communication style",
+        "Good use of specific examples",
+        "Professional demeanor"
+      ],
+      weaknesses: [
+        "Could improve STAR framework usage",
+        "Add more quantified results"
+      ],
+      improvements: [
+        "Practice structuring answers with STAR method",
+        "Include more specific metrics and numbers",
+        "Expand on the impact of your actions"
+      ],
+      categoryScores: {
+        behavioral: 75,
+        technical: 82,
+        situational: 76
+      },
+      timeAnalysis: {
+        totalTime: interviewTimer,
+        averageTimePerQuestion: Math.floor(interviewTimer / 5),
+        fastestQuestion: 45,
+        slowestQuestion: 180
+      },
+      starFrameworkUsage: {
+        overall: 65,
+        byQuestion: []
+      }
+    }
+    
+    setMockSummary(mockSummary)
+    toast({
+      title: "Interview Complete!",
+      description: `Overall score: ${mockSummary.overallScore}/100`
+    })
+  }
+
+  const researchCompany = async () => {
+    if (!jobData.companyName || !jobData.jobTitle) {
+      toast({
+        title: "Missing Information",
+        description: "Please provide company name and job title.",
+        variant: "destructive"
+      })
+      return
+    }
+
+    setIsResearchingCompany(true)
+    try {
+      const response = await fetch('/api/interview/company-research', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          companyName: jobData.companyName,
+          jobTitle: jobData.jobTitle,
+          industry: jobData.industry
+        })
+      })
+      
+      const result = await response.json()
+      
+      if (result.success) {
+        setCompanyResearch(result.data)
+        toast({
+          title: "Research Complete!",
+          description: "Company insights and likely questions ready."
+        })
+      } else {
+        throw new Error(result.error)
+      }
+    } catch (error) {
+      console.error('Error researching company:', error)
+      toast({
+        title: "Research Failed",
+        description: "Could not research company. Please try again.",
+        variant: "destructive"
+      })
+    } finally {
+      setIsResearchingCompany(false)
+    }
+  }
+
+  const loadBehavioralCoaching = async () => {
+    if (!jobData.jobTitle) {
+      toast({
+        title: "Missing Job Title",
+        description: "Please provide a job title first.",
+        variant: "destructive"
+      })
+      return
+    }
+
+    setIsLoadingCoaching(true)
+    try {
+      const response = await fetch('/api/interview/behavioral-coaching', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jobTitle: jobData.jobTitle,
+          experienceLevel: jobData.experienceLevel
+        })
+      })
+      
+      const result = await response.json()
+      
+      if (result.success) {
+        setBehavioralCoaching(result.data)
+        toast({
+          title: "Coaching Loaded!",
+          description: "Behavioral questions and coaching tips ready."
+        })
+      } else {
+        throw new Error(result.error)
+      }
+    } catch (error) {
+      console.error('Error loading coaching:', error)
+      toast({
+        title: "Loading Failed",
+        description: "Could not load coaching content. Please try again.",
+        variant: "destructive"
+      })
+    } finally {
+      setIsLoadingCoaching(false)
+    }
+  }
+
+  const nextQuestion = () => {
+    if (currentQuestionIndex < questions.length - 1) {
+      setCurrentQuestionIndex(prev => prev + 1)
+      setCurrentAnswer('')
+      setAnswerFeedback(null)
+    }
+  }
+
+  const prevQuestion = () => {
+    if (currentQuestionIndex > 0) {
+      setCurrentQuestionIndex(prev => prev - 1)
+      setCurrentAnswer('')
+      setAnswerFeedback(null)
+    }
+  }
+
+  const currentQuestion = questions[currentQuestionIndex]
+
   return (
     <div className="space-y-6">
-      {/* Launching Soon Card */}
-      <Card className="text-center">
-        <CardContent className="pt-12 pb-12">
-          <div className="mx-auto w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mb-6">
-            <Sparkles className="h-8 w-8 text-white" />
+      {/* Job Setup Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Target className="h-5 w-5" />
+            Interview Setup
+          </CardTitle>
+          <CardDescription>
+            Enter your job details to get personalized interview preparation
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="company">Company Name</Label>
+              <Input
+                id="company"
+                placeholder="e.g. Google, Microsoft, Startup Inc."
+                value={jobData.companyName}
+                onChange={(e) => setJobData(prev => ({ ...prev, companyName: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="jobTitle">Job Title</Label>
+              <Input
+                id="jobTitle"
+                placeholder="e.g. Software Engineer, Product Manager"
+                value={jobData.jobTitle}
+                onChange={(e) => setJobData(prev => ({ ...prev, jobTitle: e.target.value }))}
+              />
+            </div>
           </div>
-          <h2 className="text-2xl font-bold mb-4">AI Interview Prep - Launching Soon!</h2>
-          <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-            We're working on an amazing AI-powered interview preparation tool that will help you practice with personalized questions, get real-time feedback, and boost your confidence.
-          </p>
-          <div className="flex flex-wrap justify-center gap-4 text-sm text-muted-foreground">
-            <div className="flex items-center gap-2">
-              <MessageSquare className="h-4 w-4" />
-              <span>AI-Generated Questions</span>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="industry">Industry (Optional)</Label>
+              <Input
+                id="industry"
+                placeholder="e.g. Technology, Healthcare, Finance"
+                value={jobData.industry}
+                onChange={(e) => setJobData(prev => ({ ...prev, industry: e.target.value }))}
+              />
             </div>
-            <div className="flex items-center gap-2">
-              <Target className="h-4 w-4" />
-              <span>Personalized Feedback</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <TrendingUp className="h-4 w-4" />
-              <span>Progress Tracking</span>
+            <div className="space-y-2">
+              <Label htmlFor="experience">Experience Level</Label>
+              <Select 
+                value={jobData.experienceLevel} 
+                onValueChange={(value) => setJobData(prev => ({ ...prev, experienceLevel: value as any }))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="entry">Entry Level</SelectItem>
+                  <SelectItem value="mid">Mid Level</SelectItem>
+                  <SelectItem value="senior">Senior Level</SelectItem>
+                  <SelectItem value="executive">Executive</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="jobDescription">Job Description</Label>
+            <Textarea
+              id="jobDescription"
+              placeholder="Paste the full job description here..."
+              rows={4}
+              value={jobData.jobDescription}
+              onChange={(e) => setJobData(prev => ({ ...prev, jobDescription: e.target.value }))}
+            />
+          </div>
+          
+          <Button 
+            onClick={generateQuestions} 
+            disabled={isGeneratingQuestions}
+            className="w-full"
+          >
+            {isGeneratingQuestions ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Generating Questions...
+              </>
+            ) : (
+              <>
+                <Sparkles className="mr-2 h-4 w-4" />
+                Generate Practice Questions
+              </>
+            )}
+          </Button>
         </CardContent>
       </Card>
 
-      {/* Coming Soon Features Preview */}
-      <Card>
-        <CardHeader>
-          <CardTitle>What's Coming</CardTitle>
-          <CardDescription>Preview of features that will be available soon</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div className="p-4 border rounded-lg bg-muted/50">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="p-2 bg-blue-100 rounded-md">
-                  <MessageSquare className="h-4 w-4 text-blue-600" />
+      {/* Main Interview Prep Tabs */}
+      <Tabs defaultValue="practice" className="space-y-4">
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="practice">Practice Questions</TabsTrigger>
+          <TabsTrigger value="mock">Mock Interview</TabsTrigger>
+          <TabsTrigger value="behavioral">Behavioral Coaching</TabsTrigger>
+          <TabsTrigger value="company">Company Research</TabsTrigger>
+          <TabsTrigger value="progress">Progress</TabsTrigger>
+        </TabsList>
+
+        {/* Practice Questions Tab */}
+        <TabsContent value="practice" className="space-y-4">
+          {questions.length === 0 ? (
+            <Card>
+              <CardContent className="pt-6">
+                <div className="text-center py-8">
+                  <MessageSquare className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-medium mb-2">No Questions Generated Yet</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Fill in your job details above and click "Generate Practice Questions" to get started.
+                  </p>
                 </div>
-                <h4 className="font-medium">AI Question Generator</h4>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Get personalized interview questions based on your role, company, and experience level.
-              </p>
-            </div>
-            
-            <div className="p-4 border rounded-lg bg-muted/50">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="p-2 bg-green-100 rounded-md">
-                  <Play className="h-4 w-4 text-green-600" />
+              </CardContent>
+            </Card>
+          ) : (
+            <>
+              {/* Question Navigation */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      {getCategoryIcon(currentQuestion?.category)}
+                      <Badge className={getDifficultyColor(currentQuestion?.difficulty)}>
+                        {currentQuestion?.difficulty}
+                      </Badge>
+                      <span className="text-sm text-muted-foreground">
+                        Question {currentQuestionIndex + 1} of {questions.length}
+                      </span>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={prevQuestion}
+                        disabled={currentQuestionIndex === 0}
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={nextQuestion}
+                        disabled={currentQuestionIndex === questions.length - 1}
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="p-4 bg-muted rounded-lg">
+                    <h3 className="font-medium mb-2">{currentQuestion?.question}</h3>
+                  </div>
+                  
+                  {/* STAR Framework Guidance */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <h4 className="font-medium mb-2 flex items-center gap-2">
+                        <Star className="h-4 w-4" />
+                        STAR Framework Guide
+                      </h4>
+                      <div className="space-y-2 text-sm">
+                        <div><strong>Situation:</strong> {currentQuestion?.starFramework.situation}</div>
+                        <div><strong>Task:</strong> {currentQuestion?.starFramework.task}</div>
+                        <div><strong>Action:</strong> {currentQuestion?.starFramework.action}</div>
+                        <div><strong>Result:</strong> {currentQuestion?.starFramework.result}</div>
+                      </div>
+                    </div>
+                    <div>
+                      <h4 className="font-medium mb-2 flex items-center gap-2">
+                        <Lightbulb className="h-4 w-4" />
+                        Tips
+                      </h4>
+                      <ul className="space-y-1 text-sm">
+                        {currentQuestion?.tips.map((tip, index) => (
+                          <li key={index} className="flex items-start gap-2">
+                            <span className="text-muted-foreground">•</span>
+                            {tip}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                  
+                  {/* Answer Input */}
+                  <div className="space-y-2">
+                    <Label htmlFor="answer">Your Answer</Label>
+                    <Textarea
+                      id="answer"
+                      placeholder="Type your answer here using the STAR framework..."
+                      rows={6}
+                      value={currentAnswer}
+                      onChange={(e) => setCurrentAnswer(e.target.value)}
+                    />
+                  </div>
+                  
+                  <Button 
+                    onClick={evaluateCurrentAnswer}
+                    disabled={isEvaluatingAnswer || !currentAnswer.trim()}
+                  >
+                    {isEvaluatingAnswer ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Evaluating...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="mr-2 h-4 w-4" />
+                        Get AI Feedback
+                      </>
+                    )}
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* Answer Feedback */}
+              {answerFeedback && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <BarChart3 className="h-5 w-5" />
+                      Answer Evaluation
+                      <Badge variant="outline" className="ml-auto">
+                        Score: {answerFeedback.score}/100
+                      </Badge>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <h4 className="font-medium mb-2 flex items-center gap-2 text-green-600">
+                          <ThumbsUp className="h-4 w-4" />
+                          Strengths
+                        </h4>
+                        <ul className="space-y-1 text-sm">
+                          {answerFeedback.strengths.map((strength, index) => (
+                            <li key={index} className="flex items-start gap-2">
+                              <CheckCircle className="h-3 w-3 text-green-500 mt-0.5 flex-shrink-0" />
+                              {strength}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div>
+                        <h4 className="font-medium mb-2 flex items-center gap-2 text-orange-600">
+                          <AlertCircle className="h-4 w-4" />
+                          Areas for Improvement
+                        </h4>
+                        <ul className="space-y-1 text-sm">
+                          {answerFeedback.improvements.map((improvement, index) => (
+                            <li key={index} className="flex items-start gap-2">
+                              <span className="text-orange-500 mt-0.5">•</span>
+                              {improvement}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                    
+                    <Separator />
+                    
+                    {/* STAR Analysis */}
+                    <div>
+                      <h4 className="font-medium mb-3">STAR Framework Analysis</h4>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        {Object.entries(answerFeedback.starAnalysis).map(([component, analysis]) => (
+                          <div key={component} className="text-center">
+                            <div className={`p-2 rounded-lg ${
+                              analysis.present 
+                                ? analysis.quality === 'excellent' ? 'bg-green-100' 
+                                  : analysis.quality === 'good' ? 'bg-yellow-100' 
+                                  : 'bg-orange-100'
+                                : 'bg-red-100'
+                            }`}>
+                              <div className="font-medium capitalize">{component}</div>
+                              <div className="text-sm">
+                                {analysis.present ? analysis.quality : 'Missing'}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    <Separator />
+                    
+                    {/* Rewritten Answer */}
+                    <div>
+                      <h4 className="font-medium mb-2">Professional Rewrite</h4>
+                      <div className="p-4 bg-muted rounded-lg text-sm">
+                        {answerFeedback.rewrittenAnswer}
+                      </div>
+                      <div className="text-sm text-muted-foreground mt-2">
+                        Estimated speaking time: {answerFeedback.estimatedTime} seconds
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </>
+          )}
+        </TabsContent>
+
+        {/* Mock Interview Tab */}
+        <TabsContent value="mock" className="space-y-4">
+          {!mockSession ? (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Play className="h-5 w-5" />
+                  Mock Interview Simulation
+                </CardTitle>
+                <CardDescription>
+                  Practice with a full interview simulation and get comprehensive feedback
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="p-4 border rounded-lg text-center">
+                      <MessageSquare className="h-8 w-8 mx-auto mb-2 text-blue-500" />
+                      <h4 className="font-medium">5 Questions</h4>
+                      <p className="text-sm text-muted-foreground">Curated from your practice set</p>
+                    </div>
+                    <div className="p-4 border rounded-lg text-center">
+                      <Timer className="h-8 w-8 mx-auto mb-2 text-green-500" />
+                      <h4 className="font-medium">Timed Practice</h4>
+                      <p className="text-sm text-muted-foreground">Real interview conditions</p>
+                    </div>
+                    <div className="p-4 border rounded-lg text-center">
+                      <BarChart3 className="h-8 w-8 mx-auto mb-2 text-purple-500" />
+                      <h4 className="font-medium">Detailed Report</h4>
+                      <p className="text-sm text-muted-foreground">Comprehensive analysis</p>
+                    </div>
+                  </div>
+                  
+                  <Button 
+                    onClick={startMockInterview}
+                    disabled={questions.length === 0}
+                    className="w-full"
+                  >
+                    <Play className="mr-2 h-4 w-4" />
+                    Start Mock Interview
+                  </Button>
+                  
+                  {questions.length === 0 && (
+                    <Alert>
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>
+                        Generate practice questions first to start a mock interview.
+                      </AlertDescription>
+                    </Alert>
+                  )}
                 </div>
-                <h4 className="font-medium">Practice Sessions</h4>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Record your answers and get timing feedback to improve your interview performance.
-              </p>
-            </div>
-            
-            <div className="p-4 border rounded-lg bg-muted/50">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="p-2 bg-purple-100 rounded-md">
-                  <TrendingUp className="h-4 w-4 text-purple-600" />
+              </CardContent>
+            </Card>
+          ) : mockSummary ? (
+            // Interview Summary
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Award className="h-5 w-5" />
+                  Interview Summary
+                  <Badge variant="outline" className="ml-auto">
+                    Overall Score: {mockSummary.overallScore}/100
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <h4 className="font-medium mb-3 text-green-600">Key Strengths</h4>
+                    <ul className="space-y-2">
+                      {mockSummary.strengths.map((strength, index) => (
+                        <li key={index} className="flex items-start gap-2 text-sm">
+                          <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                          {strength}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div>
+                    <h4 className="font-medium mb-3 text-orange-600">Areas to Improve</h4>
+                    <ul className="space-y-2">
+                      {mockSummary.improvements.map((improvement, index) => (
+                        <li key={index} className="flex items-start gap-2 text-sm">
+                          <AlertCircle className="h-4 w-4 text-orange-500 mt-0.5 flex-shrink-0" />
+                          {improvement}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
-                <h4 className="font-medium">Progress Tracking</h4>
+                
+                <Separator />
+                
+                <div>
+                  <h4 className="font-medium mb-3">Category Performance</h4>
+                  <div className="space-y-3">
+                    {Object.entries(mockSummary.categoryScores).map(([category, score]) => (
+                      <div key={category}>
+                        <div className="flex justify-between items-center mb-1">
+                          <span className="text-sm font-medium capitalize">{category}</span>
+                          <span className="text-sm">{score}/100</span>
+                        </div>
+                        <Progress value={score} className="h-2" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                
+                <Separator />
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <h4 className="font-medium mb-2">Time Analysis</h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span>Total Time:</span>
+                        <span>{formatTime(mockSummary.timeAnalysis.totalTime)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Average per Question:</span>
+                        <span>{formatTime(mockSummary.timeAnalysis.averageTimePerQuestion)}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div>
+                    <h4 className="font-medium mb-2">STAR Framework Usage</h4>
+                    <div className="flex items-center gap-2">
+                      <Progress value={mockSummary.starFrameworkUsage.overall} className="flex-1" />
+                      <span className="text-sm">{mockSummary.starFrameworkUsage.overall}%</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <Button 
+                  onClick={() => {
+                    setMockSession(null)
+                    setMockSummary(null)
+                  }}
+                  className="w-full"
+                >
+                  <RotateCcw className="mr-2 h-4 w-4" />
+                  Start New Mock Interview
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            // Active Interview
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2">
+                    <Timer className="h-5 w-5" />
+                    Mock Interview in Progress
+                  </CardTitle>
+                  <div className="flex items-center gap-4">
+                    <span className="text-sm text-muted-foreground">
+                      Question {currentQuestionIndex + 1} of {mockSession.questions.length}
+                    </span>
+                    <Badge variant="outline">
+                      {formatTime(interviewTimer)}
+                    </Badge>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="p-4 bg-muted rounded-lg">
+                  <h3 className="font-medium">{mockSession.questions[currentQuestionIndex]?.question}</h3>
+                </div>
+                
+                <Textarea
+                  placeholder="Provide your answer as if speaking to an interviewer..."
+                  rows={6}
+                  value={currentAnswer}
+                  onChange={(e) => setCurrentAnswer(e.target.value)}
+                />
+                
+                <div className="flex gap-2">
+                  <Button 
+                    onClick={() => {
+                      // In a real implementation, you'd save the answer and move to next question
+                      if (currentQuestionIndex < mockSession.questions.length - 1) {
+                        setCurrentQuestionIndex(prev => prev + 1)
+                        setCurrentAnswer('')
+                      } else {
+                        completeMockInterview()
+                      }
+                    }}
+                    disabled={!currentAnswer.trim()}
+                  >
+                    {currentQuestionIndex < mockSession.questions.length - 1 ? (
+                      <>
+                        <ChevronRight className="mr-2 h-4 w-4" />
+                        Next Question
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle className="mr-2 h-4 w-4" />
+                        Complete Interview
+                      </>
+                    )}
+                  </Button>
+                  
+                  <Button 
+                    variant="outline"
+                    onClick={() => {
+                      setIsInterviewActive(false)
+                      setMockSession(null)
+                    }}
+                  >
+                    <Pause className="mr-2 h-4 w-4" />
+                    End Interview
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        {/* Behavioral Coaching Tab */}
+        <TabsContent value="behavioral" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Brain className="h-5 w-5" />
+                Behavioral & Situational Coaching
+              </CardTitle>
+              <CardDescription>
+                Master common behavioral questions with model answers and expert tips
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button 
+                onClick={loadBehavioralCoaching}
+                disabled={isLoadingCoaching || !jobData.jobTitle}
+                className="w-full mb-4"
+              >
+                {isLoadingCoaching ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Loading Coaching Content...
+                  </>
+                ) : (
+                  <>
+                    <BookOpen className="mr-2 h-4 w-4" />
+                    Load Behavioral Coaching
+                  </>
+                )}
+              </Button>
+              
+              {!jobData.jobTitle && (
+                <Alert>
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    Please enter a job title in the setup section first.
+                  </AlertDescription>
+                </Alert>
+              )}
+            </CardContent>
+          </Card>
+
+          {behavioralCoaching && (
+            <>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Common Behavioral Questions</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {behavioralCoaching.commonQuestions.map((item, index) => (
+                    <div key={index} className="border rounded-lg p-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Badge variant="outline">{item.category}</Badge>
+                      </div>
+                      <h4 className="font-medium mb-2">{item.question}</h4>
+                      <div className="space-y-3">
+                        <div>
+                          <h5 className="text-sm font-medium mb-1">Model Answer:</h5>
+                          <p className="text-sm text-muted-foreground bg-muted p-3 rounded">
+                            {item.modelAnswer}
+                          </p>
+                        </div>
+                        <div>
+                          <h5 className="text-sm font-medium mb-1">Tips:</h5>
+                          <ul className="text-sm space-y-1">
+                            {item.tips.map((tip, tipIndex) => (
+                              <li key={tipIndex} className="flex items-start gap-2">
+                                <span className="text-muted-foreground">•</span>
+                                {tip}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Situational Scenarios</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {behavioralCoaching.situationalScenarios.map((scenario, index) => (
+                    <div key={index} className="border rounded-lg p-4">
+                      <h4 className="font-medium mb-2">{scenario.scenario}</h4>
+                      <div className="space-y-2">
+                        <div>
+                          <h5 className="text-sm font-medium">Recommended Approach:</h5>
+                          <p className="text-sm text-muted-foreground">{scenario.approach}</p>
+                        </div>
+                        <div>
+                          <h5 className="text-sm font-medium">Key Points to Emphasize:</h5>
+                          <ul className="text-sm space-y-1">
+                            {scenario.keyPoints.map((point, pointIndex) => (
+                              <li key={pointIndex} className="flex items-start gap-2">
+                                <span className="text-muted-foreground">•</span>
+                                {point}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            </>
+          )}
+        </TabsContent>
+
+        {/* Company Research Tab */}
+        <TabsContent value="company" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Building className="h-5 w-5" />
+                Company-Specific Preparation
+              </CardTitle>
+              <CardDescription>
+                Get insights about the company, culture, and likely interview questions
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button 
+                onClick={researchCompany}
+                disabled={isResearchingCompany || !jobData.companyName || !jobData.jobTitle}
+                className="w-full mb-4"
+              >
+                {isResearchingCompany ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Researching Company...
+                  </>
+                ) : (
+                  <>
+                    <Building className="mr-2 h-4 w-4" />
+                    Research {jobData.companyName || 'Company'}
+                  </>
+                )}
+              </Button>
+              
+              {(!jobData.companyName || !jobData.jobTitle) && (
+                <Alert>
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    Please enter company name and job title in the setup section first.
+                  </AlertDescription>
+                </Alert>
+              )}
+            </CardContent>
+          </Card>
+
+          {companyResearch && (
+            <>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Company Overview</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <h4 className="font-medium mb-2">About {companyResearch.companyName}</h4>
+                    <p className="text-sm text-muted-foreground">{companyResearch.overview}</p>
+                  </div>
+                  
+                  <div>
+                    <h4 className="font-medium mb-2">Mission</h4>
+                    <p className="text-sm text-muted-foreground">{companyResearch.mission}</p>
+                  </div>
+                  
+                  <div>
+                    <h4 className="font-medium mb-2">Core Values</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {companyResearch.values.map((value, index) => (
+                        <Badge key={index} variant="secondary">{value}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Recent News</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ul className="space-y-2 text-sm">
+                      {companyResearch.recentNews.map((news, index) => (
+                        <li key={index} className="flex items-start gap-2">
+                          <span className="text-muted-foreground">•</span>
+                          {news}
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Industry Trends</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ul className="space-y-2 text-sm">
+                      {companyResearch.industryTrends.map((trend, index) => (
+                        <li key={index} className="flex items-start gap-2">
+                          <span className="text-muted-foreground">•</span>
+                          {trend}
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                </Card>
               </div>
-              <p className="text-sm text-muted-foreground">
-                Track your improvement over time with detailed analytics and insights.
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Likely Interview Questions</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {companyResearch.likelyQuestions.map((question, index) => (
+                      <div key={index} className="p-3 bg-muted rounded-lg">
+                        <p className="text-sm font-medium">{question}</p>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Culture Fit</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ul className="space-y-2 text-sm">
+                      {companyResearch.cultureFit.map((fit, index) => (
+                        <li key={index} className="flex items-start gap-2">
+                          <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                          {fit}
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Competitive Landscape</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ul className="space-y-2 text-sm">
+                      {companyResearch.competitorInfo.map((info, index) => (
+                        <li key={index} className="flex items-start gap-2">
+                          <span className="text-muted-foreground">•</span>
+                          {info}
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                </Card>
+              </div>
+            </>
+          )}
+        </TabsContent>
+
+        {/* Progress Tab */}
+        <TabsContent value="progress" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="h-5 w-5" />
+                Interview Preparation Progress
+              </CardTitle>
+              <CardDescription>
+                Track your improvement and identify areas to focus on
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {/* Mock progress data */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div className="p-4 border rounded-lg text-center">
+                  <div className="text-2xl font-bold text-blue-600">8</div>
+                  <div className="text-sm text-muted-foreground">Sessions Completed</div>
+                </div>
+                <div className="p-4 border rounded-lg text-center">
+                  <div className="text-2xl font-bold text-green-600">78</div>
+                  <div className="text-sm text-muted-foreground">Average Score</div>
+                </div>
+                <div className="p-4 border rounded-lg text-center">
+                  <div className="text-2xl font-bold text-purple-600">82</div>
+                  <div className="text-sm text-muted-foreground">Confidence Score</div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <h4 className="font-medium mb-3 text-green-600">Key Strengths</h4>
+                  <ul className="space-y-2">
+                    <li className="flex items-start gap-2 text-sm">
+                      <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                      Clear communication style
+                    </li>
+                    <li className="flex items-start gap-2 text-sm">
+                      <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                      Strong problem-solving approach
+                    </li>
+                    <li className="flex items-start gap-2 text-sm">
+                      <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                      Professional demeanor
+                    </li>
+                  </ul>
+                </div>
+                <div>
+                  <h4 className="font-medium mb-3 text-orange-600">Focus Areas</h4>
+                  <ul className="space-y-2">
+                    <li className="flex items-start gap-2 text-sm">
+                      <AlertCircle className="h-4 w-4 text-orange-500 mt-0.5 flex-shrink-0" />
+                      Technical depth in explanations
+                    </li>
+                    <li className="flex items-start gap-2 text-sm">
+                      <AlertCircle className="h-4 w-4 text-orange-500 mt-0.5 flex-shrink-0" />
+                      STAR framework consistency
+                    </li>
+                    <li className="flex items-start gap-2 text-sm">
+                      <AlertCircle className="h-4 w-4 text-orange-500 mt-0.5 flex-shrink-0" />
+                      Quantifying achievements
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              <Separator className="my-6" />
+
+              <div>
+                <h4 className="font-medium mb-3">Weekly Progress</h4>
+                <div className="space-y-3">
+                  {[
+                    { week: "Week 1", sessions: 2, score: 65 },
+                    { week: "Week 2", sessions: 3, score: 72 },
+                    { week: "Week 3", sessions: 2, score: 78 },
+                    { week: "Week 4", sessions: 1, score: 85 }
+                  ].map((week, index) => (
+                    <div key={index} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                      <div className="flex items-center gap-4">
+                        <span className="font-medium">{week.week}</span>
+                        <span className="text-sm text-muted-foreground">
+                          {week.sessions} session{week.sessions !== 1 ? 's' : ''}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Progress value={week.score} className="w-20" />
+                        <span className="text-sm font-medium">{week.score}%</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }

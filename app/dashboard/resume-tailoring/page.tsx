@@ -17,6 +17,7 @@ export default function ResumeTailoringPage() {
     tailorResume, 
     revertTailoring, 
     getTailoringStatus,
+    loadTailoredResume,
     isTailoring, 
     tailoringData,
     resumeData 
@@ -64,6 +65,13 @@ export default function ResumeTailoringPage() {
     
     try {
       const result = await tailorResume(data)
+      
+      // Load the newly created tailored resume into the store
+      if (result?.tailoredResume?.id) {
+        console.log('Loading tailored resume into store:', result.tailoredResume.id)
+        await loadTailoredResume(result.tailoredResume.id)
+      }
+      
       setShowPreview(true)
       
       console.log('Tailoring completed, new tailored resume created:', result?.tailoredResume?.id)

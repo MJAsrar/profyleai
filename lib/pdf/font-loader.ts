@@ -184,11 +184,10 @@ export class FontLoader {
         // Server-side: Use fetch to get fonts from static assets (works on Vercel)
         try {
           // Build the full URL for the font
-          const baseUrl = process.env.VERCEL_URL 
-            ? `https://${process.env.VERCEL_URL}` 
-            : process.env.NODE_ENV === 'development'
+          // Always use production domain for font loading to avoid auth issues with preview URLs
+          const baseUrl = process.env.NODE_ENV === 'development'
             ? 'http://localhost:3000'
-            : 'https://www.profyleai.com' // fallback to production domain
+            : 'https://www.profyleai.com' // Use production domain for reliable font access
           
           const fontUrl = `${baseUrl}${fontPath}`
           console.log(`🔤 Server-side loading font from: ${fontUrl}`)

@@ -712,28 +712,33 @@ REQUIREMENTS:
 2. Include 4-5 situational scenarios with recommended approaches
 3. Focus on: teamwork, problem-solving, communication, adaptability, results, time management
 
-CRITICAL: Return ONLY valid JSON. Keep model answers concise (max 100 words each).
+CRITICAL FORMATTING RULES:
+- Return ONLY valid JSON - no markdown, no explanations, no extra text
+- Keep all text content under 100 words each
+- Use double quotes for all strings
+- No trailing commas
+- Escape any quotes or special characters in text content
 
-OUTPUT FORMAT:
+OUTPUT FORMAT (return exactly this structure):
 {
   "commonQuestions": [
     {
       "question": "Tell me about a challenging project you completed",
-      "category": "Problem-solving",
-      "modelAnswer": "Brief STAR format answer focusing on situation, task, action, and result",
+      "category": "Problem-solving", 
+      "modelAnswer": "Brief STAR format answer",
       "tips": ["Tip 1", "Tip 2", "Tip 3"]
     }
   ],
   "situationalScenarios": [
     {
       "scenario": "Brief scenario description",
-      "approach": "Recommended approach summary",
+      "approach": "Recommended approach summary", 
       "keyPoints": ["Key point 1", "Key point 2", "Key point 3"]
     }
   ]
 }
 
-Return ONLY the JSON object.`.trim()
+IMPORTANT: Return ONLY the JSON object above, nothing else.`.trim()
 
     console.log(`🎯 Generating behavioral coaching for: ${jobTitle} at level: ${experienceLevel}`)
     console.log(`🤖 Generating behavioral coaching for ${jobTitle} with Gemini API...`)
@@ -767,19 +772,26 @@ Return ONLY the JSON object.`.trim()
     }
 
     console.log('📥 Received response from Gemini:', responseText.substring(0, 200) + '...')
+    console.log('📊 Response length:', responseText.length, 'characters')
 
     // Parse JSON response with better error handling
     let parsedResponse: any
+    let cleanedResponse: string = ''
+    
     try {
       // Clean the response text more thoroughly
-      let cleanedResponse = responseText
+      cleanedResponse = responseText
         .replace(/```json\n?/g, '')
         .replace(/```\n?/g, '')
         .trim()
       
-      // Remove or escape control characters that break JSON parsing
-      // Replace problematic control characters (except for normal whitespace)
-      cleanedResponse = cleanedResponse.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, ' ')
+      // Remove control characters more aggressively
+      // First pass: remove non-printable characters but keep essential whitespace
+      cleanedResponse = cleanedResponse.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]/g, '')
+      // Second pass: remove Unicode control characters
+      cleanedResponse = cleanedResponse.replace(/[\u0000-\u001F\u007F-\u009F\u2000-\u200F\u2028-\u202F]/g, '')
+      // Third pass: normalize whitespace but preserve structure
+      cleanedResponse = cleanedResponse.replace(/\r\n/g, '\n').replace(/\r/g, '\n')
       
       // Fix common JSON issues
       // Remove any trailing commas before closing braces/brackets
@@ -822,12 +834,18 @@ Return ONLY the JSON object.`.trim()
       })
       cleanedResponse = fixedLines.join('\n')
       
+      console.log('🧹 Cleaned response preview:', cleanedResponse.substring(0, 300) + '...')
       parsedResponse = JSON.parse(cleanedResponse)
     } catch (parseError) {
       console.error('❌ Failed to parse coaching response:', parseError)
-      console.error('Response text length:', responseText.length)
-      console.error('First 500 chars:', responseText.substring(0, 500))
-      console.error('Last 500 chars:', responseText.substring(Math.max(0, responseText.length - 500)))
+      console.error('📏 Response text length:', responseText.length)
+      console.error('🔍 Cleaned response length:', cleanedResponse?.length || 0)
+      console.error('📝 First 300 chars of cleaned:', cleanedResponse?.substring(0, 300))
+      console.error('📝 Characters around position 25:', 
+        cleanedResponse?.substring(Math.max(0, 20), 35)?.split('').map((c: string, i: number) => 
+          `${i + 20}: "${c}" (${c.charCodeAt(0)})`
+        ).join(', ')
+      )
       
       // Return a fallback response instead of failing completely
       return {

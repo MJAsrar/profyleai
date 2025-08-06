@@ -24,7 +24,7 @@ export interface InterviewJobData {
 export interface PracticeQuestion {
   id: string
   question: string
-  category: 'behavioral' | 'technical' | 'situational' | 'company-specific' | 'general'
+  category: 'job-specific' | 'field-related' | 'behavioral'
   difficulty: 'easy' | 'medium' | 'hard'
   starFramework: {
     situation: string
@@ -203,11 +203,10 @@ JOB INFORMATION:
 - Job Description: ${jobData.jobDescription}
 
 REQUIREMENTS:
-1. Generate questions across these categories:
-   - Behavioral (40%): Past experience and soft skills
-   - Technical (30%): Role-specific technical competencies
-   - Situational (20%): Hypothetical scenarios
-   - Company-specific (10%): Company culture and values
+1. Generate questions across these specific categories with exact distribution for mock interviews:
+   - Job-specific (40%): Questions directly related to the specific job requirements, skills, and responsibilities mentioned in the job description
+   - Field-related (30%): Questions about the general field/industry knowledge, trends, and best practices
+   - Behavioral (30%): Soft skills, past experiences, leadership, teamwork, and behavioral competencies
 
 2. Mix difficulty levels:
    - Easy (30%): Basic questions for warming up
@@ -221,7 +220,9 @@ REQUIREMENTS:
    - Appropriate difficulty level
 
 4. Ensure questions are:
-   - Relevant to the specific role and industry
+   - Job-specific questions: Directly tied to requirements, technologies, tools, or processes mentioned in the job description
+   - Field-related questions: About industry knowledge, trends, standards, and general practices in the field
+   - Behavioral questions: Focus on soft skills, work style, leadership, communication, and past experiences
    - Appropriate for the experience level
    - Varied in format and approach
    - Realistic and commonly asked
@@ -251,7 +252,7 @@ OUTPUT FORMAT:
     }
   ],
   "totalGenerated": ${questionCount},
-  "categories": ["behavioral", "technical", "situational", "company-specific"]
+  "categories": ["job-specific", "field-related", "behavioral"]
 }
 
 Return ONLY the JSON object. Ensure all questions are unique and relevant to the ${jobData.jobTitle} role.`.trim()

@@ -206,18 +206,20 @@ export async function GET(request: NextRequest) {
 }
 
 /**
- * Select 10 questions for mock interview with balanced distribution
+ * Select exactly 10 questions for mock interview with specific distribution:
+ * - 4 job-specific questions (exactly related to the job and its requirements)
+ * - 3 field-related questions (generally about the field of the job)
+ * - 3 behavioral/soft skills questions
  */
 function selectMockInterviewQuestions(allQuestions: any[], count: number = 10): any[] {
-  const categories = ['behavioral', 'technical', 'situational', 'company-specific']
+  const categories = ['job-specific', 'field-related', 'behavioral']
   const difficulties = ['easy', 'medium', 'hard']
   
-  // Target distribution: 40% behavioral, 30% technical, 20% situational, 10% company-specific
+  // Exact distribution as requested
   const targetDistribution = {
-    behavioral: Math.ceil(count * 0.4),
-    technical: Math.ceil(count * 0.3),
-    situational: Math.ceil(count * 0.2),
-    'company-specific': Math.ceil(count * 0.1)
+    'job-specific': 4,     // 4 questions exactly related to job requirements
+    'field-related': 3,    // 3 questions about the field/industry
+    'behavioral': 3        // 3 soft skills/behavioral questions
   }
 
   const selected: any[] = []
@@ -226,30 +228,53 @@ function selectMockInterviewQuestions(allQuestions: any[], count: number = 10): 
     return acc
   }, {} as Record<string, any[]>)
 
-  // Select questions by category
+  // Select questions by category with exact counts
   for (const [category, targetCount] of Object.entries(targetDistribution)) {
     const categoryQuestions = questionsByCategory[category] || []
     
+    if (categoryQuestions.length === 0) {
+      console.warn(`⚠️ No questions found for category: ${category}`)
+      continue
+    }
+    
     // Mix difficulties within category
     const easyCount = Math.ceil(targetCount * 0.3)
-    const mediumCount = Math.ceil(targetCount * 0.5)
+    const mediumCount = Math.ceil(targetCount * 0.5) 
     const hardCount = targetCount - easyCount - mediumCount
 
     const easy = categoryQuestions.filter(q => q.difficulty === 'easy').slice(0, easyCount)
     const medium = categoryQuestions.filter(q => q.difficulty === 'medium').slice(0, mediumCount)
     const hard = categoryQuestions.filter(q => q.difficulty === 'hard').slice(0, hardCount)
 
-    selected.push(...easy, ...medium, ...hard)
+    let categorySelected = [...easy, ...medium, ...hard]
+    
+    // If we don't have enough questions in the preferred difficulties, fill with any available
+    if (categorySelected.length < targetCount) {
+      const remaining = targetCount - categorySelected.length
+      const unused = categoryQuestions.filter(q => !categorySelected.find(s => s.id === q.id))
+      categorySelected.push(...unused.slice(0, remaining))
+    }
+    
+    // Take exactly the target count
+    selected.push(...categorySelected.slice(0, targetCount))
   }
 
-  // Fill remaining slots with any available questions
-  const remaining = count - selected.length
-  if (remaining > 0) {
+  // If we don't have exactly 10 questions, fill with any remaining questions
+  const totalSelected = selected.length
+  if (totalSelected < count) {
+    const remaining = count - totalSelected
     const unused = allQuestions.filter(q => !selected.find(s => s.id === q.id))
     selected.push(...unused.slice(0, remaining))
   }
 
-  // Shuffle the final selection
+  console.log(`✅ Selected mock interview questions:`, {
+    'job-specific': selected.filter(q => q.category === 'job-specific').length,
+    'field-related': selected.filter(q => q.category === 'field-related').length,
+    'behavioral': selected.filter(q => q.category === 'behavioral').length,
+    total: selected.length
+  })
+
+  // Shuffle the final selection while maintaining the exact count
   return selected.sort(() => Math.random() - 0.5).slice(0, count)
 }
 

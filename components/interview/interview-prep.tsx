@@ -237,10 +237,18 @@ export function InterviewPrep() {
   const getCategoryIcon = (category: string) => {
     switch (category) {
       case 'behavioral': return <Users className="h-4 w-4" />
-      case 'technical': return <Brain className="h-4 w-4" />
-      case 'situational': return <Target className="h-4 w-4" />
-      case 'company-specific': return <Building className="h-4 w-4" />
+      case 'job-specific': return <Target className="h-4 w-4" />
+      case 'field-related': return <Brain className="h-4 w-4" />
       default: return <MessageSquare className="h-4 w-4" />
+    }
+  }
+
+  const getCategoryDisplayName = (category: string) => {
+    switch (category) {
+      case 'job-specific': return 'Job-Specific'
+      case 'field-related': return 'Field Knowledge'
+      case 'behavioral': return 'Behavioral'
+      default: return category
     }
   }
 
@@ -926,7 +934,7 @@ export function InterviewPrep() {
                       <div className="flex-1">
                         <h3 className="font-semibold text-lg mb-2 text-foreground">{currentQuestion?.question}</h3>
                         <p className="text-sm text-muted-foreground">
-                          Category: {currentQuestion?.category} • Difficulty: {currentQuestion?.difficulty}
+                          Category: {getCategoryDisplayName(currentQuestion?.category)} • Difficulty: {currentQuestion?.difficulty}
                         </p>
                       </div>
                       <Button 
@@ -1415,7 +1423,7 @@ export function InterviewPrep() {
                   {behavioralCoaching.commonQuestions.map((item, index) => (
                     <div key={index} className="border rounded-lg p-4">
                       <div className="flex items-center gap-2 mb-2">
-                        <Badge variant="outline">{item.category}</Badge>
+                        <Badge variant="outline">{getCategoryDisplayName(item.category)}</Badge>
                       </div>
                       <h4 className="font-medium mb-2">{item.question}</h4>
                       <div className="space-y-3">

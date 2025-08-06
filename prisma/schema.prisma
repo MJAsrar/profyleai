@@ -247,7 +247,7 @@ model InterviewAnswer {
   questionId    String   // ID of the question from the practice questions
   question      String   // The actual question text
   answer        String   // User's answer
-  category      String   // behavioral, technical, situational, etc.
+  category      String   // job-specific, field-related, behavioral
   difficulty    String   // easy, medium, hard
   
   // AI Analysis and feedback

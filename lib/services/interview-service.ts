@@ -804,15 +804,37 @@ IMPORTANT: Return ONLY the JSON object above, nothing else.`.trim()
       if (jsonStart !== -1) {
         let braceCount = 0
         let jsonEnd = -1
+        let inString = false
+        let escapeNext = false
         
         for (let i = jsonStart; i < cleanedResponse.length; i++) {
-          if (cleanedResponse[i] === '{') {
-            braceCount++
-          } else if (cleanedResponse[i] === '}') {
-            braceCount--
-            if (braceCount === 0) {
-              jsonEnd = i
-              break
+          const char = cleanedResponse[i]
+          
+          if (escapeNext) {
+            escapeNext = false
+            continue
+          }
+          
+          if (char === '\\') {
+            escapeNext = true
+            continue
+          }
+          
+          if (char === '"' && !escapeNext) {
+            inString = !inString
+            continue
+          }
+          
+          // Only count braces when not inside a string
+          if (!inString) {
+            if (char === '{') {
+              braceCount++
+            } else if (char === '}') {
+              braceCount--
+              if (braceCount === 0) {
+                jsonEnd = i
+                break
+              }
             }
           }
         }
@@ -821,8 +843,11 @@ IMPORTANT: Return ONLY the JSON object above, nothing else.`.trim()
           const extractedJSON = cleanedResponse.substring(jsonStart, jsonEnd + 1).trim()
           console.log(`🎯 Extracted JSON object: ${jsonStart} to ${jsonEnd} (${extractedJSON.length} chars)`)
           console.log(`🔍 Last 50 chars of extracted JSON: ...${extractedJSON.slice(-50)}`)
+          console.log(`🔍 Character at jsonEnd (${jsonEnd}): "${cleanedResponse[jsonEnd]}" (${cleanedResponse.charCodeAt(jsonEnd)})`)
           cleanedResponse = extractedJSON
           jsonExtracted = true
+        } else {
+          console.warn(`⚠️ Could not find matching closing brace. Brace count: ${braceCount}, inString: ${inString}`)
         }
       }
       

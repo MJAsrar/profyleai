@@ -840,11 +840,17 @@ IMPORTANT: Return ONLY the JSON object above, nothing else.`.trim()
         }
         
         if (jsonEnd !== -1) {
-          const extractedJSON = cleanedResponse.substring(jsonStart, jsonEnd + 1).trim()
+          const extractedJSON = cleanedResponse.substring(jsonStart, jsonEnd + 1)
           console.log(`🎯 Extracted JSON object: ${jsonStart} to ${jsonEnd} (${extractedJSON.length} chars)`)
-          console.log(`🔍 Last 50 chars of extracted JSON: ...${extractedJSON.slice(-50)}`)
           console.log(`🔍 Character at jsonEnd (${jsonEnd}): "${cleanedResponse[jsonEnd]}" (${cleanedResponse.charCodeAt(jsonEnd)})`)
-          cleanedResponse = extractedJSON
+          console.log(`🔍 Before trim - last 50 chars: ...${extractedJSON.slice(-50)}`)
+          console.log(`🔍 Before trim - ends with: "${extractedJSON[extractedJSON.length - 1]}" (${extractedJSON.charCodeAt(extractedJSON.length - 1)})`)
+          
+          const trimmedJSON = extractedJSON.trim()
+          console.log(`🔍 After trim - length changed: ${extractedJSON.length} -> ${trimmedJSON.length}`)
+          console.log(`🔍 After trim - ends with: "${trimmedJSON[trimmedJSON.length - 1]}" (${trimmedJSON.charCodeAt(trimmedJSON.length - 1)})`)
+          
+          cleanedResponse = trimmedJSON
           jsonExtracted = true
         } else {
           console.warn(`⚠️ Could not find matching closing brace. Brace count: ${braceCount}, inString: ${inString}`)
@@ -869,20 +875,31 @@ IMPORTANT: Return ONLY the JSON object above, nothing else.`.trim()
         }
       }
       
-      // Attempt to fix unterminated strings by finding unmatched quotes
-      const lines = cleanedResponse.split('\n')
-      const fixedLines = lines.map((line: string) => {
-        // If line ends with an unescaped quote that's not properly closed, try to fix it
-        if (line.match(/[^\\]"[^"]*$/)) {
-          return line + '"'
-        }
-        return line
-      })
-      cleanedResponse = fixedLines.join('\n')
+      // Skip the unterminated string fixing if we successfully extracted a complete JSON object
+      if (!jsonExtracted) {
+        // Attempt to fix unterminated strings by finding unmatched quotes (only if JSON extraction failed)
+        const lines = cleanedResponse.split('\n')
+        const fixedLines = lines.map((line: string) => {
+          // If line ends with an unescaped quote that's not properly closed, try to fix it
+          if (line.match(/[^\\]"[^"]*$/)) {
+            return line + '"'
+          }
+          return line
+        })
+        cleanedResponse = fixedLines.join('\n')
+      }
       
       // Final validation and parsing attempt
+      console.log(`🔍 Before final trim - length: ${cleanedResponse.length}, ends with: "${cleanedResponse[cleanedResponse.length - 1]}"`)
       cleanedResponse = cleanedResponse.trim()
+      console.log(`🔍 After final trim - length: ${cleanedResponse.length}, ends with: "${cleanedResponse[cleanedResponse.length - 1]}"`)
+      
       if (!cleanedResponse.startsWith('{') || !cleanedResponse.endsWith('}')) {
+        console.error(`🚨 Invalid JSON structure detected!`)
+        console.error(`🔍 First 10 chars: "${cleanedResponse.substring(0, 10)}"`)
+        console.error(`🔍 Last 10 chars: "${cleanedResponse.slice(-10)}"`)
+        console.error(`🔍 Starts with '{': ${cleanedResponse.startsWith('{')}`)
+        console.error(`🔍 Ends with '}': ${cleanedResponse.endsWith('}')}`)
         throw new Error(`Invalid JSON structure: starts with "${cleanedResponse[0]}", ends with "${cleanedResponse[cleanedResponse.length - 1]}"`)
       }
       

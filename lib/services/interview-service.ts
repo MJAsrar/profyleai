@@ -204,9 +204,11 @@ JOB INFORMATION:
 
 REQUIREMENTS:
 1. Generate questions across these specific categories with exact distribution for mock interviews:
-   - Job-specific (40%): Questions directly related to the specific job requirements, skills, and responsibilities mentioned in the job description
-   - Field-related (30%): Questions about the general field/industry knowledge, trends, and best practices
-   - Behavioral (30%): Soft skills, past experiences, leadership, teamwork, and behavioral competencies
+   - job-specific (40%): Questions directly related to the specific job requirements, skills, and responsibilities mentioned in the job description
+   - field-related (30%): Questions about the general field/industry knowledge, trends, and best practices
+   - behavioral (30%): Soft skills, past experiences, leadership, teamwork, and behavioral competencies
+
+IMPORTANT: Use EXACTLY these category names in your response: "job-specific", "field-related", "behavioral"
 
 2. Mix difficulty levels:
    - Easy (30%): Basic questions for warming up
@@ -249,11 +251,31 @@ OUTPUT FORMAT:
         "Highlight skills relevant to this role"
       ],
       "keywords": ["problem-solving", "pressure", "analysis", "decision-making", "results"]
+    },
+    {
+      "id": "q2", 
+      "question": "How would you implement [specific technology/process from job description]?",
+      "category": "job-specific",
+      "difficulty": "medium",
+      "starFramework": { ... },
+      "tips": [ ... ],
+      "keywords": [ ... ]
+    },
+    {
+      "id": "q3",
+      "question": "What are the current trends in [industry/field]?", 
+      "category": "field-related",
+      "difficulty": "easy",
+      "starFramework": { ... },
+      "tips": [ ... ],
+      "keywords": [ ... ]
     }
   ],
   "totalGenerated": ${questionCount},
   "categories": ["job-specific", "field-related", "behavioral"]
 }
+
+CRITICAL: Every question MUST have category set to exactly one of: "job-specific", "field-related", or "behavioral"
 
 Return ONLY the JSON object. Ensure all questions are unique and relevant to the ${jobData.jobTitle} role.`.trim()
 

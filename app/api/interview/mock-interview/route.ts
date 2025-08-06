@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
 
       // Select 10 questions for the mock interview (mix of categories)
       const selectedQuestions = selectMockInterviewQuestions(questions, 10)
-      const sessionId = `mock_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+      const sessionId = `mock-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`
 
       const mockInterview = await createMockInterview(
         user.id,
@@ -84,7 +84,8 @@ export async function POST(request: NextRequest) {
         category,
         difficulty,
         evaluationResult.data!,
-        timeSpent
+        timeSpent,
+        user.id
       )
 
       console.log('✅ Saved interview answer with score:', evaluationResult.data!.score)
@@ -107,7 +108,7 @@ export async function POST(request: NextRequest) {
         )
       }
 
-      await updateMockInterviewProgress(mockInterviewId, currentQuestionIndex)
+      await updateMockInterviewProgress(mockInterviewId, currentQuestionIndex, user.id)
 
       return NextResponse.json({
         success: true,
@@ -136,7 +137,7 @@ export async function POST(request: NextRequest) {
       // Generate real summary based on actual answers
       const summary = generateRealMockInterviewSummary(mockInterview)
 
-      const completedInterview = await completeMockInterview(mockInterviewId, totalTime, summary)
+      const completedInterview = await completeMockInterview(mockInterviewId, totalTime, summary, user.id)
       
       console.log('✅ Completed mock interview with real score:', summary.overallScore)
 

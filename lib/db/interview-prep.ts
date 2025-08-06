@@ -218,11 +218,18 @@ export async function saveInterviewAnswer(
   category: string,
   difficulty: string,
   feedback: AnswerFeedback,
-  timeSpent: number
+  timeSpent: number,
+  userId: string
 ): Promise<InterviewAnswerData> {
+  // Resolve the mockInterviewId to actual database ID
+  const resolvedId = await resolveMockInterviewId(mockInterviewId, userId)
+  if (!resolvedId) {
+    throw new Error('Mock interview not found')
+  }
+
   const answerData = await prisma.interviewAnswer.create({
     data: {
-      mockInterviewId,
+      mockInterviewId: resolvedId,
       questionId,
       question,
       answer,
@@ -247,10 +254,17 @@ export async function saveInterviewAnswer(
  */
 export async function updateMockInterviewProgress(
   mockInterviewId: string,
-  currentQuestionIndex: number
+  currentQuestionIndex: number,
+  userId: string
 ): Promise<void> {
+  // Resolve the mockInterviewId to actual database ID
+  const resolvedId = await resolveMockInterviewId(mockInterviewId, userId)
+  if (!resolvedId) {
+    throw new Error('Mock interview not found')
+  }
+
   await prisma.mockInterview.update({
-    where: { id: mockInterviewId },
+    where: { id: resolvedId },
     data: {
       currentQuestionIndex,
       updatedAt: new Date()
@@ -264,10 +278,17 @@ export async function updateMockInterviewProgress(
 export async function completeMockInterview(
   mockInterviewId: string,
   totalTime: number,
-  summary: MockInterviewSummary
+  summary: MockInterviewSummary,
+  userId: string
 ): Promise<MockInterviewData> {
+  // Resolve the mockInterviewId to actual database ID
+  const resolvedId = await resolveMockInterviewId(mockInterviewId, userId)
+  if (!resolvedId) {
+    throw new Error('Mock interview not found')
+  }
+
   const updatedInterview = await prisma.mockInterview.update({
-    where: { id: mockInterviewId },
+    where: { id: resolvedId },
     data: {
       status: 'completed',
       completedAt: new Date(),
@@ -303,7 +324,8 @@ export async function getMockInterview(
   mockInterviewId: string,
   userId: string
 ): Promise<MockInterviewData | null> {
-  const mockInterview = await prisma.mockInterview.findFirst({
+  // First try to find by ID (ObjectId)
+  let mockInterview = await prisma.mockInterview.findFirst({
     where: { id: mockInterviewId, userId },
     include: {
       answers: {
@@ -311,6 +333,18 @@ export async function getMockInterview(
       }
     }
   })
+
+  // If not found and the ID doesn't look like an ObjectId, try sessionId
+  if (!mockInterview && !isValidObjectId(mockInterviewId)) {
+    mockInterview = await prisma.mockInterview.findFirst({
+      where: { sessionId: mockInterviewId, userId },
+      include: {
+        answers: {
+          orderBy: { createdAt: 'asc' }
+        }
+      }
+    })
+  }
 
   if (!mockInterview) return null
 
@@ -324,6 +358,31 @@ export async function getMockInterview(
       starAnalysis: answer.starAnalysis
     }))
   }
+}
+
+/**
+ * Helper function to check if a string is a valid ObjectId
+ */
+function isValidObjectId(id: string): boolean {
+  return /^[0-9a-fA-F]{24}$/.test(id)
+}
+
+/**
+ * Helper function to resolve mockInterviewId (could be database ID or sessionId) to actual database ID
+ */
+async function resolveMockInterviewId(mockInterviewId: string, userId: string): Promise<string | null> {
+  // If it's already a valid ObjectId, return it
+  if (isValidObjectId(mockInterviewId)) {
+    return mockInterviewId
+  }
+  
+  // Otherwise, try to find by sessionId
+  const mockInterview = await prisma.mockInterview.findFirst({
+    where: { sessionId: mockInterviewId, userId },
+    select: { id: true }
+  })
+  
+  return mockInterview?.id || null
 }
 
 /**

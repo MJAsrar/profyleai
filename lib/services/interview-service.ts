@@ -797,16 +797,36 @@ IMPORTANT: Return ONLY the JSON object above, nothing else.`.trim()
       // Remove any trailing commas before closing braces/brackets
       cleanedResponse = cleanedResponse.replace(/,(\s*[}\]])/g, '$1')
       
-      // Try to find and extract just the JSON object if there's extra text
+      // Extract only the JSON object - find the first { and matching }
       const jsonStart = cleanedResponse.indexOf('{')
-      const jsonEnd = cleanedResponse.lastIndexOf('}')
+      let jsonExtracted = false
       
-      if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
-        cleanedResponse = cleanedResponse.substring(jsonStart, jsonEnd + 1)
+      if (jsonStart !== -1) {
+        let braceCount = 0
+        let jsonEnd = -1
+        
+        for (let i = jsonStart; i < cleanedResponse.length; i++) {
+          if (cleanedResponse[i] === '{') {
+            braceCount++
+          } else if (cleanedResponse[i] === '}') {
+            braceCount--
+            if (braceCount === 0) {
+              jsonEnd = i
+              break
+            }
+          }
+        }
+        
+        if (jsonEnd !== -1) {
+          const extractedJSON = cleanedResponse.substring(jsonStart, jsonEnd + 1)
+          console.log(`🎯 Extracted JSON object: ${jsonStart} to ${jsonEnd} (${extractedJSON.length} chars)`)
+          cleanedResponse = extractedJSON
+          jsonExtracted = true
+        }
       }
       
-      // Check if JSON appears to be truncated (common issue with large responses)
-      if (!cleanedResponse.trim().endsWith('}')) {
+      // Check if JSON appears to be truncated (only if we didn't successfully extract a complete object)
+      if (!cleanedResponse.trim().endsWith('}') && !jsonExtracted) {
         console.warn('⚠️ JSON appears to be truncated, attempting to fix...')
         // Try to close any open structures
         const openBraces = (cleanedResponse.match(/{/g) || []).length

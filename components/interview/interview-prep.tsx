@@ -990,62 +990,64 @@ export function InterviewPrep() {
                   </div>
                   )}
                   
-                  {/* Answer Input */}
-                  <Card className="border border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20">
-                    <CardContent className="p-6">
-                      <div className="space-y-4">
-                        <div className="flex items-center gap-2 mb-3">
-                          <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
-                            <FileText className="h-4 w-4 text-green-600 dark:text-green-400" />
+                  {/* Answer Input - Only show when no feedback */}
+                  {!answerFeedback && (
+                    <>
+                      <Card className="border border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20">
+                        <CardContent className="p-6">
+                          <div className="space-y-4">
+                            <div className="flex items-center gap-2 mb-3">
+                              <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                                <FileText className="h-4 w-4 text-green-600 dark:text-green-400" />
+                              </div>
+                              <Label htmlFor="answer" className="text-base font-semibold text-green-800 dark:text-green-200">Your Answer</Label>
+                            </div>
+                            <Textarea
+                              id="answer"
+                              placeholder="Write your answer using the STAR framework. Be specific about the situation, your tasks, actions taken, and measurable results..."
+                              rows={8}
+                              value={currentAnswer}
+                              onChange={(e) => setCurrentAnswer(e.target.value)}
+                              className="border-2 border-green-200 focus:border-green-400 dark:border-green-800 dark:focus:border-green-600 bg-white/70 dark:bg-black/20 text-base resize-none"
+                            />
+                            <div className="flex items-center justify-between text-sm text-green-700 dark:text-green-300">
+                              <span>{currentAnswer.length} characters</span>
+                              <span>Aim for 150-300 words for a complete answer</span>
+                            </div>
                           </div>
-                          <Label htmlFor="answer" className="text-base font-semibold text-green-800 dark:text-green-200">Your Answer</Label>
-                        </div>
-                        <Textarea
-                          id="answer"
-                          placeholder="Write your answer using the STAR framework. Be specific about the situation, your tasks, actions taken, and measurable results..."
-                          rows={8}
-                          value={currentAnswer}
-                          onChange={(e) => setCurrentAnswer(e.target.value)}
-                          className="border-2 border-green-200 focus:border-green-400 dark:border-green-800 dark:focus:border-green-600 bg-white/70 dark:bg-black/20 text-base resize-none"
-                        />
-                        <div className="flex items-center justify-between text-sm text-green-700 dark:text-green-300">
-                          <span>{currentAnswer.length} characters</span>
-                          <span>Aim for 150-300 words for a complete answer</span>
-                        </div>
+                        </CardContent>
+                      </Card>
+                      
+                      <div className="flex justify-center">
+                        <Button 
+                          onClick={evaluateCurrentAnswer}
+                          disabled={isEvaluatingAnswer || !currentAnswer.trim()}
+                          size="lg"
+                          className="shadow-lg hover:shadow-xl transition-all px-8"
+                        >
+                          {isEvaluatingAnswer ? (
+                            <>
+                              <Loader2 className="mr-3 h-5 w-5 animate-spin" />
+                              AI is analyzing your answer...
+                            </>
+                          ) : (
+                            <>
+                              <Send className="mr-3 h-5 w-5" />
+                              Get AI Feedback & Score
+                            </>
+                          )}
+                        </Button>
                       </div>
-                    </CardContent>
-                  </Card>
-                  
-                  <div className="flex justify-center">
-                    <Button 
-                      onClick={evaluateCurrentAnswer}
-                      disabled={isEvaluatingAnswer || !currentAnswer.trim()}
-                      size="lg"
-                      className="shadow-lg hover:shadow-xl transition-all px-8"
-                    >
-                      {isEvaluatingAnswer ? (
-                        <>
-                          <Loader2 className="mr-3 h-5 w-5 animate-spin" />
-                          AI is analyzing your answer...
-                        </>
-                      ) : (
-                        <>
-                          <Send className="mr-3 h-5 w-5" />
-                          Get AI Feedback & Score
-                        </>
-                      )}
-                    </Button>
-                  </div>
-        </CardContent>
-      </Card>
+                    </>
+                  )}
 
-              {/* Answer Feedback */}
-              {answerFeedback && (
-      <Card>
-        <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <BarChart3 className="h-5 w-5" />
-                      Answer Evaluation
+                  {/* Answer Feedback - Replaces answer input */}
+                  {answerFeedback && (
+                    <Card className="border-0 shadow-lg">
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <BarChart3 className="h-5 w-5" />
+                          Answer Evaluation
                       <Badge variant="outline" className="ml-auto">
                         Score: {answerFeedback.score}/100
                       </Badge>
@@ -1120,9 +1122,25 @@ export function InterviewPrep() {
                         Estimated speaking time: {answerFeedback.estimatedTime} seconds
                       </div>
                     </div>
+                    
+                    <Separator />
+                    
+                    {/* Try Again Button */}
+                    <div className="flex justify-center pt-4">
+                      <Button 
+                        variant="outline" 
+                        onClick={() => setAnswerFeedback(null)}
+                        className="shadow-md hover:shadow-lg transition-shadow"
+                      >
+                        <RotateCcw className="mr-2 h-4 w-4" />
+                        Try Answering Again
+                      </Button>
+                    </div>
                   </CardContent>
-                </Card>
-              )}
+                    </Card>
+                  )}
+                </CardContent>
+              </Card>
             </>
           )}
         </TabsContent>

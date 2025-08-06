@@ -126,9 +126,14 @@ export function InterviewPrep() {
   // Hints visibility state
   const [showHints, setShowHints] = useState(false)
   
+  // Progress tracking state
+  const [interviewProgress, setInterviewProgress] = useState<InterviewProgress | null>(null)
+  const [isLoadingProgress, setIsLoadingProgress] = useState(false)
+  
   // Load existing interview preps on component mount
   useEffect(() => {
     loadExistingPreps()
+    loadInterviewProgress()
   }, [])
 
   // Timer effect for mock interviews
@@ -170,6 +175,24 @@ export function InterviewPrep() {
       })
     } finally {
       setIsLoadingPreps(false)
+    }
+  }
+
+  const loadInterviewProgress = async () => {
+    setIsLoadingProgress(true)
+    try {
+      const response = await fetch('/api/interview/progress')
+      const result = await response.json()
+      
+      if (result.success) {
+        setInterviewProgress(result.data)
+      } else {
+        console.error('Failed to load interview progress:', result.error)
+      }
+    } catch (error) {
+      console.error('Error loading interview progress:', error)
+    } finally {
+      setIsLoadingProgress(false)
     }
   }
 
@@ -249,6 +272,72 @@ export function InterviewPrep() {
       case 'field-related': return 'Field Knowledge'
       case 'behavioral': return 'Behavioral'
       default: return category
+    }
+  }
+
+  const calculateJobChances = (progress: InterviewProgress | null): number => {
+    if (!progress || progress.sessionsCompleted === 0) return 0
+    
+    // Base score from average performance
+    let baseScore = progress.averageScore
+    
+    // Confidence bonus (up to +15 points)
+    const confidenceBonus = (progress.confidenceScore / 100) * 15
+    
+    // Experience bonus based on sessions completed (up to +10 points)
+    const experienceBonus = Math.min(progress.sessionsCompleted * 2, 10)
+    
+    // Improvement trend bonus (up to +10 points)
+    let trendBonus = 0
+    if (progress.weeklyProgress.length >= 2) {
+      const recentScores = progress.weeklyProgress.slice(0, 3).map(w => w.averageScore)
+      const oldScores = progress.weeklyProgress.slice(-3).map(w => w.averageScore)
+      const recentAvg = recentScores.reduce((a, b) => a + b, 0) / recentScores.length
+      const oldAvg = oldScores.reduce((a, b) => a + b, 0) / oldScores.length
+      
+      if (recentAvg > oldAvg) {
+        trendBonus = Math.min((recentAvg - oldAvg) * 0.5, 10)
+      }
+    }
+    
+    // Calculate final chances (max 95% to be realistic)
+    const totalScore = baseScore + confidenceBonus + experienceBonus + trendBonus
+    return Math.min(Math.round(totalScore * 0.85), 95) // Scale down to be more realistic
+  }
+
+  const getProgressInsight = (progress: InterviewProgress | null): string => {
+    if (!progress || progress.sessionsCompleted === 0) {
+      return "Start practicing to get personalized insights!"
+    }
+    
+    if (progress.averageScore >= 85) {
+      return "Excellent performance! You're interview-ready."
+    } else if (progress.averageScore >= 75) {
+      return "Strong progress! Focus on consistency to excel."
+    } else if (progress.averageScore >= 65) {
+      return "Good foundation. Practice more to boost confidence."
+    } else {
+      return "Keep practicing! Focus on your improvement areas."
+    }
+  }
+
+  const formatWeekDisplay = (weekString: string): string => {
+    // Convert ISO week string to readable format
+    try {
+      const [year, week] = weekString.split('-W')
+      const startOfYear = new Date(parseInt(year), 0, 1)
+      const weekStart = new Date(startOfYear.getTime() + (parseInt(week) - 1) * 7 * 24 * 60 * 60 * 1000)
+      
+      const now = new Date()
+      const weeksDiff = Math.floor((now.getTime() - weekStart.getTime()) / (7 * 24 * 60 * 60 * 1000))
+      
+      if (weeksDiff === 0) return "This week"
+      if (weeksDiff === 1) return "Last week"
+      if (weeksDiff < 4) return `${weeksDiff} weeks ago`
+      
+      return weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    } catch {
+      return weekString
     }
   }
 
@@ -462,6 +551,8 @@ export function InterviewPrep() {
       
       if (result.success) {
         setMockSummary(result.data.summary)
+        // Reload progress data to show updated stats
+        loadInterviewProgress()
         toast({
           title: "Interview Complete!",
           description: `Overall score: ${result.data.summary.overallScore}/100`
@@ -1698,56 +1789,88 @@ export function InterviewPrep() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {/* Mock progress data */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <div className="p-4 border rounded-lg text-center">
-                  <div className="text-2xl font-bold text-blue-600">8</div>
-                  <div className="text-sm text-muted-foreground">Sessions Completed</div>
+              {isLoadingProgress ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin mr-2" />
+                  Loading your progress...
                 </div>
-                <div className="p-4 border rounded-lg text-center">
-                  <div className="text-2xl font-bold text-green-600">78</div>
-                  <div className="text-sm text-muted-foreground">Average Score</div>
-                </div>
-                <div className="p-4 border rounded-lg text-center">
-                  <div className="text-2xl font-bold text-purple-600">82</div>
-                  <div className="text-sm text-muted-foreground">Confidence Score</div>
-                </div>
-              </div>
+              ) : (
+                <>
+                  {/* Real progress data */}
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                    <div className="p-4 border rounded-lg text-center">
+                      <div className="text-2xl font-bold text-blue-600">
+                        {interviewProgress?.sessionsCompleted || 0}
+                      </div>
+                      <div className="text-sm text-muted-foreground">Sessions Completed</div>
+                    </div>
+                    <div className="p-4 border rounded-lg text-center">
+                      <div className="text-2xl font-bold text-green-600">
+                        {interviewProgress?.averageScore || 0}
+                      </div>
+                      <div className="text-sm text-muted-foreground">Average Score</div>
+                    </div>
+                    <div className="p-4 border rounded-lg text-center">
+                      <div className="text-2xl font-bold text-purple-600">
+                        {interviewProgress?.confidenceScore || 0}
+                      </div>
+                      <div className="text-sm text-muted-foreground">Confidence Score</div>
+                    </div>
+                    <div className="p-4 border rounded-lg text-center">
+                      <div className="text-2xl font-bold text-orange-600">
+                        {calculateJobChances(interviewProgress)}%
+                      </div>
+                      <div className="text-sm text-muted-foreground">Job Chances</div>
+                    </div>
+                  </div>
+
+                  {/* Progress Insight */}
+                  <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border">
+                    <div className="flex items-start gap-3">
+                      <Lightbulb className="h-5 w-5 text-blue-600 mt-0.5" />
+                      <div>
+                        <h4 className="font-medium text-blue-900 mb-1">Progress Insight</h4>
+                        <p className="text-sm text-blue-700">{getProgressInsight(interviewProgress)}</p>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <h4 className="font-medium mb-3 text-green-600">Key Strengths</h4>
-                  <ul className="space-y-2">
-                    <li className="flex items-start gap-2 text-sm">
-                      <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                      Clear communication style
-                    </li>
-                    <li className="flex items-start gap-2 text-sm">
-                      <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                      Strong problem-solving approach
-                    </li>
-                    <li className="flex items-start gap-2 text-sm">
-                      <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                      Professional demeanor
-                    </li>
-                  </ul>
+                  {interviewProgress?.strengths && interviewProgress.strengths.length > 0 ? (
+                    <ul className="space-y-2">
+                      {interviewProgress.strengths.slice(0, 5).map((strength, index) => (
+                        <li key={index} className="flex items-start gap-2 text-sm">
+                          <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                          {strength}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-sm text-muted-foreground italic">
+                      Complete mock interviews to identify your strengths
+                    </p>
+                  )}
                 </div>
                 <div>
                   <h4 className="font-medium mb-3 text-orange-600">Focus Areas</h4>
-                  <ul className="space-y-2">
-                    <li className="flex items-start gap-2 text-sm">
-                      <AlertCircle className="h-4 w-4 text-orange-500 mt-0.5 flex-shrink-0" />
-                      Technical depth in explanations
-                    </li>
-                    <li className="flex items-start gap-2 text-sm">
-                      <AlertCircle className="h-4 w-4 text-orange-500 mt-0.5 flex-shrink-0" />
-                      STAR framework consistency
-                    </li>
-                    <li className="flex items-start gap-2 text-sm">
-                      <AlertCircle className="h-4 w-4 text-orange-500 mt-0.5 flex-shrink-0" />
-                      Quantifying achievements
-                    </li>
-                  </ul>
+                  {interviewProgress?.improvementAreas && interviewProgress.improvementAreas.length > 0 ? (
+                    <ul className="space-y-2">
+                      {interviewProgress.improvementAreas.slice(0, 5).map((area, index) => (
+                        <li key={index} className="flex items-start gap-2 text-sm">
+                          <AlertCircle className="h-4 w-4 text-orange-500 mt-0.5 flex-shrink-0" />
+                          {area}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-sm text-muted-foreground italic">
+                      Complete mock interviews to identify areas for improvement
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -1756,25 +1879,29 @@ export function InterviewPrep() {
               <div>
                 <h4 className="font-medium mb-3">Weekly Progress</h4>
                 <div className="space-y-3">
-                  {[
-                    { week: "Week 1", sessions: 2, score: 65 },
-                    { week: "Week 2", sessions: 3, score: 72 },
-                    { week: "Week 3", sessions: 2, score: 78 },
-                    { week: "Week 4", sessions: 1, score: 85 }
-                  ].map((week, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                      <div className="flex items-center gap-4">
-                        <span className="font-medium">{week.week}</span>
-                        <span className="text-sm text-muted-foreground">
-                          {week.sessions} session{week.sessions !== 1 ? 's' : ''}
-                        </span>
+                  {interviewProgress?.weeklyProgress && interviewProgress.weeklyProgress.length > 0 ? (
+                    interviewProgress.weeklyProgress.slice(0, 8).map((week, index) => (
+                      <div key={index} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                        <div className="flex items-center gap-4">
+                          <span className="font-medium">{formatWeekDisplay(week.week)}</span>
+                          <span className="text-sm text-muted-foreground">
+                            {week.sessions} session{week.sessions !== 1 ? 's' : ''}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Progress value={week.averageScore} className="w-20" />
+                          <span className="text-sm font-medium">{Math.round(week.averageScore)}%</span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Progress value={week.score} className="w-20" />
-                        <span className="text-sm font-medium">{week.score}%</span>
-                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-6">
+                      <BarChart3 className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                      <p className="text-sm text-muted-foreground">
+                        No weekly data yet. Complete mock interviews to see your progress over time.
+                      </p>
                     </div>
-                  ))}
+                  )}
                 </div>
               </div>
             </CardContent>

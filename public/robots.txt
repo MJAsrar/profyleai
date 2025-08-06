@@ -17,7 +17,7 @@ Allow: /sitemap.xml
 Crawl-delay: 1
 
 # Sitemap location
-Sitemap: https://profyle.ai/sitemap.xml
+Sitemap: https://profyleai.com/sitemap.xml
 
 # Block AI training crawlers (optional - uncomment if desired)
 # User-agent: CCBot

@@ -1,6 +1,7 @@
 import { Header } from "@/components/header"
 import { HeroSection } from "@/components/hero-section"
 import { FeaturesSection } from "@/components/features-section"
+import { ResumeTailoringSection } from "@/components/resume-tailoring-section"
 import { TemplateCarousel } from "@/components/template-carousel"
 import { ChromeExtensionBanner } from "@/components/chrome-extension-banner"
 import { PricingSection } from "@/components/pricing-section"
@@ -27,22 +28,25 @@ export default function HomePage() {
             <HeroSection />
           </MotionWrapper>
           <MotionWrapper animation="fade-in-up" delay={200}>
-            <FeaturesSection />
-          </MotionWrapper>
-          <MotionWrapper animation="fade-in-up" delay={300}>
             <TemplateCarousel />
           </MotionWrapper>
+          <MotionWrapper animation="fade-in-up" delay={300}>
+            <FeaturesSection />
+          </MotionWrapper>
           <MotionWrapper animation="fade-in-up" delay={400}>
-            <ChromeExtensionBanner />
+            <ResumeTailoringSection />
           </MotionWrapper>
           <MotionWrapper animation="fade-in-up" delay={500}>
-            <PricingSection />
+            <ChromeExtensionBanner />
           </MotionWrapper>
           <MotionWrapper animation="fade-in-up" delay={600}>
+            <PricingSection />
+          </MotionWrapper>
+          <MotionWrapper animation="fade-in-up" delay={700}>
             <TestimonialsSection />
           </MotionWrapper>
         </main>
-        <MotionWrapper animation="fade-in" delay={700}>
+        <MotionWrapper animation="fade-in" delay={800}>
           <Footer />
         </MotionWrapper>
       </div>

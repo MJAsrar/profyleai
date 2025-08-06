@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Check } from "lucide-react"
+import { Check, GraduationCap, Building2 } from "lucide-react"
 import Link from "next/link"
 import { useState } from "react"
 
@@ -13,42 +13,79 @@ export function PricingSection() {
       name: "Free",
       monthlyPrice: "$0",
       yearlyPrice: "$0",
+      yearlyTotal: "$0",
       description: "Perfect for getting started",
-      features: ["1 resume template", "Basic resume builder", "PDF export", "Community support"],
+      features: [
+        "2 resume templates", 
+        "Resume builder", 
+        "PDF export", 
+        "1 tailored resume", 
+        "1 tailored cover letter"
+      ],
       cta: "Get Started",
       popular: false,
     },
     {
       name: "Pro",
-      monthlyPrice: "$9.99",
-      yearlyPrice: "$8.99",
+      monthlyPrice: "$7.99",
+      yearlyPrice: "$6.99",
+      yearlyTotal: "$83.88",
+      originalYearlyTotal: "$95.88",
       description: "Best for job seekers",
       features: [
         "All resume templates",
+        "Unlimited tailored resumes",
+        "Unlimited tailored cover letters",
         "AI-enhanced content",
-        "Cover letter generator",
         "LinkedIn optimizer",
         "Interview prep",
+        "ATS optimization",
         "Priority support",
       ],
       cta: "Start Free Trial",
       popular: true,
     },
     {
-      name: "Enterprise",
+      name: "Student",
+      monthlyPrice: "$4.99",
+      yearlyPrice: "$4.19", 
+      yearlyTotal: "$50.28",
+      originalYearlyTotal: "$59.88",
+      description: "Special pricing for students",
+      features: [
+        "All Pro features",
+        "Unlimited tailored resumes",
+        "Unlimited tailored cover letters", 
+        "AI-enhanced content",
+        "LinkedIn optimizer",
+        "Interview prep",
+        "Student ID verification required",
+      ],
+      cta: "Verify & Start",
+      popular: false,
+      icon: GraduationCap,
+      badge: "Student Only",
+    },
+    {
+      name: "Business",
       monthlyPrice: "$29.99",
-      yearlyPrice: "$26.99",
-      description: "For teams and organizations",
+      yearlyPrice: "$24.99",
+      yearlyTotal: "$299.88", 
+      originalYearlyTotal: "$359.88",
+      description: "For organizations & career counselors",
       features: [
         "Everything in Pro",
         "Team collaboration",
+        "Bulk user management",
         "Custom branding",
         "Analytics dashboard",
         "API access",
+        "White-label options",
         "Dedicated support",
       ],
       cta: "Contact Sales",
       popular: false,
+      icon: Building2,
     },
   ]
 
@@ -81,15 +118,15 @@ export function PricingSection() {
               Yearly
             </span>
             {isYearly && (
-              <span className="text-sm font-medium text-green-600 bg-green-100 px-2 py-1 rounded-full">
-                Save 10%
+              <span className="text-sm font-medium text-green-600 bg-green-100 dark:bg-green-950/20 dark:text-green-200 px-2 py-1 rounded-full">
+                Save up to 16%
               </span>
             )}
           </div>
         </div>
 
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="grid grid-cols-1 gap-6 sm:gap-8 md:grid-cols-2 lg:grid-cols-3">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="grid grid-cols-1 gap-6 sm:gap-8 md:grid-cols-2 lg:grid-cols-4">
           {plans.map((plan) => (
             <Card key={plan.name} className={`relative hover:shadow-md transition-shadow ${plan.popular ? "border-primary shadow-lg scale-105" : ""}`}>
               {plan.popular && (
@@ -99,8 +136,22 @@ export function PricingSection() {
                   </span>
                 </div>
               )}
+              {plan.badge && !plan.popular && (
+                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                  <span className={`px-3 py-1 text-sm font-medium rounded-full ${
+                    plan.name === 'Student' 
+                      ? 'bg-green-600 text-white' 
+                      : 'bg-blue-600 text-white'
+                  }`}>
+                    {plan.badge}
+                  </span>
+                </div>
+              )}
               <CardHeader className="text-center">
-                <CardTitle className="text-2xl">{plan.name}</CardTitle>
+                <div className="flex items-center justify-center gap-2 mb-2">
+                  {plan.icon && <plan.icon className="h-6 w-6 text-primary" />}
+                  <CardTitle className="text-2xl">{plan.name}</CardTitle>
+                </div>
                 <CardDescription>{plan.description}</CardDescription>
                 <div className="mt-4">
                   <span className="text-4xl font-bold">
@@ -108,12 +159,18 @@ export function PricingSection() {
                   </span>
                   {(isYearly ? plan.yearlyPrice : plan.monthlyPrice) !== "$0" && (
                     <span className="text-muted-foreground">
-                      /{isYearly ? 'year' : 'month'}
+                      /month
                     </span>
                   )}
                   {isYearly && plan.monthlyPrice !== "$0" && (
-                    <div className="text-sm text-muted-foreground mt-1">
-                      <span className="line-through">{plan.monthlyPrice}/month</span>
+                    <div className="text-sm text-muted-foreground mt-2 space-y-1">
+                      <div className="line-through">{plan.monthlyPrice}/month</div>
+                      <div>Billed annually at {plan.yearlyTotal}</div>
+                      {plan.originalYearlyTotal && (
+                        <div className="text-green-600 font-medium">
+                          Save ${(parseFloat(plan.originalYearlyTotal.replace('$', '')) - parseFloat(plan.yearlyTotal.replace('$', ''))).toFixed(2)}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

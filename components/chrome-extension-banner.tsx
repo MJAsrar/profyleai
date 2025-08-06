@@ -33,12 +33,12 @@ export function ChromeExtensionBanner() {
                   </div>
                   
                   <h2 className="text-3xl font-bold tracking-tight mb-4">
-                    Chrome Extension Launch
+                    Instant Resume Tailoring Extension
                   </h2>
                   
                   <p className="text-lg text-muted-foreground mb-6 max-w-2xl">
-                    Tailor your resume and cover letter directly on job posting pages without opening our website. 
-                    One-click optimization for any job application.
+                    Tailor your resume instantly while browsing job postings on LinkedIn, Indeed, and other job boards. 
+                    Our AI analyzes the job description and creates a perfectly matched resume in seconds.
                   </p>
                   
                   <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">

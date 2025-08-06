@@ -52,6 +52,15 @@ export async function POST(request: NextRequest) {
     } else if (action === 'answer') {
       const { mockInterviewId, questionId, question, answer, category, difficulty, timeSpent, jobContext } = body
 
+      console.log('📝 Answer action received:', {
+        mockInterviewId,
+        questionId,
+        hasAnswer: !!answer,
+        answerLength: answer?.length || 0,
+        category,
+        difficulty
+      })
+
       if (!mockInterviewId || !questionId || !answer || !question) {
         return NextResponse.json(
           { success: false, error: 'Mock interview ID, question ID, question, and answer are required' },

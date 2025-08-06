@@ -135,6 +135,12 @@ export async function POST(request: NextRequest) {
       }
 
       // Generate real summary based on actual answers
+      console.log('🔍 Mock interview data for summary generation:', {
+        id: mockInterview.id,
+        sessionId: mockInterview.sessionId,
+        answersCount: mockInterview.answers?.length || 0,
+        answers: mockInterview.answers?.map(a => ({ id: a.id, score: a.score, questionId: a.questionId })) || []
+      })
       const summary = generateRealMockInterviewSummary(mockInterview)
 
       const completedInterview = await completeMockInterview(mockInterviewId, totalTime, summary, user.id)
@@ -285,7 +291,19 @@ function selectMockInterviewQuestions(allQuestions: any[], count: number = 10): 
 function generateRealMockInterviewSummary(mockInterview: any): any {
   const answers = mockInterview.answers || []
   
+  console.log('📊 Generating summary with answers:', {
+    totalAnswers: answers.length,
+    answersData: answers.map(a => ({ 
+      id: a.id, 
+      score: a.score, 
+      questionId: a.questionId,
+      hasfeedback: !!a.feedback,
+      feedbackType: typeof a.feedback
+    }))
+  })
+  
   if (answers.length === 0) {
+    console.log('⚠️ No answers found, returning default summary')
     return {
       overallScore: 0,
       strengths: [],

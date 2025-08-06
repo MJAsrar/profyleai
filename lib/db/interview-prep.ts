@@ -227,6 +227,13 @@ export async function saveInterviewAnswer(
     throw new Error('Mock interview not found')
   }
 
+  console.log('💾 Saving answer with resolved mockInterviewId:', {
+    originalId: mockInterviewId,
+    resolvedId: resolvedId,
+    questionId: questionId,
+    score: feedback.score
+  })
+
   const answerData = await prisma.interviewAnswer.create({
     data: {
       mockInterviewId: resolvedId,
@@ -351,6 +358,13 @@ export async function getMockInterview(
   }
 
   if (!mockInterview) return null
+
+  console.log('🔄 Retrieved mock interview:', {
+    id: mockInterview.id,
+    sessionId: mockInterview.sessionId,
+    rawAnswersCount: mockInterview.answers?.length || 0,
+    rawAnswers: mockInterview.answers?.map(a => ({ id: a.id, score: a.score, mockInterviewId: a.mockInterviewId })) || []
+  })
 
   return {
     ...mockInterview,

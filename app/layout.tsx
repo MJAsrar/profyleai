@@ -1,15 +1,19 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { GeistSans } from 'geist/font/sans'
 import { GeistMono } from 'geist/font/mono'
 import { Analytics } from '@vercel/analytics/next'
 import { SessionProviderWrapper } from '@/components/providers/session-provider'
 import { Toaster } from '@/components/ui/toaster'
+import { defaultMetadata, organizationSchema } from '@/lib/seo-config'
 import './globals.css'
 
-export const metadata: Metadata = {
-  title: 'Profyle - AI Resume Builder',
-  description: 'Build professional resumes with AI assistance',
-  viewport: 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no',
+export const metadata: Metadata = defaultMetadata
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 }
 
 export default function RootLayout({
@@ -27,6 +31,15 @@ html {
   --font-mono: ${GeistMono.variable};
 }
         `}</style>
+        <link rel="preload" href="/logo.png" as="image" type="image/png" />
+        <link rel="dns-prefetch" href="//fonts.googleapis.com" />
+        <link rel="dns-prefetch" href="//vercel.live" />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(organizationSchema),
+          }}
+        />
       </head>
       <body>
         <SessionProviderWrapper>

@@ -21,6 +21,7 @@ export function Header() {
   const { data: session, status } = useSession()
 
   const navigation = [
+    { name: "Templates", href: "/templates" },
     { name: "Features", href: "#features" },
     { name: "Pricing", href: "#pricing" },
     { name: "About", href: "#about" },
@@ -34,7 +35,7 @@ export function Header() {
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between px-6">
         <Link href="/" className="flex items-center">
-          <img src="/logo.png" alt="ProfyleAI" className="h-10 w-auto max-w-[200px]" />
+          <img src="/logo.png" alt="Profyle AI Resume Builder - Home" className="h-10 w-auto max-w-[200px]" />
         </Link>
 
         {/* Desktop Navigation */}

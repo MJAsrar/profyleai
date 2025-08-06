@@ -42,9 +42,10 @@ export function HeroSection() {
                 <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
               </Button>
             </Link>
-            <Link href="#features">
+            <Link href="/templates">
               <Button variant="outline" size="lg" className="text-base bg-transparent hover-glow touch-target w-full sm:w-auto">
-                See Features
+                <FileText className="mr-2 h-4 w-4" />
+                Browse Templates
               </Button>
             </Link>
           </div>

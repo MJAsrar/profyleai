@@ -2,6 +2,9 @@ import { LoginForm } from "@/components/auth/login-form"
 import Link from "next/link"
 import { Sparkles } from "lucide-react"
 import { MotionWrapper } from "@/components/ui/motion-wrapper"
+import { generateMetadata } from "@/lib/seo-config"
+
+export const metadata = generateMetadata('login')
 
 export default function LoginPage() {
   return (
@@ -11,7 +14,7 @@ export default function LoginPage() {
           <div className="text-center space-y-4">
             <MotionWrapper animation="bounce-in" delay={200}>
               <Link href="/" className="inline-flex items-center mb-6 hover-lift">
-                <img src="/logo.png" alt="ProfyleAI" className="h-16 w-auto max-w-[300px]" />
+                <img src="/logo.png" alt="Profyle AI Resume Builder - Login" className="h-16 w-auto max-w-[300px]" />
               </Link>
             </MotionWrapper>
             <div className="space-y-2">

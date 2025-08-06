@@ -79,7 +79,7 @@ export function DashboardSidebar() {
             <SidebarMenuButton size="lg" asChild className="py-4 px-2 hover:bg-sidebar-accent/50">
               <Link href="/dashboard">
                 <div className="flex items-center justify-center w-full">
-                  <img src="/logo.png" alt="ProfyleAI" className="h-8 w-auto max-w-[160px]" />
+                  <img src="/logo.png" alt="Profyle AI Resume Builder Dashboard" className="h-8 w-auto max-w-[160px]" />
                 </div>
               </Link>
             </SidebarMenuButton>

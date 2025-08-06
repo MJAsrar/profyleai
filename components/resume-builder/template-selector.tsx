@@ -156,9 +156,9 @@ export function TemplateSelector({ onTemplateSelect }: TemplateSelectorProps) {
                     >
                       <CardContent className="p-4 sm:p-6">
                         <div className="aspect-[3/4] bg-muted rounded-lg mb-4 overflow-hidden relative group-hover:scale-105 transition-transform duration-300">
-                          <img
-                            src={template.previewUrl}
-                            alt={template.name}
+                                                  <img
+                          src={template.previewUrl}
+                          alt={`${template.name} resume template preview`}
                             className="w-full h-full object-cover"
                             onError={(e) => {
                               e.currentTarget.src = "/placeholder.svg?height=400&width=300"

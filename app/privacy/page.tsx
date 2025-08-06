@@ -1,11 +1,9 @@
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { MotionWrapper } from "@/components/ui/motion-wrapper"
+import { generateMetadata } from "@/lib/seo-config"
 
-export const metadata = {
-  title: 'Privacy Policy - Profyle',
-  description: 'Privacy Policy for Profyle Web App & Chrome Extension',
-}
+export const metadata = generateMetadata('privacy')
 
 export default function PrivacyPage() {
   return (

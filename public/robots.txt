@@ -1,0 +1,30 @@
+# Robots.txt for Profyle AI Resume Builder
+
+User-agent: *
+Allow: /
+Disallow: /dashboard/
+Disallow: /api/
+Disallow: /login
+Disallow: /signup
+Disallow: /_next/
+Disallow: /*.json$
+
+# Allow specific public pages
+Allow: /privacy
+Allow: /sitemap.xml
+
+# Crawl delay for polite crawling
+Crawl-delay: 1
+
+# Sitemap location
+Sitemap: https://profyle.ai/sitemap.xml
+
+# Block AI training crawlers (optional - uncomment if desired)
+# User-agent: CCBot
+# Disallow: /
+# 
+# User-agent: ChatGPT-User
+# Disallow: /
+# 
+# User-agent: GPTBot
+# Disallow: /

@@ -8,7 +8,7 @@ export function Footer() {
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-4">
           <div className="lg:col-span-2">
             <Link href="/" className="flex items-center mb-4">
-              <img src="/logo.png" alt="ProfyleAI" className="h-12 w-auto max-w-[250px]" />
+              <img src="/logo.png" alt="Profyle AI Resume Builder" className="h-12 w-auto max-w-[250px]" />
             </Link>
             <p className="text-muted-foreground max-w-md">
               Build professional resumes with AI assistance. Get hired faster with our comprehensive job application

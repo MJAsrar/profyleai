@@ -1,3 +1,4 @@
+import Link from "next/link"
 import { FileText, Linkedin, MessageSquare, Users, Download, Sparkles } from "lucide-react"
 
 export function FeaturesSection() {
@@ -6,6 +7,8 @@ export function FeaturesSection() {
       icon: FileText,
       title: "Resume Builder",
       description: "Create professional resumes with step-by-step guidance and real-time preview.",
+      link: "/templates",
+      linkText: "Browse Templates"
     },
     {
       icon: MessageSquare,
@@ -46,7 +49,7 @@ export function FeaturesSection() {
 
         <div className="max-w-6xl mx-auto px-4">
           <div className="grid grid-cols-1 gap-6 sm:gap-8 sm:grid-cols-2 lg:grid-cols-3">
-          {features.map((feature) => (
+          {features.map((feature: any) => (
             <div
               key={feature.title}
               className="relative rounded-lg border bg-background p-6 hover:shadow-md transition-shadow"
@@ -57,7 +60,12 @@ export function FeaturesSection() {
                 </div>
                 <h3 className="font-semibold">{feature.title}</h3>
               </div>
-              <p className="text-sm text-muted-foreground">{feature.description}</p>
+              <p className="text-sm text-muted-foreground mb-4">{feature.description}</p>
+              {feature.link && (
+                <Link href={feature.link} className="text-sm text-primary hover:underline font-medium">
+                  {feature.linkText} →
+                </Link>
+              )}
             </div>
                       ))}
           </div>

@@ -818,8 +818,9 @@ IMPORTANT: Return ONLY the JSON object above, nothing else.`.trim()
         }
         
         if (jsonEnd !== -1) {
-          const extractedJSON = cleanedResponse.substring(jsonStart, jsonEnd + 1)
+          const extractedJSON = cleanedResponse.substring(jsonStart, jsonEnd + 1).trim()
           console.log(`🎯 Extracted JSON object: ${jsonStart} to ${jsonEnd} (${extractedJSON.length} chars)`)
+          console.log(`🔍 Last 50 chars of extracted JSON: ...${extractedJSON.slice(-50)}`)
           cleanedResponse = extractedJSON
           jsonExtracted = true
         }
@@ -854,8 +855,30 @@ IMPORTANT: Return ONLY the JSON object above, nothing else.`.trim()
       })
       cleanedResponse = fixedLines.join('\n')
       
+      // Final validation and parsing attempt
+      cleanedResponse = cleanedResponse.trim()
+      if (!cleanedResponse.startsWith('{') || !cleanedResponse.endsWith('}')) {
+        throw new Error(`Invalid JSON structure: starts with "${cleanedResponse[0]}", ends with "${cleanedResponse[cleanedResponse.length - 1]}"`)
+      }
+      
       console.log('🧹 Cleaned response preview:', cleanedResponse.substring(0, 300) + '...')
-      parsedResponse = JSON.parse(cleanedResponse)
+      console.log('🔚 Final JSON ends with:', cleanedResponse.slice(-10))
+      
+      // Try parsing with additional safety
+      try {
+        parsedResponse = JSON.parse(cleanedResponse)
+      } catch (jsonError) {
+        console.error('❌ JSON.parse failed, attempting character-by-character validation...')
+        // If JSON.parse still fails, try to find and remove any problematic characters
+        let safeJSON = cleanedResponse
+        // Remove any characters that might be causing issues after the last }
+        const lastBrace = safeJSON.lastIndexOf('}')
+        if (lastBrace !== -1 && lastBrace < safeJSON.length - 1) {
+          safeJSON = safeJSON.substring(0, lastBrace + 1)
+          console.log('🛠️ Trimmed to last brace, new length:', safeJSON.length)
+        }
+        parsedResponse = JSON.parse(safeJSON)
+      }
     } catch (parseError) {
       console.error('❌ Failed to parse coaching response:', parseError)
       console.error('📏 Response text length:', responseText.length)

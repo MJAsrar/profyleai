@@ -123,6 +123,9 @@ export function InterviewPrep() {
   // Answer feedback state
   const [answerFeedback, setAnswerFeedback] = useState<AnswerFeedback | null>(null)
   
+  // Hints visibility state
+  const [showHints, setShowHints] = useState(false)
+  
   // Load existing interview preps on component mount
   useEffect(() => {
     loadExistingPreps()
@@ -515,6 +518,7 @@ export function InterviewPrep() {
       setCurrentQuestionIndex(prev => prev + 1)
       setCurrentAnswer('')
       setAnswerFeedback(null)
+      setShowHints(false)
     }
   }
 
@@ -523,6 +527,7 @@ export function InterviewPrep() {
       setCurrentQuestionIndex(prev => prev - 1)
       setCurrentAnswer('')
       setAnswerFeedback(null)
+      setShowHints(false)
     }
   }
 
@@ -917,14 +922,28 @@ export function InterviewPrep() {
                 </CardHeader>
                 <CardContent className="p-8 space-y-6">
                   <div className="p-6 bg-gradient-to-br from-primary/5 to-secondary/5 rounded-xl border border-primary/10">
-                    <h3 className="font-semibold text-lg mb-2 text-foreground">{currentQuestion?.question}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Category: {currentQuestion?.category} • Difficulty: {currentQuestion?.difficulty}
-                    </p>
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-lg mb-2 text-foreground">{currentQuestion?.question}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Category: {currentQuestion?.category} • Difficulty: {currentQuestion?.difficulty}
+                        </p>
+                      </div>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => setShowHints(!showHints)}
+                        className="ml-4 shadow-sm hover:shadow-md transition-shadow"
+                      >
+                        <Lightbulb className="mr-2 h-4 w-4" />
+                        {showHints ? 'Hide Hints' : 'Show Hints'}
+                      </Button>
+                    </div>
                   </div>
                   
-                  {/* STAR Framework Guidance */}
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* STAR Framework Guidance - Only show when hints are enabled */}
+                  {showHints && (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <Card className="border border-amber-200 bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-950/20 dark:to-yellow-950/20">
                       <CardContent className="p-6">
                         <h4 className="font-semibold mb-4 flex items-center gap-2 text-amber-800 dark:text-amber-200">
@@ -969,6 +988,7 @@ export function InterviewPrep() {
                       </CardContent>
                     </Card>
                   </div>
+                  )}
                   
                   {/* Answer Input */}
                   <Card className="border border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20">

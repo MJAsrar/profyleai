@@ -264,15 +264,15 @@ Return ONLY the JSON object. Ensure all questions are unique and relevant to the
     }
 
     const result = await client.models.generateContent({
-      model: "gemini-2.5-pro",
+      model: "gemini-2.5-flash",
       contents: prompt,
       config: {
-        temperature: 0.7, // Higher creativity for diverse questions
-        topP: 0.9,
+        temperature: 0.3, // Lower temperature for consistent questions
+        topP: 0.8,
         topK: 40,
         maxOutputTokens: 4096,
         thinkingConfig: {
-          thinkingBudget: 8192,
+          thinkingBudget: 0, // Disable thinking for faster responses
         }
       }
     })
@@ -442,7 +442,7 @@ Return ONLY the JSON object.`.trim()
     }
 
     const result = await client.models.generateContent({
-      model: "gemini-2.5-pro",
+      model: "gemini-2.5-flash",
       contents: prompt,
       config: {
         temperature: 0.3, // Lower temperature for consistent evaluation
@@ -450,7 +450,7 @@ Return ONLY the JSON object.`.trim()
         topK: 40,
         maxOutputTokens: 2048,
         thinkingConfig: {
-          thinkingBudget: 8192,
+          thinkingBudget: 0, // Disable thinking for faster responses
         }
       }
     })
@@ -610,7 +610,7 @@ Return ONLY the JSON object with accurate, interview-relevant information.`.trim
     }
 
     const result = await client.models.generateContent({
-      model: "gemini-2.5-pro",
+      model: "gemini-2.5-flash",
       contents: prompt,
       config: {
         temperature: 0.4, // Balanced creativity for research
@@ -618,7 +618,7 @@ Return ONLY the JSON object with accurate, interview-relevant information.`.trim
         topK: 40,
         maxOutputTokens: 3072,
         thinkingConfig: {
-          thinkingBudget: 8192,
+          thinkingBudget: 0, // Disable thinking for faster responses
         }
       }
     })
@@ -735,6 +735,7 @@ OUTPUT FORMAT:
 
 Return ONLY the JSON object.`.trim()
 
+    console.log(`🎯 Generating behavioral coaching for: ${jobTitle} at level: ${experienceLevel}`)
     console.log(`🤖 Generating behavioral coaching for ${jobTitle} with Gemini API...`)
     
     const client = getGeminiClient()
@@ -743,15 +744,15 @@ Return ONLY the JSON object.`.trim()
     }
 
     const result = await client.models.generateContent({
-      model: "gemini-2.5-pro",
+      model: "gemini-2.5-flash",
       contents: prompt,
       config: {
-        temperature: 0.5, // Balanced for coaching content
+        temperature: 0.3, // Lower temperature for more consistent output
         topP: 0.8,
         topK: 40,
-        maxOutputTokens: 1536, // Further reduced to prevent truncation
+        maxOutputTokens: 2048, // Increase for complete responses
         thinkingConfig: {
-          thinkingBudget: 8192,
+          thinkingBudget: 0, // Disable thinking for faster responses
         }
       }
     })
@@ -764,6 +765,8 @@ Return ONLY the JSON object.`.trim()
         error: "Empty response from AI service"
       }
     }
+
+    console.log('📥 Received response from Gemini:', responseText.substring(0, 200) + '...')
 
     // Parse JSON response with better error handling
     let parsedResponse: any

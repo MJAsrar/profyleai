@@ -666,8 +666,8 @@ export function InterviewPrep() {
         </div>
       )}
 
-      {/* Job Setup Card - Only show in new or existing view */}
-      {(currentView === 'new' || currentView === 'existing') && (
+      {/* Job Setup Card - Only show in new or existing view and when no questions generated */}
+      {(currentView === 'new' || currentView === 'existing') && questions.length === 0 && (
         <Card className="border-0 shadow-lg overflow-hidden">
           <CardHeader className="bg-gradient-to-r from-primary/10 via-primary/5 to-secondary/10 border-b">
             <div className="flex items-center gap-4">
@@ -775,6 +775,37 @@ export function InterviewPrep() {
                   Please fill in the company name and job title to continue
                 </p>
               )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Compact Job Info Display - Show when questions are generated */}
+      {(currentView === 'new' || currentView === 'existing') && questions.length > 0 && (
+        <Card className="border-0 shadow-md">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="p-2 bg-primary/10 rounded-lg">
+                  <Building className="h-4 w-4 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-lg">{jobData.jobTitle}</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {jobData.companyName} • {jobData.experienceLevel} level
+                    {jobData.industry && ` • ${jobData.industry}`}
+                  </p>
+                </div>
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setQuestions([])}
+                className="shadow-sm hover:shadow-md transition-shadow"
+              >
+                <Target className="mr-2 h-4 w-4" />
+                Edit Company Info
+              </Button>
             </div>
           </CardContent>
         </Card>

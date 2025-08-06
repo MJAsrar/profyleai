@@ -529,238 +529,346 @@ export function InterviewPrep() {
   const currentQuestion = questions[currentQuestionIndex]
 
   return (
-    <div className="relative space-y-6">
+    <div className="relative space-y-8">
       {/* Interview Prep List/Selection */}
       {currentView === 'list' && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Target className="h-5 w-5" />
-              Your Interview Preparations
-            </CardTitle>
-            <CardDescription>
-              Continue with an existing prep or start a new one
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {isLoadingPreps ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-8 w-8 animate-spin" />
-                <span className="ml-2">Loading your interview preparations...</span>
-          </div>
-            ) : existingPreps.length === 0 ? (
-              <div className="text-center py-8">
-                <Target className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <h3 className="text-lg font-medium mb-2">No Interview Preparations Yet</h3>
-                <p className="text-muted-foreground mb-4">
-                  Create your first interview preparation to get started with AI-powered practice.
-                </p>
-                <Button onClick={startNewPrep}>
-                  <Sparkles className="mr-2 h-4 w-4" />
-                  Start New Interview Prep
-                </Button>
+        <div className="space-y-6">
+          {/* Hero Section */}
+          <div className="text-center py-8 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5 rounded-xl border">
+            <div className="flex justify-center mb-4">
+              <div className="p-4 bg-primary/10 rounded-full">
+                <Users className="h-12 w-12 text-primary" />
+              </div>
             </div>
-            ) : (
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {existingPreps.map((prep) => (
-                    <Card key={prep.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => selectExistingPrep(prep)}>
-                      <CardContent className="p-4">
-                        <div className="flex items-start justify-between mb-2">
-                          <h4 className="font-medium">{prep.title}</h4>
-                          <div className="flex gap-1">
+            <h1 className="text-3xl font-bold mb-2">Interview Preparation</h1>
+            <p className="text-muted-foreground max-w-2xl mx-auto mb-6">
+              Master your interviews with AI-powered practice questions, mock interviews, and personalized coaching
+            </p>
+            <Button onClick={startNewPrep} size="lg" className="shadow-lg hover:shadow-xl transition-shadow">
+              <Sparkles className="mr-2 h-5 w-5" />
+              Start New Interview Prep
+            </Button>
+          </div>
+
+          {/* Existing Preparations */}
+          <Card className="border-0 shadow-lg">
+            <CardHeader className="bg-gradient-to-r from-muted/50 to-muted/30 rounded-t-lg">
+              <CardTitle className="flex items-center gap-3">
+                <div className="p-2 bg-primary/10 rounded-lg">
+                  <Target className="h-5 w-5 text-primary" />
+                </div>
+                Your Interview Preparations
+              </CardTitle>
+              <CardDescription>
+                Continue with an existing prep or start fresh with a new preparation
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-6">
+              {isLoadingPreps ? (
+                <div className="flex flex-col items-center justify-center py-12">
+                  <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+                  <span className="text-lg font-medium">Loading your preparations...</span>
+                  <span className="text-sm text-muted-foreground">This won't take long</span>
+                </div>
+              ) : existingPreps.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="bg-muted/50 rounded-full p-6 w-24 h-24 mx-auto mb-6 flex items-center justify-center">
+                    <Target className="h-12 w-12 text-muted-foreground" />
+                  </div>
+                  <h3 className="text-xl font-semibold mb-3">Ready to ace your interviews?</h3>
+                  <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                    Create your first interview preparation to get personalized questions, coaching, and feedback
+                  </p>
+                  <Button onClick={startNewPrep} size="lg" className="shadow-md hover:shadow-lg transition-shadow">
+                    <Sparkles className="mr-2 h-5 w-5" />
+                    Create Your First Prep
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                    {existingPreps.map((prep) => (
+                      <Card 
+                        key={prep.id} 
+                        className="group cursor-pointer hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border-0 bg-gradient-to-br from-card to-muted/20" 
+                        onClick={() => selectExistingPrep(prep)}
+                      >
+                        <CardContent className="p-6">
+                          <div className="flex items-start justify-between mb-4">
+                            <div className="flex-1">
+                              <h4 className="font-semibold text-lg mb-1 group-hover:text-primary transition-colors">
+                                {prep.title}
+                              </h4>
+                              <p className="text-sm text-muted-foreground">
+                                {prep.companyName} • {prep.experienceLevel} level
+                              </p>
+                            </div>
+                            <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
+                              <Building className="h-4 w-4 text-primary" />
+                            </div>
+                          </div>
+                          
+                          <div className="flex flex-wrap gap-2 mb-4">
                             {prep.questionsGenerated && (
-                              <Badge variant="secondary" className="text-xs">
+                              <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-700 border-blue-200">
                                 <MessageSquare className="h-3 w-3 mr-1" />
-                                Questions
+                                Questions Ready
                               </Badge>
                             )}
                             {prep.researchCompleted && (
-                              <Badge variant="secondary" className="text-xs">
+                              <Badge variant="secondary" className="text-xs bg-green-100 text-green-700 border-green-200">
                                 <Building className="h-3 w-3 mr-1" />
-                                Research
+                                Research Done
                               </Badge>
                             )}
                             {prep.coachingLoaded && (
-                              <Badge variant="secondary" className="text-xs">
+                              <Badge variant="secondary" className="text-xs bg-purple-100 text-purple-700 border-purple-200">
                                 <Brain className="h-3 w-3 mr-1" />
-                                Coaching
+                                Coaching Ready
                               </Badge>
                             )}
-            </div>
-                        </div>
-                        <p className="text-sm text-muted-foreground mb-2">
-                          {prep.companyName} • {prep.experienceLevel} level
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          Created {new Date(prep.createdAt).toLocaleDateString()}
-                        </p>
-                      </CardContent>
-                    </Card>
-                  ))}
+                          </div>
+                          
+                          <div className="flex items-center justify-between text-xs text-muted-foreground">
+                            <span>Created {new Date(prep.createdAt).toLocaleDateString()}</span>
+                            <ChevronRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                  
+                  <div className="flex justify-center pt-6 border-t border-muted/50">
+                    <Button variant="outline" onClick={startNewPrep} size="lg" className="shadow-md hover:shadow-lg transition-shadow">
+                      <Sparkles className="mr-2 h-5 w-5" />
+                      Start New Interview Prep
+                    </Button>
+                  </div>
                 </div>
-                
-                <div className="flex justify-center pt-4">
-                  <Button variant="outline" onClick={startNewPrep}>
-                    <Sparkles className="mr-2 h-4 w-4" />
-                    Start New Interview Prep
-                  </Button>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       )}
 
       {/* Back Button for existing/new views */}
       {(currentView === 'existing' || currentView === 'new') && (
-        <Button variant="outline" onClick={() => setCurrentView('list')} className="mb-4">
-          <ChevronLeft className="mr-2 h-4 w-4" />
-          Back to Interview Preparations
-        </Button>
+        <div className="flex items-center gap-4 mb-6">
+          <Button variant="outline" onClick={() => setCurrentView('list')} className="shadow-md hover:shadow-lg transition-shadow">
+            <ChevronLeft className="mr-2 h-4 w-4" />
+            Back to Interview Preparations
+          </Button>
+          <div className="h-6 w-px bg-border"></div>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Target className="h-4 w-4" />
+            Setting up your interview preparation
+          </div>
+        </div>
       )}
 
       {/* Job Setup Card - Only show in new or existing view */}
       {(currentView === 'new' || currentView === 'existing') && (
-        <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Target className="h-5 w-5" />
-            Interview Setup
-          </CardTitle>
-          <CardDescription>
-            Enter your job details to get personalized interview preparation
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="company">Company Name</Label>
-              <Input
-                id="company"
-                placeholder="e.g. Google, Microsoft, Startup Inc."
-                value={jobData.companyName}
-                onChange={(e) => setJobData(prev => ({ ...prev, companyName: e.target.value }))}
-              />
+        <Card className="border-0 shadow-lg overflow-hidden">
+          <CardHeader className="bg-gradient-to-r from-primary/10 via-primary/5 to-secondary/10 border-b">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-primary/10 rounded-xl">
+                <Target className="h-6 w-6 text-primary" />
+              </div>
+              <div className="flex-1">
+                <CardTitle className="text-2xl">Interview Setup</CardTitle>
+                <CardDescription className="text-base mt-1">
+                  Tell us about the role you're preparing for and we'll create personalized interview content
+                </CardDescription>
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="jobTitle">Job Title</Label>
-              <Input
-                id="jobTitle"
-                placeholder="e.g. Software Engineer, Product Manager"
-                value={jobData.jobTitle}
-                onChange={(e) => setJobData(prev => ({ ...prev, jobTitle: e.target.value }))}
-              />
+          </CardHeader>
+          <CardContent className="p-8 space-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-3">
+                <Label htmlFor="company" className="text-base font-medium">Company Name</Label>
+                <Input
+                  id="company"
+                  placeholder="e.g. Google, Microsoft, Apple"
+                  value={jobData.companyName}
+                  onChange={(e) => setJobData(prev => ({ ...prev, companyName: e.target.value }))}
+                  className="h-12 text-base border-2 focus:border-primary/50 transition-colors"
+                />
+              </div>
+              <div className="space-y-3">
+                <Label htmlFor="jobTitle" className="text-base font-medium">Job Title</Label>
+                <Input
+                  id="jobTitle"
+                  placeholder="e.g. Software Engineer, Product Manager"
+                  value={jobData.jobTitle}
+                  onChange={(e) => setJobData(prev => ({ ...prev, jobTitle: e.target.value }))}
+                  className="h-12 text-base border-2 focus:border-primary/50 transition-colors"
+                />
+              </div>
             </div>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="industry">Industry (Optional)</Label>
-              <Input
-                id="industry"
-                placeholder="e.g. Technology, Healthcare, Finance"
-                value={jobData.industry}
-                onChange={(e) => setJobData(prev => ({ ...prev, industry: e.target.value }))}
-              />
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-3">
+                <Label htmlFor="industry" className="text-base font-medium">Industry <span className="text-muted-foreground font-normal">(Optional)</span></Label>
+                <Input
+                  id="industry"
+                  placeholder="e.g. Technology, Healthcare, Finance"
+                  value={jobData.industry}
+                  onChange={(e) => setJobData(prev => ({ ...prev, industry: e.target.value }))}
+                  className="h-12 text-base border-2 focus:border-primary/50 transition-colors"
+                />
+              </div>
+              <div className="space-y-3">
+                <Label htmlFor="experience" className="text-base font-medium">Experience Level</Label>
+                <Select 
+                  value={jobData.experienceLevel} 
+                  onValueChange={(value) => setJobData(prev => ({ ...prev, experienceLevel: value as any }))}
+                >
+                  <SelectTrigger className="h-12 text-base border-2 focus:border-primary/50 transition-colors">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="entry">Entry Level (0-2 years)</SelectItem>
+                    <SelectItem value="mid">Mid Level (3-5 years)</SelectItem>
+                    <SelectItem value="senior">Senior Level (6+ years)</SelectItem>
+                    <SelectItem value="executive">Executive (Leadership)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="experience">Experience Level</Label>
-              <Select 
-                value={jobData.experienceLevel} 
-                onValueChange={(value) => setJobData(prev => ({ ...prev, experienceLevel: value as any }))}
+            
+            <div className="space-y-3">
+              <Label htmlFor="jobDescription" className="text-base font-medium">Job Description</Label>
+              <Textarea
+                id="jobDescription"
+                placeholder="Paste the complete job description here. Include responsibilities, requirements, and qualifications for the most accurate preparation..."
+                rows={6}
+                value={jobData.jobDescription}
+                onChange={(e) => setJobData(prev => ({ ...prev, jobDescription: e.target.value }))}
+                className="text-base border-2 focus:border-primary/50 transition-colors resize-none"
+              />
+              <p className="text-sm text-muted-foreground">
+                The more detailed the job description, the better we can tailor your interview preparation.
+              </p>
+            </div>
+            
+            <div className="pt-4 border-t border-muted/50">
+              <Button 
+                onClick={generateQuestions} 
+                disabled={isGeneratingQuestions || !jobData.companyName || !jobData.jobTitle}
+                size="lg"
+                className="w-full h-12 text-base shadow-lg hover:shadow-xl transition-all"
               >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="entry">Entry Level</SelectItem>
-                  <SelectItem value="mid">Mid Level</SelectItem>
-                  <SelectItem value="senior">Senior Level</SelectItem>
-                  <SelectItem value="executive">Executive</SelectItem>
-                </SelectContent>
-              </Select>
+                {isGeneratingQuestions ? (
+                  <>
+                    <Loader2 className="mr-3 h-5 w-5 animate-spin" />
+                    Generating Personalized Questions...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="mr-3 h-5 w-5" />
+                    Generate Interview Preparation
+                  </>
+                )}
+              </Button>
+              {(!jobData.companyName || !jobData.jobTitle) && (
+                <p className="text-sm text-muted-foreground text-center mt-3">
+                  Please fill in the company name and job title to continue
+                </p>
+              )}
             </div>
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="jobDescription">Job Description</Label>
-            <Textarea
-              id="jobDescription"
-              placeholder="Paste the full job description here..."
-              rows={4}
-              value={jobData.jobDescription}
-              onChange={(e) => setJobData(prev => ({ ...prev, jobDescription: e.target.value }))}
-            />
-          </div>
-          
-          <Button 
-            onClick={generateQuestions} 
-            disabled={isGeneratingQuestions}
-            className="w-full"
-          >
-            {isGeneratingQuestions ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Generating Questions...
-              </>
-            ) : (
-              <>
-                <Sparkles className="mr-2 h-4 w-4" />
-                Generate Practice Questions
-              </>
-            )}
-          </Button>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
       )}
 
       {/* Main Interview Prep Tabs - Only show in new or existing view */}
       {(currentView === 'new' || currentView === 'existing') && (
-        <Tabs defaultValue="practice" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="practice">Practice Questions</TabsTrigger>
-          <TabsTrigger value="mock">Mock Interview</TabsTrigger>
-          <TabsTrigger value="behavioral">Behavioral Coaching</TabsTrigger>
-          <TabsTrigger value="company">Company Research</TabsTrigger>
-          <TabsTrigger value="progress">Progress</TabsTrigger>
-        </TabsList>
+        <Tabs defaultValue="practice" className="space-y-8">
+          <div className="bg-gradient-to-r from-muted/50 via-muted/30 to-muted/50 rounded-xl p-2">
+            <TabsList className="grid w-full grid-cols-5 bg-transparent border-0 gap-2">
+              <TabsTrigger 
+                value="practice" 
+                className="data-[state=active]:bg-background data-[state=active]:shadow-md rounded-lg py-3 px-4 text-sm font-medium transition-all"
+              >
+                <MessageSquare className="h-4 w-4 mr-2" />
+                Practice Questions
+              </TabsTrigger>
+              <TabsTrigger 
+                value="mock" 
+                className="data-[state=active]:bg-background data-[state=active]:shadow-md rounded-lg py-3 px-4 text-sm font-medium transition-all"
+              >
+                <Play className="h-4 w-4 mr-2" />
+                Mock Interview
+              </TabsTrigger>
+              <TabsTrigger 
+                value="behavioral" 
+                className="data-[state=active]:bg-background data-[state=active]:shadow-md rounded-lg py-3 px-4 text-sm font-medium transition-all"
+              >
+                <Brain className="h-4 w-4 mr-2" />
+                Behavioral Coaching
+              </TabsTrigger>
+              <TabsTrigger 
+                value="company" 
+                className="data-[state=active]:bg-background data-[state=active]:shadow-md rounded-lg py-3 px-4 text-sm font-medium transition-all"
+              >
+                <Building className="h-4 w-4 mr-2" />
+                Company Research
+              </TabsTrigger>
+              <TabsTrigger 
+                value="progress" 
+                className="data-[state=active]:bg-background data-[state=active]:shadow-md rounded-lg py-3 px-4 text-sm font-medium transition-all"
+              >
+                <TrendingUp className="h-4 w-4 mr-2" />
+                Progress
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
         {/* Practice Questions Tab */}
-        <TabsContent value="practice" className="space-y-4">
+        <TabsContent value="practice" className="space-y-6">
           {questions.length === 0 ? (
-            <Card>
-              <CardContent className="pt-6">
-                <div className="text-center py-8">
-                  <MessageSquare className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-medium mb-2">No Questions Generated Yet</h3>
-                  <p className="text-muted-foreground mb-4">
-                    Fill in your job details above and click "Generate Practice Questions" to get started.
+            <Card className="border-0 shadow-lg">
+              <CardContent className="p-12">
+                <div className="text-center">
+                  <div className="bg-primary/10 rounded-full p-6 w-24 h-24 mx-auto mb-6 flex items-center justify-center">
+                    <MessageSquare className="h-12 w-12 text-primary" />
+                  </div>
+                  <h3 className="text-xl font-semibold mb-3">Ready for Practice Questions?</h3>
+                  <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                    Complete your job details above and generate personalized interview questions tailored to your role.
                   </p>
+                  <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                    <Target className="h-4 w-4" />
+                    <span>AI-powered questions based on your specific job description</span>
+                  </div>
                 </div>
               </CardContent>
             </Card>
           ) : (
             <>
               {/* Question Navigation */}
-              <Card>
-                <CardHeader className="pb-3">
+              <Card className="border-0 shadow-lg overflow-hidden">
+                <CardHeader className="bg-gradient-to-r from-muted/50 to-muted/30 border-b">
                   <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-                      {getCategoryIcon(currentQuestion?.category)}
-                      <Badge className={getDifficultyColor(currentQuestion?.difficulty)}>
-                        {currentQuestion?.difficulty}
-                      </Badge>
-                      <span className="text-sm text-muted-foreground">
-                        Question {currentQuestionIndex + 1} of {questions.length}
-                      </span>
-            </div>
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-primary/10 rounded-lg">
+                        {getCategoryIcon(currentQuestion?.category)}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge className={`${getDifficultyColor(currentQuestion?.difficulty)} shadow-sm`}>
+                          {currentQuestion?.difficulty}
+                        </Badge>
+                        <span className="text-sm font-medium text-muted-foreground">
+                          Question {currentQuestionIndex + 1} of {questions.length}
+                        </span>
+                      </div>
+                    </div>
                     <div className="flex gap-2">
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={prevQuestion}
                         disabled={currentQuestionIndex === 0}
+                        className="shadow-sm hover:shadow-md transition-shadow"
                       >
                         <ChevronLeft className="h-4 w-4" />
                       </Button>
@@ -769,75 +877,114 @@ export function InterviewPrep() {
                         size="sm"
                         onClick={nextQuestion}
                         disabled={currentQuestionIndex === questions.length - 1}
+                        className="shadow-sm hover:shadow-md transition-shadow"
                       >
                         <ChevronRight className="h-4 w-4" />
                       </Button>
-          </div>
+                    </div>
                   </div>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="p-4 bg-muted rounded-lg">
-                    <h3 className="font-medium mb-2">{currentQuestion?.question}</h3>
+                <CardContent className="p-8 space-y-6">
+                  <div className="p-6 bg-gradient-to-br from-primary/5 to-secondary/5 rounded-xl border border-primary/10">
+                    <h3 className="font-semibold text-lg mb-2 text-foreground">{currentQuestion?.question}</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Category: {currentQuestion?.category} • Difficulty: {currentQuestion?.difficulty}
+                    </p>
                   </div>
                   
                   {/* STAR Framework Guidance */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <h4 className="font-medium mb-2 flex items-center gap-2">
-                        <Star className="h-4 w-4" />
-                        STAR Framework Guide
-                      </h4>
-                      <div className="space-y-2 text-sm">
-                        <div><strong>Situation:</strong> {currentQuestion?.starFramework.situation}</div>
-                        <div><strong>Task:</strong> {currentQuestion?.starFramework.task}</div>
-                        <div><strong>Action:</strong> {currentQuestion?.starFramework.action}</div>
-                        <div><strong>Result:</strong> {currentQuestion?.starFramework.result}</div>
-                      </div>
-                    </div>
-                    <div>
-                      <h4 className="font-medium mb-2 flex items-center gap-2">
-                        <Lightbulb className="h-4 w-4" />
-                        Tips
-                      </h4>
-                      <ul className="space-y-1 text-sm">
-                        {currentQuestion?.tips.map((tip, index) => (
-                          <li key={index} className="flex items-start gap-2">
-                            <span className="text-muted-foreground">•</span>
-                            {tip}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <Card className="border border-amber-200 bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-950/20 dark:to-yellow-950/20">
+                      <CardContent className="p-6">
+                        <h4 className="font-semibold mb-4 flex items-center gap-2 text-amber-800 dark:text-amber-200">
+                          <Star className="h-5 w-5" />
+                          STAR Framework Guide
+                        </h4>
+                        <div className="space-y-4">
+                          <div className="p-3 bg-white/60 dark:bg-black/20 rounded-lg">
+                            <div className="font-medium text-sm text-amber-900 dark:text-amber-100">Situation</div>
+                            <div className="text-sm text-amber-700 dark:text-amber-300 mt-1">{currentQuestion?.starFramework.situation}</div>
+                          </div>
+                          <div className="p-3 bg-white/60 dark:bg-black/20 rounded-lg">
+                            <div className="font-medium text-sm text-amber-900 dark:text-amber-100">Task</div>
+                            <div className="text-sm text-amber-700 dark:text-amber-300 mt-1">{currentQuestion?.starFramework.task}</div>
+                          </div>
+                          <div className="p-3 bg-white/60 dark:bg-black/20 rounded-lg">
+                            <div className="font-medium text-sm text-amber-900 dark:text-amber-100">Action</div>
+                            <div className="text-sm text-amber-700 dark:text-amber-300 mt-1">{currentQuestion?.starFramework.action}</div>
+                          </div>
+                          <div className="p-3 bg-white/60 dark:bg-black/20 rounded-lg">
+                            <div className="font-medium text-sm text-amber-900 dark:text-amber-100">Result</div>
+                            <div className="text-sm text-amber-700 dark:text-amber-300 mt-1">{currentQuestion?.starFramework.result}</div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card className="border border-blue-200 bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950/20 dark:to-cyan-950/20">
+                      <CardContent className="p-6">
+                        <h4 className="font-semibold mb-4 flex items-center gap-2 text-blue-800 dark:text-blue-200">
+                          <Lightbulb className="h-5 w-5" />
+                          Expert Tips
+                        </h4>
+                        <ul className="space-y-3">
+                          {currentQuestion?.tips.map((tip, index) => (
+                            <li key={index} className="flex items-start gap-3">
+                              <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                              <span className="text-sm text-blue-700 dark:text-blue-300">{tip}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </CardContent>
+                    </Card>
                   </div>
                   
                   {/* Answer Input */}
-                  <div className="space-y-2">
-                    <Label htmlFor="answer">Your Answer</Label>
-                    <Textarea
-                      id="answer"
-                      placeholder="Type your answer here using the STAR framework..."
-                      rows={6}
-                      value={currentAnswer}
-                      onChange={(e) => setCurrentAnswer(e.target.value)}
-                    />
-                  </div>
+                  <Card className="border border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20">
+                    <CardContent className="p-6">
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-2 mb-3">
+                          <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                            <FileText className="h-4 w-4 text-green-600 dark:text-green-400" />
+                          </div>
+                          <Label htmlFor="answer" className="text-base font-semibold text-green-800 dark:text-green-200">Your Answer</Label>
+                        </div>
+                        <Textarea
+                          id="answer"
+                          placeholder="Write your answer using the STAR framework. Be specific about the situation, your tasks, actions taken, and measurable results..."
+                          rows={8}
+                          value={currentAnswer}
+                          onChange={(e) => setCurrentAnswer(e.target.value)}
+                          className="border-2 border-green-200 focus:border-green-400 dark:border-green-800 dark:focus:border-green-600 bg-white/70 dark:bg-black/20 text-base resize-none"
+                        />
+                        <div className="flex items-center justify-between text-sm text-green-700 dark:text-green-300">
+                          <span>{currentAnswer.length} characters</span>
+                          <span>Aim for 150-300 words for a complete answer</span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
                   
-                  <Button 
-                    onClick={evaluateCurrentAnswer}
-                    disabled={isEvaluatingAnswer || !currentAnswer.trim()}
-                  >
-                    {isEvaluatingAnswer ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Evaluating...
-                      </>
-                    ) : (
-                      <>
-                        <Send className="mr-2 h-4 w-4" />
-                        Get AI Feedback
-                      </>
-                    )}
-                  </Button>
+                  <div className="flex justify-center">
+                    <Button 
+                      onClick={evaluateCurrentAnswer}
+                      disabled={isEvaluatingAnswer || !currentAnswer.trim()}
+                      size="lg"
+                      className="shadow-lg hover:shadow-xl transition-all px-8"
+                    >
+                      {isEvaluatingAnswer ? (
+                        <>
+                          <Loader2 className="mr-3 h-5 w-5 animate-spin" />
+                          AI is analyzing your answer...
+                        </>
+                      ) : (
+                        <>
+                          <Send className="mr-3 h-5 w-5" />
+                          Get AI Feedback & Score
+                        </>
+                      )}
+                    </Button>
+                  </div>
         </CardContent>
       </Card>
 

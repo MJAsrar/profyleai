@@ -393,6 +393,55 @@ export function InterviewPrep() {
     }
   }
 
+  const submitMockAnswer = async () => {
+    if (!mockSession || !currentAnswer.trim()) return
+
+    setIsEvaluatingAnswer(true)
+    
+    try {
+      const currentQuestion = mockSession.questions[currentQuestionIndex]
+      
+      const response = await fetch('/api/interview/mock-interview', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'answer',
+          mockInterviewId: mockSession.sessionId,
+          questionId: currentQuestion.id,
+          question: currentQuestion.question,
+          answer: currentAnswer,
+          category: currentQuestion.category,
+          difficulty: currentQuestion.difficulty,
+          timeSpent: 60, // You might want to track actual time
+          jobContext: jobData
+        })
+      })
+      
+      const result = await response.json()
+      
+      if (result.success) {
+        // Move to next question or complete interview
+        if (currentQuestionIndex < mockSession.questions.length - 1) {
+          setCurrentQuestionIndex(prev => prev + 1)
+          setCurrentAnswer('')
+        } else {
+          completeMockInterview()
+        }
+      } else {
+        throw new Error(result.error)
+      }
+    } catch (error) {
+      console.error('Error submitting answer:', error)
+      toast({
+        title: "Submit Failed",
+        description: "Could not submit answer. Please try again.",
+        variant: "destructive"
+      })
+    } finally {
+      setIsEvaluatingAnswer(false)
+    }
+  }
+
   const completeMockInterview = async () => {
     if (!mockSession) return
 
@@ -1331,26 +1380,23 @@ export function InterviewPrep() {
                 
                 <div className="flex gap-2">
                   <Button 
-                    onClick={() => {
-                      // In a real implementation, you'd save the answer and move to next question
-                      if (currentQuestionIndex < mockSession.questions.length - 1) {
-                        setCurrentQuestionIndex(prev => prev + 1)
-                        setCurrentAnswer('')
-                      } else {
-                        completeMockInterview()
-                      }
-                    }}
-                    disabled={!currentAnswer.trim()}
+                    onClick={submitMockAnswer}
+                    disabled={!currentAnswer.trim() || isEvaluatingAnswer}
                   >
-                    {currentQuestionIndex < mockSession.questions.length - 1 ? (
+                    {isEvaluatingAnswer ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Evaluating...
+                      </>
+                    ) : currentQuestionIndex < mockSession.questions.length - 1 ? (
                       <>
                         <ChevronRight className="mr-2 h-4 w-4" />
-                        Next Question
+                        Submit & Next
                       </>
                     ) : (
                       <>
                         <CheckCircle className="mr-2 h-4 w-4" />
-                        Complete Interview
+                        Submit & Complete
                       </>
                     )}
                   </Button>

@@ -6,17 +6,20 @@ import { StaggeredContainer } from "@/components/ui/motion-wrapper"
 
 export function HeroSection() {
   return (
-    <Section spacing="lg" className="relative overflow-hidden">
+    <Section spacing="sm" className="relative overflow-hidden pt-2">
       {/* Background gradient */}
       <div className="absolute inset-0 -z-10 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5" />
       
-      <PageContainer maxWidth="4xl" padding="lg">
+      <PageContainer maxWidth="4xl" padding="sm">
         <div className="text-center space-y-8">
           {/* Badge */}
           <div className="flex justify-center animate-bounce-in">
-            <div className="relative rounded-full px-4 py-2 text-sm leading-6 text-muted-foreground ring-1 ring-muted border hover-glow">
-              AI-powered resume building {""}
-              <span className="font-semibold text-primary">now available</span>
+            <div className="relative rounded-full px-4 py-2 text-sm leading-6 text-muted-foreground ring-1 ring-muted border hover-glow shadow-lg shadow-green-500/20">
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-green-500" />
+                AI-powered resume building {""}
+                <span className="font-semibold text-primary">now available</span>
+              </div>
             </div>
           </div>
 

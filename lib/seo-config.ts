@@ -4,7 +4,7 @@ import { Metadata } from 'next'
 export const siteConfig = {
   name: 'Profyle',
   description: 'Build professional resumes with AI assistance. Create ATS-friendly resumes, cover letters, and optimize your LinkedIn profile with our AI-powered platform.',
-  url: process.env.NEXT_PUBLIC_APP_URL || 'https://profyle.ai',
+  url: process.env.NEXT_PUBLIC_APP_URL || 'https://profyleai.com',
   ogImage: '/og-image.png',
   creator: '@profyleai',
   keywords: [

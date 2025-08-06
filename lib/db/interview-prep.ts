@@ -324,18 +324,22 @@ export async function getMockInterview(
   mockInterviewId: string,
   userId: string
 ): Promise<MockInterviewData | null> {
-  // First try to find by ID (ObjectId)
-  let mockInterview = await prisma.mockInterview.findFirst({
-    where: { id: mockInterviewId, userId },
-    include: {
-      answers: {
-        orderBy: { createdAt: 'asc' }
-      }
-    }
-  })
+  let mockInterview
 
-  // If not found and the ID doesn't look like an ObjectId, try sessionId
-  if (!mockInterview && !isValidObjectId(mockInterviewId)) {
+  // If it looks like an ObjectId, try to find by ID first
+  if (isValidObjectId(mockInterviewId)) {
+    mockInterview = await prisma.mockInterview.findFirst({
+      where: { id: mockInterviewId, userId },
+      include: {
+        answers: {
+          orderBy: { createdAt: 'asc' }
+        }
+      }
+    })
+  }
+
+  // If not found or doesn't look like ObjectId, try sessionId
+  if (!mockInterview) {
     mockInterview = await prisma.mockInterview.findFirst({
       where: { sessionId: mockInterviewId, userId },
       include: {

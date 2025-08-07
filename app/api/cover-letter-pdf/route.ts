@@ -106,17 +106,20 @@ async function generateCoverLetterPDFBlob(data: CoverLetterData): Promise<Buffer
     // Dynamic imports to avoid SSR issues
     const pdfMakeModule = await import('pdfmake/build/pdfmake')
     const vfsModule = await import('pdfmake/build/vfs_fonts')
-    const fs = await import('fs')
-    const path = await import('path')
     
     const pdfMake = pdfMakeModule.default
     
     // Start with default VFS
     const customVfs = { ...vfsModule.default }
     
+    // Track which font we'll actually use
+    let actualFont = 'Roboto' // Default fallback
+    
     try {
-      // Load Libertinus Serif fonts from file system
-      const fontDir = path.join(process.cwd(), 'public/fonts/Libertinus_Serif')
+      // Load Libertinus Serif fonts using HTTP requests (works in all environments)
+      const baseUrl = process.env.NODE_ENV === 'development'
+        ? 'http://localhost:3000'
+        : 'https://www.profyleai.com' // Use production domain for reliable font access
       
       const fontFiles = {
         normal: 'LibertinusSerif-Regular.ttf',
@@ -126,18 +129,26 @@ async function generateCoverLetterPDFBlob(data: CoverLetterData): Promise<Buffer
         semibold: 'LibertinusSerif-SemiBold.ttf'
       }
       
-      // Load each font file and add to VFS
+      // Load each font file via HTTP and add to VFS
       const loadedFonts: Record<string, string> = {}
       for (const [variant, filename] of Object.entries(fontFiles)) {
-        const fontPath = path.join(fontDir, filename)
-        if (fs.existsSync(fontPath)) {
-          const fontBuffer = fs.readFileSync(fontPath)
-          const base64Font = fontBuffer.toString('base64')
+        try {
+          const fontUrl = `${baseUrl}/fonts/Libertinus_Serif/${filename}`
+          console.log(`🔤 Loading font from: ${fontUrl}`)
+          
+          const response = await fetch(fontUrl)
+          if (!response.ok) {
+            console.warn(`⚠️ Font file not found: ${fontUrl} (${response.status})`)
+            continue
+          }
+          
+          const fontBuffer = await response.arrayBuffer()
+          const base64Font = Buffer.from(fontBuffer).toString('base64')
           ;(customVfs as any)[filename] = base64Font
           loadedFonts[variant] = filename
           console.log(`✅ Loaded ${filename} for LibertinusSerif ${variant}`)
-        } else {
-          console.warn(`⚠️ Font file not found: ${fontPath}`)
+        } catch (fetchError) {
+          console.warn(`⚠️ Failed to load font ${filename}:`, fetchError)
         }
       }
       
@@ -158,6 +169,7 @@ async function generateCoverLetterPDFBlob(data: CoverLetterData): Promise<Buffer
             bolditalics: 'Roboto-MediumItalic.ttf'
           }
         }
+        actualFont = 'LibertinusSerif'
         console.log('🎨 LibertinusSerif fonts configured successfully')
       } else {
         throw new Error('Missing required font variants for LibertinusSerif')
@@ -180,6 +192,7 @@ async function generateCoverLetterPDFBlob(data: CoverLetterData): Promise<Buffer
           bolditalics: 'Roboto-MediumItalic.ttf'
         }
       }
+      actualFont = 'Roboto'
     }
     
     // Set up VFS BEFORE creating document
@@ -187,8 +200,8 @@ async function generateCoverLetterPDFBlob(data: CoverLetterData): Promise<Buffer
     
     console.log('📄 VFS and fonts configured, generating document...')
 
-    // Generate document definition
-    const docDefinition = generateCoverLetterDocument(data)
+    // Generate document definition with the actual available font
+    const docDefinition = generateCoverLetterDocument(data, actualFont)
     
     console.log('📝 Document generated with font:', docDefinition.defaultStyle?.font)
     
@@ -217,7 +230,7 @@ async function generateCoverLetterPDFBlob(data: CoverLetterData): Promise<Buffer
 /**
  * Generate document definition for cover letter with beautiful typography
  */
-function generateCoverLetterDocument(data: CoverLetterData) {
+function generateCoverLetterDocument(data: CoverLetterData, fontName: string = 'LibertinusSerif') {
   return {
     content: [
       // Header with personal information - elegant and prominent
@@ -398,7 +411,7 @@ function generateCoverLetterDocument(data: CoverLetterData) {
     
     defaultStyle: {
       fontSize: 11,
-      font: 'LibertinusSerif',
+      font: fontName,
       color: '#2c3e50',
       lineHeight: 1.5
     },

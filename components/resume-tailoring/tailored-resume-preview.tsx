@@ -47,6 +47,7 @@ interface TailoringData {
     skills: {
       changed: boolean
       changeType: string
+      keywordsAdded: string[]
       skillsReordered: string[]
       skillsAdded: string[]
       improvementReason: string
@@ -80,7 +81,7 @@ export function TailoredResumePreview({
 }: TailoredResumePreviewProps) {
   const { revertTailoring } = useResumeStore()
   const { toast } = useToast()
-  const { fontConfig } = useFontConfig()
+  const fontConfig = useFontConfig()
   const [isDownloading, setIsDownloading] = useState(false)
 
   // Extract match score from tailoring data
@@ -234,7 +235,7 @@ export function TailoredResumePreview({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 overflow-x-hidden">
       {/* Enhanced Detailed Tailoring Results */}
       {tailoringData?.atsBreakdown && tailoringData?.detailedChanges && tailoringData?.keywordAnalysis && (
         <DetailedTailoringResults
@@ -306,17 +307,20 @@ export function TailoredResumePreview({
               size="sm" 
               onClick={handleDownload}
               disabled={isDownloading}
+              className="px-3 py-2 h-auto min-h-[36px]"
             >
               {isDownloading ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               ) : (
                 <Download className="h-4 w-4 mr-2" />
               )}
-              {isDownloading ? "Downloading..." : "Download PDF"}
+              <span className="whitespace-nowrap">
+                {isDownloading ? "Downloading..." : "Download PDF"}
+              </span>
             </Button>
           </div>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-6 px-4 sm:px-6">
           {/* Header */}
           <div className="space-y-2">
             <h3 className="text-lg font-bold">{resumeData.personalInfo.fullName || "Your Name"}</h3>
@@ -400,7 +404,7 @@ export function TailoredResumePreview({
 
       {/* Next Steps */}
       <Card>
-        <CardContent className="pt-6">
+        <CardContent className="pt-6 px-4 sm:px-6">
           <div className="space-y-4">
             <div className="flex items-center gap-3 text-sm">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-blue-600">
@@ -413,17 +417,17 @@ export function TailoredResumePreview({
                 </p>
               </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <Button variant="outline" size="sm" className="flex-1" asChild>
                 <a href="/dashboard/view-resumes">
                   <FolderOpen className="h-4 w-4 mr-2" />
-                  View All Resumes
+                  <span className="truncate">View All Resumes</span>
                 </a>
               </Button>
               <Button variant="outline" size="sm" className="flex-1" asChild>
                 <a href="/dashboard/cover-letter">
                   <FileText className="h-4 w-4 mr-2" />
-                  Create Cover Letter
+                  <span className="truncate">Create Cover Letter</span>
                 </a>
               </Button>
             </div>

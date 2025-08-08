@@ -13,26 +13,26 @@ export function ResumeTailoringHeader({ onReset, showReset = false }: ResumeTail
   return (
     <div className="space-y-6">
       {/* Streamlined Header */}
-      <header className="flex h-16 shrink-0 items-center gap-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="flex items-center gap-3 px-4">
+      <header className="flex h-16 shrink-0 items-center gap-2 sm:gap-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 overflow-hidden">
+        <div className="flex items-center gap-2 sm:gap-3 px-2 sm:px-4 min-w-0 flex-1">
           <SidebarTrigger className="-ml-1" />
           <Separator orientation="vertical" className="h-4" />
-          <div className="flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-slate-600 to-slate-700 text-white">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-slate-600 to-slate-700 text-white flex-shrink-0">
               <Target className="h-4 w-4" />
             </div>
-            <div className="flex flex-col">
-              <h1 className="text-sm font-semibold">Resume Tailoring</h1>
-              <p className="text-xs text-muted-foreground">Optimize for specific job postings</p>
+            <div className="flex flex-col min-w-0 flex-1">
+              <h1 className="text-sm font-semibold truncate">Resume Tailoring</h1>
+              <p className="text-xs text-muted-foreground truncate hidden sm:block">Optimize for specific job postings</p>
             </div>
           </div>
         </div>
 
         {showReset && (
-          <div className="ml-auto mr-4">
-            <Button variant="outline" onClick={onReset} size="sm" className="gap-2">
+          <div className="flex-shrink-0 mr-2 sm:mr-4">
+            <Button variant="outline" onClick={onReset} size="sm" className="gap-1 sm:gap-2 px-2 sm:px-3">
               <RotateCcw className="h-4 w-4" />
-              Start Over
+              <span className="hidden sm:inline">Start Over</span>
             </Button>
           </div>
         )}

@@ -96,11 +96,6 @@ export default function ResumeTailoringPage() {
     }
   }
 
-  const handleEditJobDetails = () => {
-    setShowPreview(false)
-    setError(null)
-  }
-
   return (
     <PageContainer maxWidth="7xl" padding="lg" className="min-h-screen">
       <MotionWrapper animation="fade-in-down">
@@ -144,7 +139,6 @@ export default function ResumeTailoringPage() {
               jobData={jobData} 
               tailoringData={tailoringData}
               resumeData={resumeData}
-              onEditJobDetails={handleEditJobDetails}
             />
           </MotionWrapper>
         )}

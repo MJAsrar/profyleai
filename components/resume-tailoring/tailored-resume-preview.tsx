@@ -71,14 +71,12 @@ interface TailoredResumePreviewProps {
   jobData: JobData
   tailoringData?: TailoringData | null
   resumeData: ResumeData
-  onEditJobDetails?: () => void
 }
 
 export function TailoredResumePreview({ 
   jobData, 
   tailoringData, 
-  resumeData,
-  onEditJobDetails
+  resumeData 
 }: TailoredResumePreviewProps) {
   const { revertTailoring } = useResumeStore()
   const { toast } = useToast()
@@ -304,30 +302,18 @@ export function TailoredResumePreview({
               <FileText className="h-5 w-5" />
               Tailored Resume Preview
             </CardTitle>
-            <div className="flex gap-2">
-              {onEditJobDetails && (
-                <Button 
-                  variant="outline"
-                  size="sm" 
-                  onClick={onEditJobDetails}
-                >
-                  <Target className="h-4 w-4 mr-2" />
-                  Edit Job Details
-                </Button>
+            <Button 
+              size="sm" 
+              onClick={handleDownload}
+              disabled={isDownloading}
+            >
+              {isDownloading ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Download className="h-4 w-4 mr-2" />
               )}
-              <Button 
-                size="sm" 
-                onClick={handleDownload}
-                disabled={isDownloading}
-              >
-                {isDownloading ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <Download className="h-4 w-4 mr-2" />
-                )}
-                {isDownloading ? "Downloading..." : "Download PDF"}
-              </Button>
-            </div>
+              {isDownloading ? "Downloading..." : "Download PDF"}
+            </Button>
           </div>
         </CardHeader>
         <CardContent className="space-y-6">

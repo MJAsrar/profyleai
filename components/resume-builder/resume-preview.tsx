@@ -166,36 +166,36 @@ export function ResumePreview() {
         </div>
 
         {/* Zoom Controls */}
-        <div className="flex items-center justify-center gap-3">
+        <div className="flex items-center justify-center gap-2 sm:gap-3">
           <Button 
             variant="outline" 
             size="sm" 
             onClick={handleZoomOut}
-            className="h-8 w-8 p-0"
+            className="h-7 w-7 sm:h-8 sm:w-8 p-0"
             disabled={zoom <= 0.3}
           >
-            <ZoomOut className="h-4 w-4" />
+            <ZoomOut className="h-3 w-3 sm:h-4 sm:w-4" />
           </Button>
-          <span className="text-sm text-muted-foreground min-w-[50px] text-center font-medium">
+          <span className="text-xs sm:text-sm text-muted-foreground min-w-[40px] sm:min-w-[50px] text-center font-medium">
             {Math.round(zoom * 100)}%
           </span>
           <Button 
             variant="outline" 
             size="sm" 
             onClick={handleZoomIn}
-            className="h-8 w-8 p-0"
+            className="h-7 w-7 sm:h-8 sm:w-8 p-0"
             disabled={zoom >= 2}
           >
-            <ZoomIn className="h-4 w-4" />
+            <ZoomIn className="h-3 w-3 sm:h-4 sm:w-4" />
           </Button>
           <Button 
             variant="outline" 
             size="sm" 
             onClick={handleRefresh}
-            className="h-8 w-8 p-0 ml-2"
+            className="h-7 w-7 sm:h-8 sm:w-8 p-0 ml-1 sm:ml-2"
             disabled={isPreviewLoading}
           >
-            <RefreshCw className={`h-4 w-4 ${isPreviewLoading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`h-3 w-3 sm:h-4 sm:w-4 ${isPreviewLoading ? 'animate-spin' : ''}`} />
           </Button>
         </div>
       </CardHeader>
@@ -213,17 +213,11 @@ export function ResumePreview() {
 
         {/* Preview Container */}
         <div className="relative">
-          <div 
-            className="overflow-auto bg-white rounded-lg border border-muted/50 shadow-soft"
-            style={{ 
-              height: '600px',
-              maxWidth: '100%'
-            }}
-          >
+          <div className="overflow-auto bg-white rounded-lg border border-muted/50 shadow-soft h-[400px] md:h-[600px] max-w-full">
             <div 
               ref={previewRef}
               id="resume-preview" 
-              className="w-full h-full p-4"
+              className="w-full h-full p-2 sm:p-4"
               style={{
                 minHeight: '100%',
                 backgroundColor: 'white'

@@ -6,11 +6,11 @@ import { CoverLetterPreview } from "@/components/cover-letter/cover-letter-previ
 
 export default function CoverLetterPage() {
   return (
-    <div className="flex flex-1 flex-col gap-4 p-2 sm:p-4">
+    <div className="flex flex-1 flex-col gap-3 sm:gap-4 p-2 sm:p-4">
       <CoverLetterHeader />
       
       {/* Mobile Layout: Stacked */}
-      <div className="lg:hidden space-y-6">
+      <div className="lg:hidden space-y-4 sm:space-y-6">
         <CoverLetterForm />
         <CoverLetterPreview />
       </div>

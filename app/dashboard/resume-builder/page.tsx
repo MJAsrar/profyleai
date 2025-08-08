@@ -202,9 +202,9 @@ export default function ResumeBuilderPage() {
         />
       </MotionWrapper>
 
-      <div className="mt-6">
+      <div className="mt-4 sm:mt-6">
         {/* Mobile Layout: Stacked */}
-        <div className="xl:hidden space-y-8">
+        <div className="xl:hidden space-y-4 sm:space-y-6 lg:space-y-8">
           <MotionWrapper animation="slide-in-up" delay={200}>
             <ResumeForm />
           </MotionWrapper>

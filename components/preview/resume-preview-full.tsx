@@ -153,34 +153,34 @@ export function ResumePreviewFull() {
     <div className="space-y-8">
       {/* Action Bar */}
       <Card className="card-elevated">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between">
+        <CardContent className="p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-slate-600 to-slate-700 text-white">
-                <Download className="h-5 w-5" />
+              <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-lg bg-gradient-to-br from-slate-600 to-slate-700 text-white">
+                <Download className="h-4 w-4 sm:h-5 sm:w-5" />
               </div>
               <div>
-                <h1 className="text-xl font-semibold">Resume Preview</h1>
-                <p className="text-sm text-muted-foreground">View and export your resume</p>
+                <h1 className="text-lg sm:text-xl font-semibold">Resume Preview</h1>
+                <p className="text-xs sm:text-sm text-muted-foreground">View and export your resume</p>
               </div>
             </div>
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-2 sm:gap-3">
               <Link href="/dashboard/resume-builder">
-                <Button variant="outline" className="h-10 px-4">
-                  <Edit className="mr-2 h-4 w-4" />
+                <Button variant="outline" className="h-9 px-3 sm:h-10 sm:px-4 text-sm">
+                  <Edit className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
                   Edit
                 </Button>
               </Link>
-              <Button variant="outline" className="h-10 px-4">
-                <Share className="mr-2 h-4 w-4" />
+              <Button variant="outline" className="h-9 px-3 sm:h-10 sm:px-4 text-sm">
+                <Share className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
                 Share
               </Button>
               <Button 
                 onClick={handleExportPDF} 
                 disabled={isExporting}
-                className="h-10 px-4 btn-gradient"
+                className="h-9 px-3 sm:h-10 sm:px-4 btn-gradient text-sm"
               >
-                <Download className="mr-2 h-4 w-4" />
+                <Download className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
                 {isExporting ? "Exporting..." : "Download PDF"}
               </Button>
             </div>
@@ -189,7 +189,7 @@ export function ResumePreviewFull() {
       </Card>
 
       {/* Resume Content */}
-      <div id="resume-preview-full" className="w-full min-h-screen bg-muted/30 rounded-xl p-8 shadow-soft">
+      <div id="resume-preview-full" className="w-full min-h-screen bg-muted/30 rounded-xl p-3 sm:p-6 lg:p-8 shadow-soft">
         <EnhancedResumeRenderer 
           template={selectedTemplate} 
           data={resumeData}

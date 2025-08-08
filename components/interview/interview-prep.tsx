@@ -966,49 +966,54 @@ export function InterviewPrep() {
 
       {/* Main Interview Prep Tabs - Only show in new or existing view */}
       {(currentView === 'new' || currentView === 'existing') && (
-        <Tabs defaultValue="practice" className="space-y-8">
+        <Tabs defaultValue="practice" className="space-y-6 sm:space-y-8">
           <div className="bg-gradient-to-r from-muted/50 via-muted/30 to-muted/50 rounded-xl p-2">
-            <TabsList className="grid w-full grid-cols-5 bg-transparent border-0 gap-2">
+            <TabsList className="grid w-full grid-cols-5 bg-transparent border-0 gap-1 sm:gap-2">
               <TabsTrigger 
                 value="practice" 
-                className="data-[state=active]:bg-background data-[state=active]:shadow-md rounded-lg py-3 px-4 text-sm font-medium transition-all"
+                className="data-[state=active]:bg-background data-[state=active]:shadow-md rounded-lg py-2 px-2 sm:py-3 sm:px-4 text-xs sm:text-sm font-medium transition-all"
               >
-                <MessageSquare className="h-4 w-4 mr-2" />
-                Practice Questions
+                <MessageSquare className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Practice Questions</span>
+                <span className="sm:hidden">Practice</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="mock" 
-                className="data-[state=active]:bg-background data-[state=active]:shadow-md rounded-lg py-3 px-4 text-sm font-medium transition-all"
+                className="data-[state=active]:bg-background data-[state=active]:shadow-md rounded-lg py-2 px-2 sm:py-3 sm:px-4 text-xs sm:text-sm font-medium transition-all"
               >
-                <Play className="h-4 w-4 mr-2" />
-                Mock Interview
+                <Play className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Mock Interview</span>
+                <span className="sm:hidden">Mock</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="behavioral" 
-                className="data-[state=active]:bg-background data-[state=active]:shadow-md rounded-lg py-3 px-4 text-sm font-medium transition-all"
+                className="data-[state=active]:bg-background data-[state=active]:shadow-md rounded-lg py-2 px-2 sm:py-3 sm:px-4 text-xs sm:text-sm font-medium transition-all"
               >
-                <Brain className="h-4 w-4 mr-2" />
-                Behavioral Coaching
+                <Brain className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Behavioral Coaching</span>
+                <span className="sm:hidden">Behavioral</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="company" 
-                className="data-[state=active]:bg-background data-[state=active]:shadow-md rounded-lg py-3 px-4 text-sm font-medium transition-all"
+                className="data-[state=active]:bg-background data-[state=active]:shadow-md rounded-lg py-2 px-2 sm:py-3 sm:px-4 text-xs sm:text-sm font-medium transition-all"
               >
-                <Building className="h-4 w-4 mr-2" />
-                Company Research
+                <Building className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Company Research</span>
+                <span className="sm:hidden">Company</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="progress" 
-                className="data-[state=active]:bg-background data-[state=active]:shadow-md rounded-lg py-3 px-4 text-sm font-medium transition-all"
+                className="data-[state=active]:bg-background data-[state=active]:shadow-md rounded-lg py-2 px-2 sm:py-3 sm:px-4 text-xs sm:text-sm font-medium transition-all"
               >
-                <TrendingUp className="h-4 w-4 mr-2" />
-                Progress
+                <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Progress</span>
+                <span className="sm:hidden">Progress</span>
               </TabsTrigger>
             </TabsList>
           </div>
 
         {/* Practice Questions Tab */}
-        <TabsContent value="practice" className="space-y-6">
+        <TabsContent value="practice" className="space-y-4 sm:space-y-6">
           {questions.length === 0 ? (
             <Card className="border-0 shadow-lg">
               <CardContent className="p-12">

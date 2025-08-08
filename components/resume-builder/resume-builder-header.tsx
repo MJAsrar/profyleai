@@ -133,32 +133,32 @@ export function ResumeBuilderHeader({ onChangeTemplate, onBack }: ResumeBuilderH
   }
 
   return (
-    <header className="flex h-16 shrink-0 items-center gap-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="flex h-16 shrink-0 items-center gap-2 sm:gap-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 overflow-hidden">
       {/* Left Section */}
-      <div className="flex items-center gap-3 px-4">
+      <div className="flex items-center gap-2 sm:gap-3 px-2 sm:px-4 min-w-0">
         <SidebarTrigger className="-ml-1" />
         <Separator orientation="vertical" className="h-4" />
         {onBack && (
-          <Button variant="ghost" size="sm" onClick={onBack} className="gap-2 px-2">
+          <Button variant="ghost" size="sm" onClick={onBack} className="gap-1 sm:gap-2 px-1 sm:px-2">
             <ArrowLeft className="h-4 w-4" />
-            Back
+            <span className="hidden sm:inline">Back</span>
           </Button>
         )}
-        <div className="flex flex-col">
-          <h1 className="text-sm font-semibold">Resume Builder</h1>
-          <p className="text-xs text-muted-foreground">Create your professional resume</p>
+        <div className="flex flex-col min-w-0">
+          <h1 className="text-sm font-semibold truncate">Resume Builder</h1>
+          <p className="text-xs text-muted-foreground truncate hidden sm:block">Create your professional resume</p>
         </div>
       </div>
 
-      {/* Center Section - Simplified Progress */}
-      <div className="flex-1 max-w-sm mx-6">
-        <div className="flex items-center gap-3">
+      {/* Center Section - Progress (hidden on very small screens) */}
+      <div className="hidden md:flex flex-1 max-w-sm mx-2 lg:mx-6">
+        <div className="flex items-center gap-2 sm:gap-3 w-full">
           <div className="flex-1">
             <Progress value={completionPercentage} className="h-1.5" />
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2">
             <span className="text-xs font-medium text-muted-foreground">{completionPercentage}%</span>
-            <Badge variant={completionPercentage >= 80 ? "default" : "secondary"} className="text-xs py-0 px-2">
+            <Badge variant={completionPercentage >= 80 ? "default" : "secondary"} className="text-xs py-0 px-1 sm:px-2">
               {completionPercentage >= 80 ? "Ready" : "Draft"}
             </Badge>
           </div>
@@ -166,17 +166,17 @@ export function ResumeBuilderHeader({ onChangeTemplate, onBack }: ResumeBuilderH
       </div>
 
       {/* Right Section - Action Buttons */}
-      <div className="flex items-center gap-2 px-4">
+      <div className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4">
         {/* Save Status Indicator */}
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground mr-2">
+        <div className="hidden lg:flex items-center gap-1.5 text-xs text-muted-foreground mr-2">
           {getSaveStatusIcon()}
-          <span className="hidden sm:inline">{getSaveStatusText()}</span>
+          <span>{getSaveStatusText()}</span>
         </div>
 
         {onChangeTemplate && (
-          <Button variant="outline" size="sm" onClick={onChangeTemplate} className="px-3">
+          <Button variant="outline" size="sm" onClick={onChangeTemplate} className="px-2 sm:px-3">
             <Palette className="h-4 w-4" />
-            <span className="hidden sm:ml-2 sm:inline">Template</span>
+            <span className="hidden lg:ml-2 lg:inline">Template</span>
           </Button>
         )}
 
@@ -185,28 +185,28 @@ export function ResumeBuilderHeader({ onChangeTemplate, onBack }: ResumeBuilderH
           size="sm" 
           onClick={handleSave}
           disabled={!hasUnsavedChanges || isSaving}
-          className="px-3"
+          className="px-2 sm:px-3"
         >
           {isSaving ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
             <Save className="h-4 w-4" />
           )}
-          <span className="hidden sm:ml-2 sm:inline">Save</span>
+          <span className="hidden lg:ml-2 lg:inline">Save</span>
         </Button>
         
         <Button 
           size="sm" 
           onClick={handleExportPDF}
           disabled={isExporting || completionPercentage < 50}
-          className="px-3"
+          className="px-2 sm:px-3"
         >
           {isExporting ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
             <Download className="h-4 w-4" />
           )}
-          <span className="hidden sm:ml-2 sm:inline">Export</span>
+          <span className="hidden lg:ml-2 lg:inline">Export</span>
         </Button>
       </div>
     </header>

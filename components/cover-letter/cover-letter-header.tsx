@@ -54,47 +54,51 @@ export function CoverLetterHeader() {
   }
 
   return (
-    <header className="flex h-16 shrink-0 items-center gap-2 border-b">
-      <div className="flex items-center gap-2 px-3">
+    <header className="flex h-16 shrink-0 items-center gap-2 border-b overflow-hidden">
+      <div className="flex items-center gap-2 px-2 sm:px-3 min-w-0">
         <SidebarTrigger className="-ml-1" />
-        <Separator orientation="vertical" className="mr-2 h-4" />
-        <Breadcrumb>
-          <BreadcrumbList>
-            <BreadcrumbItem>
-              <BreadcrumbLink href="/dashboard">Dashboard</BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbItem>
-              <BreadcrumbPage>Cover Letter</BreadcrumbPage>
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb>
+        <Separator orientation="vertical" className="mr-1 sm:mr-2 h-4" />
+        <div className="min-w-0">
+          <Breadcrumb>
+            <BreadcrumbList className="flex-wrap">
+              <BreadcrumbItem>
+                <BreadcrumbLink href="/dashboard" className="text-xs sm:text-sm">Dashboard</BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbItem>
+                <BreadcrumbPage className="text-xs sm:text-sm truncate">Cover Letter</BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+        </div>
       </div>
 
-      <div className="ml-auto flex items-center gap-2 px-3">
+      <div className="ml-auto flex items-center gap-1 sm:gap-2 px-2 sm:px-3">
         <Button 
           variant="outline" 
           size="sm" 
           onClick={generateAIContent}
           disabled={isGenerating}
+          className="px-2 sm:px-3"
         >
           {isGenerating ? (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
-            <Sparkles className="mr-2 h-4 w-4" />
+            <Sparkles className="h-4 w-4" />
           )}
-          {isGenerating ? 'Generating...' : 'Generate with AI'}
+          <span className="hidden sm:ml-2 sm:inline">{isGenerating ? 'Generating...' : 'Generate with AI'}</span>
         </Button>
         <Button 
           size="sm" 
           onClick={handleExportPDF}
           disabled={isExporting}
+          className="px-2 sm:px-3"
         >
           {isExporting ? (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
-            <Download className="mr-2 h-4 w-4" />
+            <Download className="h-4 w-4" />
           )}
-          {isExporting ? 'Exporting...' : 'Export PDF'}
+          <span className="hidden sm:ml-2 sm:inline">{isExporting ? 'Exporting...' : 'Export PDF'}</span>
         </Button>
       </div>
     </header>

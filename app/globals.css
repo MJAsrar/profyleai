@@ -97,6 +97,15 @@
   .smooth-transition {
     @apply transition-all duration-200 ease-in-out;
   }
+
+  /* Hide scrollbar utility (used for horizontal tab lists on mobile) */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
   
   .hover-lift {
     @apply smooth-transition hover:scale-[1.02] hover:shadow-lg;
@@ -307,7 +316,7 @@
   }
   
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground overflow-x-hidden;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
   

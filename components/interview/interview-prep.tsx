@@ -682,7 +682,7 @@ export function InterviewPrep() {
   const currentQuestion = questions[currentQuestionIndex]
 
   return (
-    <div className="relative space-y-8">
+    <div className="relative space-y-8 overflow-x-hidden">
       {/* Interview Prep List/Selection */}
       {currentView === 'list' && (
         <div className="space-y-6">
@@ -806,15 +806,15 @@ export function InterviewPrep() {
 
       {/* Back Button for existing/new views */}
       {(currentView === 'existing' || currentView === 'new') && (
-        <div className="flex items-center gap-4 mb-6">
-          <Button variant="outline" onClick={() => setCurrentView('list')} className="shadow-md hover:shadow-lg transition-shadow">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mb-6">
+          <Button variant="outline" onClick={() => setCurrentView('list')} className="shadow-md hover:shadow-lg transition-shadow w-full sm:w-auto">
             <ChevronLeft className="mr-2 h-4 w-4" />
-            Back to Interview Preparations
+            <span className="truncate">Back to Interview Preparations</span>
           </Button>
-          <div className="h-6 w-px bg-border"></div>
+          <div className="hidden sm:block h-6 w-px bg-border"></div>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Target className="h-4 w-4" />
-            Setting up your interview preparation
+            <span className="truncate">Setting up your interview preparation</span>
           </div>
         </div>
       )}
@@ -937,16 +937,16 @@ export function InterviewPrep() {
       {(currentView === 'new' || currentView === 'existing') && questions.length > 0 && (
         <Card className="border-0 shadow-md">
           <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="p-2 bg-primary/10 rounded-lg">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+              <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
+                <div className="p-2 bg-primary/10 rounded-lg flex-shrink-0">
                   <Building className="h-4 w-4 text-primary" />
                 </div>
-                <div>
-                  <h3 className="font-semibold text-lg">{jobData.jobTitle}</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {jobData.companyName} • {jobData.experienceLevel} level
-                    {jobData.industry && ` • ${jobData.industry}`}
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-semibold text-base sm:text-lg truncate">{jobData.jobTitle}</h3>
+                  <p className="text-sm text-muted-foreground truncate">
+                    <span className="truncate">{jobData.companyName}</span> • {jobData.experienceLevel} level
+                    {jobData.industry && <span> • {jobData.industry}</span>}
                   </p>
                 </div>
               </div>
@@ -954,10 +954,10 @@ export function InterviewPrep() {
                 variant="outline" 
                 size="sm"
                 onClick={() => setQuestions([])}
-                className="shadow-sm hover:shadow-md transition-shadow"
+                className="shadow-sm hover:shadow-md transition-shadow w-full sm:w-auto flex-shrink-0"
               >
                 <Target className="mr-2 h-4 w-4" />
-                Edit Company Info
+                <span className="truncate">Edit Company Info</span>
               </Button>
             </div>
           </CardContent>
@@ -1073,11 +1073,11 @@ export function InterviewPrep() {
                     </div>
                   </div>
                 </CardHeader>
-                <CardContent className="p-8 space-y-6">
-                  <div className="p-6 bg-gradient-to-br from-primary/5 to-secondary/5 rounded-xl border border-primary/10">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-lg mb-2 text-foreground">{currentQuestion?.question}</h3>
+                <CardContent className="p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-6">
+                  <div className="p-4 sm:p-6 bg-gradient-to-br from-primary/5 to-secondary/5 rounded-xl border border-primary/10">
+                    <div className="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-4">
+                      <div className="min-w-0 flex-1">
+                        <h3 className="font-semibold text-base sm:text-lg mb-2 text-foreground leading-relaxed break-words">{currentQuestion?.question}</h3>
                         <p className="text-sm text-muted-foreground">
                           Category: {getCategoryDisplayName(currentQuestion?.category)} • Difficulty: {currentQuestion?.difficulty}
                         </p>
@@ -1086,10 +1086,10 @@ export function InterviewPrep() {
                         variant="outline" 
                         size="sm"
                         onClick={() => setShowHints(!showHints)}
-                        className="ml-4 shadow-sm hover:shadow-md transition-shadow"
+                        className="shadow-sm hover:shadow-md transition-shadow w-full sm:w-auto flex-shrink-0"
                       >
                         <Lightbulb className="mr-2 h-4 w-4" />
-                        {showHints ? 'Hide Hints' : 'Show Hints'}
+                        <span className="truncate">{showHints ? 'Hide Hints' : 'Show Hints'}</span>
                       </Button>
                     </div>
                   </div>
@@ -1646,12 +1646,12 @@ export function InterviewPrep() {
                 {isResearchingCompany ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Researching Company...
+                    <span className="truncate">Researching Company...</span>
                   </>
                 ) : (
                   <>
                     <Building className="mr-2 h-4 w-4" />
-                    Research {jobData.companyName || 'Company'}
+                    <span className="truncate">Research {jobData.companyName || 'Company'}</span>
                   </>
                 )}
               </Button>

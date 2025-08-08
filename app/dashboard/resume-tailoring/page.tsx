@@ -96,6 +96,11 @@ export default function ResumeTailoringPage() {
     }
   }
 
+  const handleEditJobDetails = () => {
+    setShowPreview(false)
+    setError(null)
+  }
+
   return (
     <PageContainer maxWidth="7xl" padding="lg" className="min-h-screen">
       <MotionWrapper animation="fade-in-down">
@@ -134,24 +139,14 @@ export default function ResumeTailoringPage() {
             <JobInputForm onSubmit={handleJobSubmit} />
           </MotionWrapper>
         ) : (
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-            <MotionWrapper animation="slide-in-left" delay={300}>
-              <JobInputForm 
-                onSubmit={handleJobSubmit} 
-                initialData={jobData}
-                showPreview={true}
-              />
-            </MotionWrapper>
-            <MotionWrapper animation="slide-in-right" delay={500}>
-              <div className="xl:sticky xl:top-6 h-fit">
-                <TailoredResumePreview 
-                  jobData={jobData} 
-                  tailoringData={tailoringData}
-                  resumeData={resumeData}
-                />
-              </div>
-            </MotionWrapper>
-          </div>
+          <MotionWrapper animation="fade-in-up" delay={300}>
+            <TailoredResumePreview 
+              jobData={jobData} 
+              tailoringData={tailoringData}
+              resumeData={resumeData}
+              onEditJobDetails={handleEditJobDetails}
+            />
+          </MotionWrapper>
         )}
       </div>
     </PageContainer>

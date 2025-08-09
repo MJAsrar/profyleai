@@ -25,15 +25,15 @@ export function ChromeExtensionBanner() {
                       <Chrome className="h-6 w-6 text-blue-600 dark:text-blue-400" />
                     </div>
                     <div className="flex items-center gap-2">
-                      <Sparkles className="h-4 w-4 text-yellow-500" />
-                      <span className="text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 px-3 py-1 rounded-full">
-                        Coming Soon
+                      <Sparkles className="h-4 w-4 text-green-500" />
+                      <span className="text-sm font-medium text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30 px-3 py-1 rounded-full">
+                        Available Now
                       </span>
                     </div>
                   </div>
                   
                   <h2 className="text-3xl font-bold tracking-tight mb-4">
-                    Instant Resume Tailoring Extension
+                    Chrome Extension Now Available!
                   </h2>
                   
                   <p className="text-lg text-muted-foreground mb-6 max-w-2xl">
@@ -42,11 +42,13 @@ export function ChromeExtensionBanner() {
                   </p>
                   
                   <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
-                    <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white">
-                      <Chrome className="mr-2 h-4 w-4" />
-                      Get Notified
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
+                    <Link href="https://chromewebstore.google.com/detail/profyle-job-tailoring-ass/pefncjpobdnoiodnooiefjlcboblpnlf" target="_blank" rel="noopener noreferrer">
+                      <Button size="lg" className="bg-green-600 hover:bg-green-700 text-white hover-lift">
+                        <Chrome className="mr-2 h-4 w-4" />
+                        Try Chrome Extension Now
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </Button>
+                    </Link>
                     
                     <Link href="/dashboard">
                       <Button variant="outline" size="lg" className="border-blue-200 hover:bg-blue-50 dark:border-blue-800 dark:hover:bg-blue-950/20">

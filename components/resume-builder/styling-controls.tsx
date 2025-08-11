@@ -15,9 +15,10 @@ import { MotionWrapper } from '@/components/ui/motion-wrapper'
 interface StylingControlsProps {
   showEditFormButton?: boolean
   onEditForm?: () => void
+  centered?: boolean
 }
 
-export function StylingControls({ showEditFormButton = false, onEditForm }: StylingControlsProps = {}) {
+export function StylingControls({ showEditFormButton = false, onEditForm, centered = false }: StylingControlsProps = {}) {
   const { resumeData, currentStep } = useResumeStore()
   const [showFontControls, setShowFontControls] = useState(false)
   const [showSpacingControls, setShowSpacingControls] = useState(false)
@@ -31,9 +32,9 @@ export function StylingControls({ showEditFormButton = false, onEditForm }: Styl
 
   return (
     <MotionWrapper animation="fade-in-up" delay={100}>
-      <div className="space-y-4">
+      <div className={`space-y-4 ${centered ? 'text-center' : ''}`}>
         {/* Control Buttons */}
-        <div className="flex gap-3 flex-wrap">
+        <div className="flex gap-3 flex-wrap justify-center">
           {showEditFormButton && (
             <Button
               variant="secondary"

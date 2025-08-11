@@ -43,7 +43,7 @@ export function ResumeForm({ onFormComplete }: ResumeFormProps = {}) {
     }
   }
 
-  const handleFinish = () => {
+  const handleFinish = async () => {
     // Call the completion handler if provided
     if (onFormComplete) {
       onFormComplete()

@@ -30,6 +30,7 @@ export default function ResumeBuilderPage() {
     loadTemplates, 
     createNewResume,
     resetToDefaults,
+    saveResume,
     isLoading 
   } = useResumeStore()
   
@@ -141,10 +142,19 @@ export default function ResumeBuilderPage() {
     router.replace('/dashboard/resume-builder', { scroll: false })
   }
 
-  const handleFormComplete = () => {
+  const handleFormComplete = async () => {
     console.log('✅ Resume form completed!')
-    setIsFormCompleted(true)
-    // Here you could also trigger a save operation if needed
+    try {
+      // Save the resume when form is completed
+      await saveResume()
+      console.log('💾 Resume saved successfully!')
+      setIsFormCompleted(true)
+    } catch (error) {
+      console.error('❌ Failed to save resume:', error)
+      // You could show a toast notification here if needed
+      // For now, still mark as completed so user can continue
+      setIsFormCompleted(true)
+    }
   }
 
   const handleEditForm = () => {
@@ -218,38 +228,80 @@ export default function ResumeBuilderPage() {
       <div className="mt-4 sm:mt-6">
         {/* Mobile Layout: Stacked */}
         <div className="xl:hidden space-y-4 sm:space-y-6 lg:space-y-8">
-          {!isFormCompleted && (
-            <MotionWrapper animation="slide-in-up" delay={200}>
-              <ResumeForm onFormComplete={handleFormComplete} />
-            </MotionWrapper>
+          {!isFormCompleted ? (
+            // Form still active - original layout
+            <>
+              <MotionWrapper animation="slide-in-up" delay={200}>
+                <ResumeForm onFormComplete={handleFormComplete} />
+              </MotionWrapper>
+              <MotionWrapper animation="slide-in-up" delay={300}>
+                <StylingControls 
+                  showEditFormButton={isFormCompleted} 
+                  onEditForm={handleEditForm} 
+                />
+              </MotionWrapper>
+              <MotionWrapper animation="slide-in-up" delay={400}>
+                <ResumePreview />
+              </MotionWrapper>
+            </>
+          ) : (
+            // Form completed - centered layout
+            <div className="flex flex-col items-center space-y-6">
+              <MotionWrapper animation="fade-in" delay={100}>
+                <div className="w-full max-w-4xl">
+                  <StylingControls 
+                    showEditFormButton={isFormCompleted} 
+                    onEditForm={handleEditForm}
+                    centered={true}
+                  />
+                </div>
+              </MotionWrapper>
+              <MotionWrapper animation="slide-in-up" delay={200}>
+                <ResumePreview />
+              </MotionWrapper>
+            </div>
           )}
-          <MotionWrapper animation="slide-in-up" delay={300}>
-            <StylingControls 
-              showEditFormButton={isFormCompleted} 
-              onEditForm={handleEditForm} 
-            />
-          </MotionWrapper>
-          <MotionWrapper animation="slide-in-up" delay={400}>
-            <ResumePreview />
-          </MotionWrapper>
         </div>
 
         {/* Desktop Layout: Side by Side */}
-        <div className="hidden xl:grid xl:grid-cols-2 gap-8 min-h-[calc(100vh-12rem)]">
-          <MotionWrapper animation="slide-in-left" delay={300}>
-            <div className="space-y-6">
-              {!isFormCompleted && <ResumeForm onFormComplete={handleFormComplete} />}
-              <StylingControls 
-                showEditFormButton={isFormCompleted} 
-                onEditForm={handleEditForm} 
-              />
+        <div className="hidden xl:block">
+          {!isFormCompleted ? (
+            // Form still active - original side by side layout
+            <div className="grid xl:grid-cols-2 gap-8 min-h-[calc(100vh-12rem)]">
+              <MotionWrapper animation="slide-in-left" delay={300}>
+                <div className="space-y-6">
+                  <ResumeForm onFormComplete={handleFormComplete} />
+                  <StylingControls 
+                    showEditFormButton={isFormCompleted} 
+                    onEditForm={handleEditForm} 
+                  />
+                </div>
+              </MotionWrapper>
+              <MotionWrapper animation="slide-in-right" delay={500}>
+                <div className="sticky top-6 h-fit">
+                  <ResumePreview />
+                </div>
+              </MotionWrapper>
             </div>
-          </MotionWrapper>
-          <MotionWrapper animation="slide-in-right" delay={500}>
-            <div className="sticky top-6 h-fit">
-              <ResumePreview />
+          ) : (
+            // Form completed - centered layout
+            <div className="flex flex-col items-center space-y-8 min-h-[calc(100vh-12rem)]">
+              <MotionWrapper animation="fade-in" delay={100}>
+                <div className="w-full max-w-4xl">
+                  <StylingControls 
+                    showEditFormButton={isFormCompleted} 
+                    onEditForm={handleEditForm}
+                    centered={true}
+                  />
+                </div>
+              </MotionWrapper>
+              <MotionWrapper animation="slide-in-up" delay={200}>
+                <div className="flex justify-center">
+                  <ResumePreview />
+                </div>
+              </MotionWrapper>
             </div>
-          </MotionWrapper>
+          )}
         </div>
       </div>
     </PageContainer>

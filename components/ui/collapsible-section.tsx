@@ -37,16 +37,16 @@ export function CollapsibleSection({
         <Button
           variant="ghost"
           onClick={() => setIsExpanded(!isExpanded)}
-          className="w-full justify-between text-left p-0 h-auto hover:bg-transparent"
+          className="w-full justify-between text-left p-2 h-auto hover:bg-muted/50 rounded-md transition-colors"
         >
           <div className="flex items-center gap-2">
             {icon}
             <h3 className="text-lg font-semibold">{title}</h3>
           </div>
           {isExpanded ? (
-            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+            <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform" />
           ) : (
-            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform" />
           )}
         </Button>
       </CardHeader>

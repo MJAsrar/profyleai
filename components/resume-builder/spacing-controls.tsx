@@ -82,7 +82,7 @@ export function SpacingControls() {
     <CollapsibleSection
       title="Spacing Controls"
       icon={<Move className="h-5 w-5 text-purple-600" />}
-      defaultExpanded={false}
+      defaultExpanded={true}
       className="w-full"
     >
       <div className="space-y-6">

@@ -7,8 +7,7 @@ import { ResumeSelection } from "@/components/resume-builder/resume-selection"
 import { TemplateSelector } from "@/components/resume-builder/template-selector"
 import { ResumeForm } from "@/components/resume-builder/resume-form"
 import { ResumePreview } from "@/components/resume-builder/resume-preview"
-import { FontSizeControls } from "@/components/resume-builder/font-size-controls"
-import { SpacingControls } from "@/components/resume-builder/spacing-controls"
+import { StylingControls } from "@/components/resume-builder/styling-controls"
 import { PageContainer } from "@/components/ui/page-container"
 import { MotionWrapper } from "@/components/ui/motion-wrapper"
 
@@ -210,10 +209,7 @@ export default function ResumeBuilderPage() {
             <ResumeForm />
           </MotionWrapper>
           <MotionWrapper animation="slide-in-up" delay={300}>
-            <FontSizeControls />
-          </MotionWrapper>
-          <MotionWrapper animation="slide-in-up" delay={350}>
-            <SpacingControls />
+            <StylingControls />
           </MotionWrapper>
           <MotionWrapper animation="slide-in-up" delay={400}>
             <ResumePreview />
@@ -225,8 +221,7 @@ export default function ResumeBuilderPage() {
           <MotionWrapper animation="slide-in-left" delay={300}>
             <div className="space-y-6">
               <ResumeForm />
-              <FontSizeControls />
-              <SpacingControls />
+              <StylingControls />
             </div>
           </MotionWrapper>
           <MotionWrapper animation="slide-in-right" delay={500}>

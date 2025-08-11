@@ -91,7 +91,7 @@ export function FontSizeControls() {
     <CollapsibleSection
       title="Font Sizes"
       icon={<Type className="w-5 h-5 text-blue-600" />}
-      defaultExpanded={false}
+      defaultExpanded={true}
       className="w-full"
     >
       <div className="space-y-6">

@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Plus, Trash2, ExternalLink, Sparkles, Loader2 } from "lucide-react"
+import { Plus, Trash2, ExternalLink, Sparkles, Loader2, Edit, Save, X } from "lucide-react"
 import { useResumeStore } from "@/lib/resume-store"
 import { useToast } from "@/hooks/use-toast"
 
@@ -19,6 +19,8 @@ export function CertificationsForm() {
   const [showAddForm, setShowAddForm] = useState(false)
   const [isOptimizing, setIsOptimizing] = useState(false)
   const [optimizingId, setOptimizingId] = useState<string | null>(null)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editData, setEditData] = useState<any>(null)
   const [newCertification, setNewCertification] = useState({
     name: "",
     issuedBy: "",
@@ -52,6 +54,32 @@ export function CertificationsForm() {
       ...newCertification,
       isLifetime: checked,
       expiryDate: checked ? "" : newCertification.expiryDate,
+    })
+  }
+
+  const handleEditCertification = (cert: any) => {
+    setEditingId(cert.id)
+    setEditData({ ...cert })
+  }
+
+  const handleSaveEdit = () => {
+    if (editData && editingId && editData.name && editData.issuedBy && editData.issueDate) {
+      updateCertification(editingId, editData)
+      setEditingId(null)
+      setEditData(null)
+    }
+  }
+
+  const handleCancelEdit = () => {
+    setEditingId(null)
+    setEditData(null)
+  }
+
+  const handleEditLifetimeChange = (checked: boolean) => {
+    setEditData({
+      ...editData,
+      isLifetime: checked,
+      expiryDate: checked ? "" : editData.expiryDate,
     })
   }
 
@@ -262,66 +290,188 @@ export function CertificationsForm() {
         {(resumeData.certifications || []).map((cert) => (
           <Card key={cert.id}>
             <CardContent className="pt-6">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h4 className="font-semibold">{cert.name}</h4>
-                    <span className="text-sm text-muted-foreground">
-                      {formatDate(cert.issueDate)}
-                    </span>
+              {editingId === cert.id ? (
+                // Edit mode
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor={`edit-name-${cert.id}`}>Certification Name *</Label>
+                      <Input
+                        id={`edit-name-${cert.id}`}
+                        value={editData?.name || ""}
+                        onChange={(e) => setEditData({ ...editData, name: e.target.value })}
+                        placeholder="AWS Solutions Architect"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor={`edit-issuedBy-${cert.id}`}>Issued By *</Label>
+                      <Input
+                        id={`edit-issuedBy-${cert.id}`}
+                        value={editData?.issuedBy || ""}
+                        onChange={(e) => setEditData({ ...editData, issuedBy: e.target.value })}
+                        placeholder="Amazon Web Services"
+                      />
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <p className="text-sm font-medium">{cert.issuedBy}</p>
-                    <span className="text-sm text-muted-foreground">
-                      {cert.isLifetime 
-                        ? '• Lifetime' 
-                        : cert.expiryDate 
-                          ? `• Expires ${formatDate(cert.expiryDate)}`
-                          : '• No Expiry'}
-                    </span>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor={`edit-issueDate-${cert.id}`}>Issue Date *</Label>
+                      <Input
+                        id={`edit-issueDate-${cert.id}`}
+                        type="month"
+                        value={editData?.issueDate || ""}
+                        onChange={(e) => setEditData({ ...editData, issueDate: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor={`edit-expiryDate-${cert.id}`}>Expiry Date</Label>
+                      <Input
+                        id={`edit-expiryDate-${cert.id}`}
+                        type="month"
+                        value={editData?.expiryDate || ""}
+                        onChange={(e) => setEditData({ ...editData, expiryDate: e.target.value })}
+                        disabled={editData?.isLifetime}
+                      />
+                    </div>
                   </div>
-                  {cert.credentialId && (
-                    <p className="text-sm text-muted-foreground mb-1">
-                      <strong>Credential ID:</strong> {cert.credentialId}
-                    </p>
-                  )}
-                  {cert.verificationUrl && (
-                    <div className="mb-2">
-                      <a
-                        href={cert.verificationUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-primary hover:underline text-sm flex items-center gap-1"
+
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`edit-isLifetime-${cert.id}`}
+                      checked={editData?.isLifetime || false}
+                      onCheckedChange={handleEditLifetimeChange}
+                    />
+                    <Label htmlFor={`edit-isLifetime-${cert.id}`}>This certification is lifetime</Label>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor={`edit-credentialId-${cert.id}`}>Credential ID</Label>
+                      <Input
+                        id={`edit-credentialId-${cert.id}`}
+                        value={editData?.credentialId || ""}
+                        onChange={(e) => setEditData({ ...editData, credentialId: e.target.value })}
+                        placeholder="ABC123DEF456"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor={`edit-verificationUrl-${cert.id}`}>Verification URL</Label>
+                      <Input
+                        id={`edit-verificationUrl-${cert.id}`}
+                        type="url"
+                        value={editData?.verificationUrl || ""}
+                        onChange={(e) => setEditData({ ...editData, verificationUrl: e.target.value })}
+                        placeholder="https://verify.example.com/123"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor={`edit-description-${cert.id}`}>Description</Label>
+                    <div className="flex gap-2">
+                      <Textarea
+                        id={`edit-description-${cert.id}`}
+                        value={editData?.description || ""}
+                        onChange={(e) => setEditData({ ...editData, description: e.target.value })}
+                        placeholder="Describe what this certification covers and its relevance..."
+                        className="min-h-[80px] flex-1"
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => optimizeCertificationDescription(editData?.name, editData?.description, cert.id)}
+                        disabled={optimizingId === cert.id}
+                        className="self-start"
                       >
-                        <ExternalLink className="h-3 w-3" />
-                        Verify Certificate
-                      </a>
+                        {optimizingId === cert.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Sparkles className="h-4 w-4" />
+                        )}
+                      </Button>
                     </div>
-                  )}
-                  {cert.description && (
-                    <div className="mt-2">
-                      <div className="flex items-start justify-between">
-                        <p className="text-sm text-muted-foreground flex-1 mr-2">{cert.description}</p>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => optimizeCertificationDescription(cert.name, cert.description, cert.id)}
-                          disabled={optimizingId === cert.id}
-                        >
-                          {optimizingId === cert.id ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <Sparkles className="h-4 w-4" />
-                          )}
-                        </Button>
-                      </div>
-                    </div>
-                  )}
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button onClick={handleSaveEdit} size="sm">
+                      <Save className="h-4 w-4 mr-2" />
+                      Save
+                    </Button>
+                    <Button variant="outline" onClick={handleCancelEdit} size="sm">
+                      <X className="h-4 w-4 mr-2" />
+                      Cancel
+                    </Button>
+                  </div>
                 </div>
-                <Button variant="ghost" size="sm" onClick={() => removeCertification(cert.id!)}>
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
+              ) : (
+                // Display mode
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h4 className="font-semibold">{cert.name}</h4>
+                      <span className="text-sm text-muted-foreground">
+                        {formatDate(cert.issueDate)}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <p className="text-sm font-medium">{cert.issuedBy}</p>
+                      <span className="text-sm text-muted-foreground">
+                        {cert.isLifetime 
+                          ? '• Lifetime' 
+                          : cert.expiryDate 
+                            ? `• Expires ${formatDate(cert.expiryDate)}`
+                            : '• No Expiry'}
+                      </span>
+                    </div>
+                    {cert.credentialId && (
+                      <p className="text-sm text-muted-foreground mb-1">
+                        <strong>Credential ID:</strong> {cert.credentialId}
+                      </p>
+                    )}
+                    {cert.verificationUrl && (
+                      <div className="mb-2">
+                        <a
+                          href={cert.verificationUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-primary hover:underline text-sm flex items-center gap-1"
+                        >
+                          <ExternalLink className="h-3 w-3" />
+                          Verify Certificate
+                        </a>
+                      </div>
+                    )}
+                    {cert.description && (
+                      <div className="mt-2">
+                        <div className="flex items-start justify-between">
+                          <p className="text-sm text-muted-foreground flex-1 mr-2">{cert.description}</p>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => optimizeCertificationDescription(cert.name, cert.description, cert.id)}
+                            disabled={optimizingId === cert.id}
+                          >
+                            {optimizingId === cert.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Sparkles className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex gap-1 ml-2">
+                    <Button variant="ghost" size="sm" onClick={() => handleEditCertification(cert)}>
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => removeCertification(cert.id!)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         ))}

@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { ChevronLeft, ChevronRight, Edit3 } from "lucide-react"
+import { ChevronLeft, ChevronRight, Edit3, Save, CheckCircle } from "lucide-react"
 import { PersonalInfoForm } from "./forms/personal-info-form"
 import { SummaryForm } from "./forms/summary-form"
 import { ExperienceForm } from "./forms/experience-form"
@@ -23,7 +23,11 @@ const steps = [
   { id: 6, title: "Certifications", component: CertificationsForm },
 ]
 
-export function ResumeForm() {
+interface ResumeFormProps {
+  onFormComplete?: () => void
+}
+
+export function ResumeForm({ onFormComplete }: ResumeFormProps = {}) {
   const { currentStep, setCurrentStep, resumeData, updateTitle } = useResumeStore()
   const CurrentStepComponent = steps[currentStep].component
 
@@ -38,6 +42,15 @@ export function ResumeForm() {
       setCurrentStep(currentStep - 1)
     }
   }
+
+  const handleFinish = () => {
+    // Call the completion handler if provided
+    if (onFormComplete) {
+      onFormComplete()
+    }
+  }
+
+  const isLastStep = currentStep === steps.length - 1
 
   return (
     <Card>
@@ -77,10 +90,17 @@ export function ResumeForm() {
             <ChevronLeft className="mr-2 h-4 w-4" />
             Previous
           </Button>
-          <Button onClick={nextStep} disabled={currentStep === steps.length - 1}>
-            Next
-            <ChevronRight className="ml-2 h-4 w-4" />
-          </Button>
+          {isLastStep ? (
+            <Button onClick={handleFinish} className="bg-green-600 hover:bg-green-700">
+              <CheckCircle className="mr-2 h-4 w-4" />
+              Finish & Save
+            </Button>
+          ) : (
+            <Button onClick={nextStep}>
+              Next
+              <ChevronRight className="ml-2 h-4 w-4" />
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>

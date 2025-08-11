@@ -8,12 +8,14 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Plus, Trash2, X } from "lucide-react"
+import { Plus, Trash2, X, Edit, Save } from "lucide-react"
 import { useResumeStore } from "@/lib/resume-store"
 
 export function SkillsForm() {
-  const { resumeData, addSkillCategory, removeSkillCategory } = useResumeStore()
+  const { resumeData, addSkillCategory, updateSkillCategory, removeSkillCategory } = useResumeStore()
   const [showAddForm, setShowAddForm] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editData, setEditData] = useState<any>(null)
   const [newCategory, setNewCategory] = useState({
     category: "",
     skills: [] as Array<{ name: string; level?: string }>,
@@ -45,10 +47,54 @@ export function SkillsForm() {
     }
   }
 
+  const handleEditSkillCategory = (skillCategory: any) => {
+    setEditingId(skillCategory.id)
+    setEditData({ 
+      ...skillCategory,
+      skills: skillCategory.skills || skillCategory.items || [] // Support both old and new formats
+    })
+  }
+
+  const handleSaveEdit = () => {
+    if (editData && editingId && editData.category && editData.skills.length > 0) {
+      updateSkillCategory(editingId, editData)
+      setEditingId(null)
+      setEditData(null)
+    }
+  }
+
+  const handleCancelEdit = () => {
+    setEditingId(null)
+    setEditData(null)
+  }
+
+  const handleAddSkillToEdit = () => {
+    if (currentSkill.trim() && editData) {
+      setEditData({
+        ...editData,
+        skills: [...editData.skills, { name: currentSkill.trim() }]
+      })
+      setCurrentSkill("")
+    }
+  }
+
+  const handleRemoveSkillFromEdit = (index: number) => {
+    if (editData) {
+      setEditData({
+        ...editData,
+        skills: editData.skills.filter((_: any, i: number) => i !== index)
+      })
+    }
+  }
+
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
       e.preventDefault()
-      handleAddSkill()
+      if (editingId) {
+        handleAddSkillToEdit()
+      } else {
+        handleAddSkill()
+      }
     }
   }
 
@@ -122,21 +168,84 @@ export function SkillsForm() {
         {resumeData.skills.map((skillCategory) => (
           <Card key={skillCategory.id}>
             <CardContent className="pt-6">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <h4 className="font-semibold mb-2">{skillCategory.category}</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {(skillCategory.skills || (skillCategory as any).items || []).map((skill, index) => (
-                      <Badge key={index} variant="outline">
-                        {typeof skill === 'string' ? skill : skill.name}
-                      </Badge>
-                    ))}
+              {editingId === skillCategory.id ? (
+                // Edit mode
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor={`edit-category-${skillCategory.id}`}>Category Name *</Label>
+                    <Input
+                      id={`edit-category-${skillCategory.id}`}
+                      value={editData?.category || ""}
+                      onChange={(e) => setEditData({ ...editData, category: e.target.value })}
+                      placeholder="e.g., Programming Languages, Tools, etc."
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor={`edit-skill-${skillCategory.id}`}>Add Skills</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id={`edit-skill-${skillCategory.id}`}
+                        value={currentSkill}
+                        onChange={(e) => setCurrentSkill(e.target.value)}
+                        onKeyPress={handleKeyPress}
+                        placeholder="Enter skill name and press Enter"
+                        className="flex-1"
+                      />
+                      <Button onClick={handleAddSkillToEdit} size="sm">
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+
+                  {editData?.skills && editData.skills.length > 0 && (
+                    <div className="space-y-2">
+                      <Label>Skills in this category:</Label>
+                      <div className="flex flex-wrap gap-2">
+                        {editData.skills.map((skill: any, index: number) => (
+                          <Badge key={index} variant="secondary" className="flex items-center gap-1">
+                            {typeof skill === 'string' ? skill : skill.name}
+                            <X className="h-3 w-3 cursor-pointer" onClick={() => handleRemoveSkillFromEdit(index)} />
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex gap-2">
+                    <Button onClick={handleSaveEdit} size="sm">
+                      <Save className="h-4 w-4 mr-2" />
+                      Save
+                    </Button>
+                    <Button variant="outline" onClick={handleCancelEdit} size="sm">
+                      <X className="h-4 w-4 mr-2" />
+                      Cancel
+                    </Button>
                   </div>
                 </div>
-                <Button variant="ghost" size="sm" onClick={() => removeSkillCategory(skillCategory.id)}>
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
+              ) : (
+                // Display mode
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <h4 className="font-semibold mb-2">{skillCategory.category}</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {(skillCategory.skills || (skillCategory as any).items || []).map((skill, index) => (
+                        <Badge key={index} variant="outline">
+                          {typeof skill === 'string' ? skill : skill.name}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="flex gap-1 ml-2">
+                    <Button variant="ghost" size="sm" onClick={() => handleEditSkillCategory(skillCategory)}>
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => removeSkillCategory(skillCategory.id)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         ))}

@@ -8,17 +8,22 @@ import React, { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { FontSizeControls } from './font-size-controls'
 import { SpacingControls } from './spacing-controls'
-import { Type, Move } from 'lucide-react'
+import { Type, Move, Edit } from 'lucide-react'
 import { useResumeStore } from '@/lib/resume-store'
 import { MotionWrapper } from '@/components/ui/motion-wrapper'
 
-export function StylingControls() {
+interface StylingControlsProps {
+  showEditFormButton?: boolean
+  onEditForm?: () => void
+}
+
+export function StylingControls({ showEditFormButton = false, onEditForm }: StylingControlsProps = {}) {
   const { resumeData, currentStep } = useResumeStore()
   const [showFontControls, setShowFontControls] = useState(false)
   const [showSpacingControls, setShowSpacingControls] = useState(false)
   
-  // Show controls only if user has reached certifications step (6) or has certifications
-  const shouldShowControls = currentStep >= 6 || resumeData.certifications.length > 0
+  // Show controls under all sections (always show them)
+  const shouldShowControls = true
   
   if (!shouldShowControls) {
     return null
@@ -29,6 +34,17 @@ export function StylingControls() {
       <div className="space-y-4">
         {/* Control Buttons */}
         <div className="flex gap-3 flex-wrap">
+          {showEditFormButton && (
+            <Button
+              variant="secondary"
+              onClick={onEditForm}
+              className="flex items-center gap-2"
+            >
+              <Edit className="h-4 w-4" />
+              Edit Resume Form
+            </Button>
+          )}
+          
           <Button
             variant={showFontControls ? "default" : "outline"}
             onClick={() => {

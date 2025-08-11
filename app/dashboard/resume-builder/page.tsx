@@ -18,6 +18,7 @@ export default function ResumeBuilderPage() {
   const [showResumeSelection, setShowResumeSelection] = useState(false)
   const [isInitialized, setIsInitialized] = useState(false)
   const [templatesLoaded, setTemplatesLoaded] = useState(false)
+  const [isFormCompleted, setIsFormCompleted] = useState(false)
   
   const { 
     resumeData, 
@@ -134,9 +135,21 @@ export default function ResumeBuilderPage() {
     console.log('⬅️ Going back to resume selection...')
     setShowResumeSelection(true)
     setShowTemplateSelector(false)
+    setIsFormCompleted(false)
     resetToDefaults()
     // Clear URL params - this will trigger re-initialization through the URL params useEffect
     router.replace('/dashboard/resume-builder', { scroll: false })
+  }
+
+  const handleFormComplete = () => {
+    console.log('✅ Resume form completed!')
+    setIsFormCompleted(true)
+    // Here you could also trigger a save operation if needed
+  }
+
+  const handleEditForm = () => {
+    console.log('📝 Reopening form for editing...')
+    setIsFormCompleted(false)
   }
 
   // Show loading state while initializing
@@ -205,11 +218,16 @@ export default function ResumeBuilderPage() {
       <div className="mt-4 sm:mt-6">
         {/* Mobile Layout: Stacked */}
         <div className="xl:hidden space-y-4 sm:space-y-6 lg:space-y-8">
-          <MotionWrapper animation="slide-in-up" delay={200}>
-            <ResumeForm />
-          </MotionWrapper>
+          {!isFormCompleted && (
+            <MotionWrapper animation="slide-in-up" delay={200}>
+              <ResumeForm onFormComplete={handleFormComplete} />
+            </MotionWrapper>
+          )}
           <MotionWrapper animation="slide-in-up" delay={300}>
-            <StylingControls />
+            <StylingControls 
+              showEditFormButton={isFormCompleted} 
+              onEditForm={handleEditForm} 
+            />
           </MotionWrapper>
           <MotionWrapper animation="slide-in-up" delay={400}>
             <ResumePreview />
@@ -220,8 +238,11 @@ export default function ResumeBuilderPage() {
         <div className="hidden xl:grid xl:grid-cols-2 gap-8 min-h-[calc(100vh-12rem)]">
           <MotionWrapper animation="slide-in-left" delay={300}>
             <div className="space-y-6">
-              <ResumeForm />
-              <StylingControls />
+              {!isFormCompleted && <ResumeForm onFormComplete={handleFormComplete} />}
+              <StylingControls 
+                showEditFormButton={isFormCompleted} 
+                onEditForm={handleEditForm} 
+              />
             </div>
           </MotionWrapper>
           <MotionWrapper animation="slide-in-right" delay={500}>

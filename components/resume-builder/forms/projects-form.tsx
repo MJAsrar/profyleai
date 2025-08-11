@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Plus, Trash2, X, Sparkles, Loader2 } from "lucide-react"
+import { Plus, Trash2, X, Sparkles, Loader2, Edit, Save } from "lucide-react"
 import { useResumeStore } from "@/lib/resume-store"
 import { useToast } from "@/hooks/use-toast"
 
@@ -19,6 +19,8 @@ export function ProjectsForm() {
   const [showAddForm, setShowAddForm] = useState(false)
   const [isOptimizing, setIsOptimizing] = useState(false)
   const [optimizingId, setOptimizingId] = useState<string | null>(null)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editData, setEditData] = useState<any>(null)
   const [newProject, setNewProject] = useState({
     name: "",
     description: "",
@@ -57,10 +59,51 @@ export function ProjectsForm() {
     }
   }
 
+  const handleEditProject = (project: any) => {
+    setEditingId(project.id)
+    setEditData({ ...project })
+  }
+
+  const handleSaveEdit = () => {
+    if (editData && editingId && editData.name && editData.description) {
+      updateProject(editingId, editData)
+      setEditingId(null)
+      setEditData(null)
+    }
+  }
+
+  const handleCancelEdit = () => {
+    setEditingId(null)
+    setEditData(null)
+  }
+
+  const handleAddTechnologyToEdit = () => {
+    if (currentTech.trim() && editData) {
+      setEditData({
+        ...editData,
+        technologies: [...editData.technologies, currentTech.trim()]
+      })
+      setCurrentTech("")
+    }
+  }
+
+  const handleRemoveTechnologyFromEdit = (index: number) => {
+    if (editData) {
+      setEditData({
+        ...editData,
+        technologies: editData.technologies.filter((_: string, i: number) => i !== index)
+      })
+    }
+  }
+
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
       e.preventDefault()
-      handleAddTechnology()
+      if (editingId) {
+        handleAddTechnologyToEdit()
+      } else {
+        handleAddTechnology()
+      }
     }
   }
 
@@ -237,29 +280,46 @@ export function ProjectsForm() {
         {resumeData.projects.map((project) => (
           <Card key={project.id}>
             <CardContent className="pt-6">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <h4 className="font-semibold">{project.name}</h4>
-                    {project.url && (
-                      <a
-                        href={project.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-primary hover:underline text-sm"
-                      >
-                        View Project
-                      </a>
-                    )}
+              {editingId === project.id ? (
+                // Edit mode
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor={`edit-name-${project.id}`}>Project Name *</Label>
+                    <Input
+                      id={`edit-name-${project.id}`}
+                      value={editData?.name || ""}
+                      onChange={(e) => setEditData({ ...editData, name: e.target.value })}
+                      placeholder="My Awesome Project"
+                    />
                   </div>
-                  <div className="mb-2">
-                    <div className="flex items-start justify-between">
-                      <p className="text-sm text-muted-foreground flex-1 mr-2">{project.description}</p>
+
+                  <div className="space-y-2">
+                    <Label htmlFor={`edit-url-${project.id}`}>Project URL</Label>
+                    <Input
+                      id={`edit-url-${project.id}`}
+                      type="url"
+                      value={editData?.url || ""}
+                      onChange={(e) => setEditData({ ...editData, url: e.target.value })}
+                      placeholder="https://github.com/username/project"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor={`edit-description-${project.id}`}>Description *</Label>
+                    <div className="flex gap-2">
+                      <Textarea
+                        id={`edit-description-${project.id}`}
+                        value={editData?.description || ""}
+                        onChange={(e) => setEditData({ ...editData, description: e.target.value })}
+                        placeholder="Describe what the project does, technologies used, and your contributions..."
+                        className="min-h-[100px] flex-1"
+                      />
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => optimizeProjectDescription(project.name, project.description, project.id)}
+                        onClick={() => optimizeProjectDescription(editData?.name, editData?.description, project.id)}
                         disabled={optimizingId === project.id}
+                        className="self-start"
                       >
                         {optimizingId === project.id ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
@@ -269,20 +329,103 @@ export function ProjectsForm() {
                       </Button>
                     </div>
                   </div>
-                  {project.technologies.length > 0 && (
-                    <div className="flex flex-wrap gap-1">
-                      {project.technologies.map((tech, index) => (
-                        <Badge key={index} variant="outline" className="text-xs">
-                          {tech}
-                        </Badge>
-                      ))}
+
+                  <div className="space-y-2">
+                    <Label htmlFor={`edit-tech-${project.id}`}>Technologies</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id={`edit-tech-${project.id}`}
+                        value={currentTech}
+                        onChange={(e) => setCurrentTech(e.target.value)}
+                        onKeyPress={handleKeyPress}
+                        placeholder="Enter technology and press Enter"
+                        className="flex-1"
+                      />
+                      <Button onClick={handleAddTechnologyToEdit} size="sm">
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+
+                  {editData?.technologies && editData.technologies.length > 0 && (
+                    <div className="space-y-2">
+                      <Label>Technologies:</Label>
+                      <div className="flex flex-wrap gap-2">
+                        {editData.technologies.map((tech: string, index: number) => (
+                          <Badge key={index} variant="secondary" className="flex items-center gap-1">
+                            {tech}
+                            <X className="h-3 w-3 cursor-pointer" onClick={() => handleRemoveTechnologyFromEdit(index)} />
+                          </Badge>
+                        ))}
+                      </div>
                     </div>
                   )}
+
+                  <div className="flex gap-2">
+                    <Button onClick={handleSaveEdit} size="sm">
+                      <Save className="h-4 w-4 mr-2" />
+                      Save
+                    </Button>
+                    <Button variant="outline" onClick={handleCancelEdit} size="sm">
+                      <X className="h-4 w-4 mr-2" />
+                      Cancel
+                    </Button>
+                  </div>
                 </div>
-                <Button variant="ghost" size="sm" onClick={() => removeProject(project.id)}>
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
+              ) : (
+                // Display mode
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <h4 className="font-semibold">{project.name}</h4>
+                      {project.url && (
+                        <a
+                          href={project.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-primary hover:underline text-sm"
+                        >
+                          View Project
+                        </a>
+                      )}
+                    </div>
+                    <div className="mb-2">
+                      <div className="flex items-start justify-between">
+                        <p className="text-sm text-muted-foreground flex-1 mr-2">{project.description}</p>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => optimizeProjectDescription(project.name, project.description, project.id)}
+                          disabled={optimizingId === project.id}
+                        >
+                          {optimizingId === project.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Sparkles className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                    {project.technologies.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {project.technologies.map((tech, index) => (
+                          <Badge key={index} variant="outline" className="text-xs">
+                            {tech}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex gap-1 ml-2">
+                    <Button variant="ghost" size="sm" onClick={() => handleEditProject(project)}>
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => removeProject(project.id)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         ))}

@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Plus, Trash2, Sparkles, Loader2 } from "lucide-react"
+import { Plus, Trash2, Sparkles, Loader2, Edit, Save, X } from "lucide-react"
 import { useResumeStore } from "@/lib/resume-store"
 import { useToast } from "@/hooks/use-toast"
 
@@ -17,6 +17,8 @@ export function ExperienceForm() {
   const [showAddForm, setShowAddForm] = useState(false)
   const [isOptimizing, setIsOptimizing] = useState(false)
   const [optimizingId, setOptimizingId] = useState<string | null>(null)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editData, setEditData] = useState<any>(null)
   const [newExperience, setNewExperience] = useState({
     company: "",
     position: "",
@@ -39,6 +41,24 @@ export function ExperienceForm() {
       })
       setShowAddForm(false)
     }
+  }
+
+  const handleEditExperience = (exp: any) => {
+    setEditingId(exp.id)
+    setEditData({ ...exp })
+  }
+
+  const handleSaveEdit = () => {
+    if (editData && editingId && editData.company && editData.position) {
+      updateExperience(editingId, editData)
+      setEditingId(null)
+      setEditData(null)
+    }
+  }
+
+  const handleCancelEdit = () => {
+    setEditingId(null)
+    setEditData(null)
   }
 
   const optimizeExperienceDescription = async (company: string, position: string, currentDescription: string, experienceId?: string) => {
@@ -217,38 +237,138 @@ export function ExperienceForm() {
         {resumeData.experience.map((exp) => (
           <Card key={exp.id}>
             <CardContent className="pt-6">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <h4 className="font-semibold">{exp.position}</h4>
-                  <p className="text-muted-foreground">{exp.company}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {exp.startDate} - {exp.current ? "Present" : exp.endDate}
-                  </p>
-                  {exp.description && (
-                    <div className="mt-2">
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="text-sm whitespace-pre-line flex-1">{exp.description}</div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => optimizeExperienceDescription(exp.company, exp.position, exp.description, exp.id)}
-                          disabled={optimizingId === exp.id}
-                          className="ml-2"
-                        >
-                          {optimizingId === exp.id ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <Sparkles className="h-4 w-4" />
-                          )}
-                        </Button>
-                      </div>
+              {editingId === exp.id ? (
+                // Edit mode
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor={`edit-position-${exp.id}`}>Position *</Label>
+                      <Input
+                        id={`edit-position-${exp.id}`}
+                        value={editData?.position || ""}
+                        onChange={(e) => setEditData({ ...editData, position: e.target.value })}
+                        placeholder="Software Engineer"
+                      />
                     </div>
-                  )}
+                    <div className="space-y-2">
+                      <Label htmlFor={`edit-company-${exp.id}`}>Company *</Label>
+                      <Input
+                        id={`edit-company-${exp.id}`}
+                        value={editData?.company || ""}
+                        onChange={(e) => setEditData({ ...editData, company: e.target.value })}
+                        placeholder="Company Name"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor={`edit-startDate-${exp.id}`}>Start Date</Label>
+                      <Input
+                        id={`edit-startDate-${exp.id}`}
+                        type="month"
+                        value={editData?.startDate || ""}
+                        onChange={(e) => setEditData({ ...editData, startDate: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor={`edit-endDate-${exp.id}`}>End Date</Label>
+                      <Input
+                        id={`edit-endDate-${exp.id}`}
+                        type="month"
+                        value={editData?.endDate || ""}
+                        onChange={(e) => setEditData({ ...editData, endDate: e.target.value })}
+                        disabled={editData?.current}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`edit-current-${exp.id}`}
+                      checked={editData?.current || false}
+                      onCheckedChange={(checked) => setEditData({ ...editData, current: !!checked, endDate: checked ? "" : editData?.endDate })}
+                    />
+                    <Label htmlFor={`edit-current-${exp.id}`}>I currently work here</Label>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor={`edit-description-${exp.id}`}>Description</Label>
+                    <div className="flex gap-2">
+                      <Textarea
+                        id={`edit-description-${exp.id}`}
+                        value={editData?.description || ""}
+                        onChange={(e) => setEditData({ ...editData, description: e.target.value })}
+                        placeholder="Describe your key responsibilities and achievements..."
+                        className="min-h-[100px] flex-1"
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => optimizeExperienceDescription(editData?.company, editData?.position, editData?.description, exp.id)}
+                        disabled={optimizingId === exp.id}
+                        className="self-start"
+                      >
+                        {optimizingId === exp.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Sparkles className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button onClick={handleSaveEdit} size="sm">
+                      <Save className="h-4 w-4 mr-2" />
+                      Save
+                    </Button>
+                    <Button variant="outline" onClick={handleCancelEdit} size="sm">
+                      <X className="h-4 w-4 mr-2" />
+                      Cancel
+                    </Button>
+                  </div>
                 </div>
-                <Button variant="ghost" size="sm" onClick={() => removeExperience(exp.id)}>
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
+              ) : (
+                // Display mode
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <h4 className="font-semibold">{exp.position}</h4>
+                    <p className="text-muted-foreground">{exp.company}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {exp.startDate} - {exp.current ? "Present" : exp.endDate}
+                    </p>
+                    {exp.description && (
+                      <div className="mt-2">
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="text-sm whitespace-pre-line flex-1">{exp.description}</div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => optimizeExperienceDescription(exp.company, exp.position, exp.description, exp.id)}
+                            disabled={optimizingId === exp.id}
+                            className="ml-2"
+                          >
+                            {optimizingId === exp.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Sparkles className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex gap-1 ml-2">
+                    <Button variant="ghost" size="sm" onClick={() => handleEditExperience(exp)}>
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => removeExperience(exp.id)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         ))}

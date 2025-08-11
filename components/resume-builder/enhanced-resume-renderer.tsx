@@ -44,7 +44,7 @@ export function EnhancedResumeRenderer({
             className="bg-white"
           />
         ) : (
-          <div className="bg-white min-h-[600px] p-8">
+          <div className="bg-white min-h-[600px] px-8 py-2">
             <ResumeTemplateRenderer 
               template={template} 
               data={data} 

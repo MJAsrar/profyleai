@@ -393,7 +393,7 @@ export function DynamicTemplateRenderer({
       // Left sidebar with contact and skills, right main content
       return (
         <>
-          <div key="sidebar" style={{ backgroundColor: '#ffffff', padding: '1.5rem', color: '#1f2937' }}>
+          <div key="sidebar" style={{ backgroundColor: '#ffffff', padding: '0', color: '#1f2937' }}>
             <div style={cssEngine.getElementStyles('name')}>
               {safeData.personalInfo.fullName || 'Your Name'}
             </div>
@@ -406,7 +406,7 @@ export function DynamicTemplateRenderer({
               {renderSkills()}
             </React.Fragment>
           </div>
-          <div key="main-content" style={{ padding: '1.5rem' }}>
+          <div key="main-content" style={{ padding: '0' }}>
             <React.Fragment key="main-summary">
               {renderSummary()}
             </React.Fragment>

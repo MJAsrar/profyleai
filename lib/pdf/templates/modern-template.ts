@@ -92,7 +92,7 @@ export class ModernPDFTemplate extends BasePDFTemplate {
         }] : []),
         // Removed separator line for minimal design
       ],
-      margin: [0, 0, 0, 8] as [number, number, number, number] // Add line spacing after header
+      margin: [0, 0, 0, 0] as [number, number, number, number] // No spacing after header
     }
   }
 

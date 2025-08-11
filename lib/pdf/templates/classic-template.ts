@@ -97,7 +97,7 @@ export class ClassicPDFTemplate extends BasePDFTemplate {
         }] : []),
         // Removed separator line for minimal design
       ],
-      margin: [0, 0, 0, 8] // Add line spacing after header
+      margin: [0, 0, 0, 0] // No spacing after header
     }
   }
 

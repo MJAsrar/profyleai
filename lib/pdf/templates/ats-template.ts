@@ -93,7 +93,7 @@ export class ATSPDFTemplate extends BasePDFTemplate {
 
     return {
       stack: headerContent,
-      margin: [0, 0, 0, 8] // Add line spacing after header
+      margin: [0, 0, 0, 0] // No spacing after header
     }
   }
 

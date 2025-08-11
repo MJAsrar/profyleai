@@ -101,7 +101,7 @@ export class DynamicPDFTemplate {
         border: '#e5e7eb'
       },
       sections: {
-        header: { marginBottom: '1.5rem', paddingBottom: '0rem' }, // Add line spacing after header
+        header: { marginBottom: '0rem', paddingBottom: '0rem' }, // No spacing after header
         section: { marginBottom: '0.75rem' }, // Increased section spacing for better separation
         sectionTitle: { fontWeight: '700', marginBottom: '0.125rem' } // Doubled title spacing
       },

@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label'
 import { Slider } from '@/components/ui/slider'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
-import { RotateCcw, Spacing } from 'lucide-react'
+import { RotateCcw, Move } from 'lucide-react'
 import { 
   useSpacingConfig, 
   useUpdateSpacing, 
@@ -83,7 +83,7 @@ export function SpacingControls() {
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Spacing className="h-5 w-5 text-purple-600" />
+            <Move className="h-5 w-5 text-purple-600" />
             <CardTitle className="text-lg font-semibold">Spacing Controls</CardTitle>
           </div>
           <Button

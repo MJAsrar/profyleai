@@ -662,7 +662,7 @@ export class DynamicPDFTemplate {
       title: {
         ...this.convertElementStyle('title'),
         fontSize: fontSizeToPDF(this.fontConfig.jobTitle),
-        margin: [0, 2, 0, 0] as [number, number, number, number]
+        margin: [0, 0, 0, 0] as [number, number, number, number]
       },
       contact: {
         ...this.convertElementStyle('contact'),

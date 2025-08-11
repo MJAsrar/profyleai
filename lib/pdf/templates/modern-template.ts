@@ -82,7 +82,7 @@ export class ModernPDFTemplate extends BasePDFTemplate {
         ...(data?.personalInfo?.professionalTitle ? [{
           text: data.personalInfo.professionalTitle,
           style: 'professionalTitle',
-          margin: [0, 2, 0, 0] as [number, number, number, number]
+          margin: [0, 0, 0, 0] as [number, number, number, number]
         }] : []),
         // Contact Information - only show if we have contact info
         ...(contactInfo.length > 0 ? [{

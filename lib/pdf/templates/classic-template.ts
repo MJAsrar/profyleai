@@ -84,7 +84,7 @@ export class ClassicPDFTemplate extends BasePDFTemplate {
           text: data.personalInfo.professionalTitle,
           style: 'professionalTitle',
           alignment: 'center',
-          margin: [0, 2, 0, 0]
+          margin: [0, 0, 0, 0]
         }] : []),
         // Contact Information - centered (only if we have contact info)
         ...(contactInfo.length > 0 ? [{

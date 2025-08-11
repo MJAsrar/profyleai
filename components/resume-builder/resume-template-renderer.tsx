@@ -170,9 +170,9 @@ export function ResumeTemplateRenderer({ template, data }: ResumeTemplateRendere
   )
 
   const renderClassicTemplate = () => (
-    <div className="w-full bg-white text-black" style={{ fontFamily: "Times New Roman, serif", padding: "1px", margin: "0" }}>
+    <div className="w-full bg-white text-black" style={{ fontFamily: "Times New Roman, serif", padding: "0", margin: "0" }}>
       {/* Header */}
-      <div className="text-center pb-1 mb-1">
+      <div className="text-center" style={{ margin: "0", padding: "0" }}>
         <h1 className="font-bold mb-0" style={{ fontSize: '17pt' }}>{data.personalInfo.fullName || "Your Name"}</h1>
         <div style={{ fontSize: '7pt' }}>
           {data.personalInfo.email && <span>{data.personalInfo.email} | </span>}
@@ -335,10 +335,10 @@ export function ResumeTemplateRenderer({ template, data }: ResumeTemplateRendere
   )
 
   const renderATSTemplate = () => (
-    <div className="w-full bg-white p-6 text-black" style={{ fontFamily: "LibertinusSerif, Times New Roman, serif", lineHeight: "1.3" }}>
+    <div className="w-full bg-white text-black" style={{ fontFamily: "LibertinusSerif, Times New Roman, serif", lineHeight: "1.3", padding: "0" }}>
       {/* Header - No divider line */}
-      <div className="mb-4">
-        <h1 className="font-bold mb-1" style={{ fontSize: "17pt" }}>
+      <div style={{ margin: "0", padding: "0" }}>
+        <h1 className="font-bold" style={{ fontSize: "17pt", margin: "0", padding: "0" }}>
           {data.personalInfo.fullName || "Your Name"}
         </h1>
         <div style={{ fontSize: "7pt" }}>

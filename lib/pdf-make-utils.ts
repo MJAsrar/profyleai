@@ -147,7 +147,7 @@ export async function exportResumeToPDFMake(
       fontConfig: options.fontConfig,
       filename,
       pageSize: options.pageSize || 'LETTER',
-      margins: options.margins || [40, 60, 40, 60]
+      margins: options.margins || [40, 20, 40, 20]
     }
     console.log('⚙️ PDF options:', pdfOptions)
 
@@ -215,7 +215,7 @@ export async function generateResumePDFBlob(
       template: templateId as 'modern' | 'classic' | 'creative',
       templateData: templateData || undefined,
       pageSize: options.pageSize || 'LETTER',
-      margins: options.margins || [40, 60, 40, 60]
+      margins: options.margins || [40, 20, 40, 20]
     }
 
     // Generate PDF blob

@@ -74,7 +74,7 @@ async function handleDownload(req: NextRequest, { params }: RouteParams, fontCon
     const pdfBlob = await generateResumePDFBlob(resumeData, {
       templateId: resume.template?.id || 'modern',
       pageSize: 'LETTER', // Same as Resume Builder
-      margins: [40, 60, 40, 60], // Same as Resume Builder
+      margins: [40, 20, 40, 20], // Fixed: Match cover letter margins (no header gap)
       fontConfig // Pass through the user's font configuration
     })
     const pdfBuffer = Buffer.from(await pdfBlob.arrayBuffer())

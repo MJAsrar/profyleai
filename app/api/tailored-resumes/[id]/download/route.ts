@@ -105,14 +105,14 @@ async function handleDownload(req: NextRequest, { params }: RouteParams, fontCon
     console.log('🔧 Starting PDF generation with options:', {
       templateId: tailoredResume.template?.id || 'modern',
       pageSize: 'LETTER',
-      margins: [40, 60, 40, 60],
+      margins: [40, 20, 40, 20],
       hasFontConfig: !!fontConfig
     })
     
     const pdfBlob = await generateResumePDFBlob(resumeData, {
       templateId: tailoredResume.template?.id || 'modern',
       pageSize: 'LETTER', // Same as Resume Builder
-      margins: [40, 60, 40, 60], // Same as Resume Builder
+      margins: [40, 20, 40, 20], // Fixed: Match cover letter margins (no header gap)
       fontConfig // Pass through the user's font configuration
     })
     

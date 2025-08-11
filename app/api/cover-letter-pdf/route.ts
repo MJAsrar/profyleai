@@ -416,7 +416,7 @@ function generateCoverLetterDocument(data: CoverLetterData, fontName: string = '
       lineHeight: 1.5
     },
     
-    pageMargins: [72, 20, 72, 72], // Left, Top (minimal), Right, Bottom margins
+    pageMargins: [40, 20, 40, 20], // Left, Top, Right, Bottom margins
     pageSize: 'LETTER',
     
     info: {

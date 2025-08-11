@@ -98,7 +98,7 @@ export async function generateResumePDFBlob(
       templateData: templateData || undefined,
       fontConfig: options.fontConfig,
       pageSize: options.pageSize || 'LETTER', // Same as Resume Builder
-      margins: options.margins || [40, 60, 40, 60] // Same as Resume Builder
+      margins: options.margins || [40, 20, 40, 20] // Same as Resume Builder
     }
     console.log('⚙️ PDF options:', pdfOptions)
 

@@ -361,7 +361,7 @@ export class CSSEngine {
       ...this._cssData.sections.header,
       background: '#ffffff', // Force white background
       color: '#1f2937', // Ensure text is visible
-      marginBottom: '1.5rem', // Add line spacing after header
+      marginBottom: '0rem', // No extra spacing after header
     }
   }
 
@@ -549,7 +549,7 @@ function getDefaultCSSData(fontConfig?: FontSizeConfig): TemplateCSSData {
     },
     sections: {
       header: {
-        marginBottom: '1.5rem', // Add line spacing after header
+        marginBottom: '0rem', // No spacing after header
         paddingBottom: '0rem', // Zero header padding
         // Removed border for minimal design
       },

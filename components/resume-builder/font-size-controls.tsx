@@ -5,12 +5,12 @@
 "use client"
 
 import React, { useMemo, useCallback } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Slider } from '@/components/ui/slider'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
+import { CollapsibleSection } from '@/components/ui/collapsible-section'
 import { RotateCcw, Type } from 'lucide-react'
 import { useFontConfig, useUpdateFontSize, useApplyPreset, useResetToDefaults, getPresetName } from '@/lib/font-config-store'
 import { FontSizeConfig, FONT_SIZE_RANGES, FONT_SIZE_PRESETS } from '@/lib/font-config'
@@ -88,16 +88,17 @@ export function FontSizeControls() {
   }), [fontControls])
 
   return (
-    <Card className="w-full">
-      <CardHeader>
+    <CollapsibleSection
+      title="Font Sizes"
+      icon={<Type className="w-5 h-5 text-blue-600" />}
+      defaultExpanded={false}
+      className="w-full"
+    >
+      <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Type className="w-5 h-5" />
-            <CardTitle>Font Sizes</CardTitle>
-          </div>
-          <div className="flex items-center gap-2">
             {currentPreset && (
-              <Badge variant="secondary" className="text-xs">
+              <Badge variant="secondary" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
                 {currentPreset}
               </Badge>
             )}
@@ -106,20 +107,17 @@ export function FontSizeControls() {
                 Custom
               </Badge>
             )}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={resetToDefaults}
-              className="flex items-center gap-1"
-            >
-              <RotateCcw className="w-3 h-3" />
-              Reset
-            </Button>
           </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={resetToDefaults}
+            className="flex items-center gap-1"
+          >
+            <RotateCcw className="w-3 h-3" />
+            Reset
+          </Button>
         </div>
-      </CardHeader>
-
-      <CardContent className="space-y-6">
         {/* Preset Selection */}
         <div className="space-y-2">
           <Label className="text-sm font-medium">Presets</Label>
@@ -183,8 +181,8 @@ export function FontSizeControls() {
             />
           ))}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </CollapsibleSection>
   )
 }
 

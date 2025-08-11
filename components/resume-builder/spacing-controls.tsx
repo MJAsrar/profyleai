@@ -6,12 +6,12 @@
 "use client"
 
 import React, { useMemo, useCallback } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Slider } from '@/components/ui/slider'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
+import { CollapsibleSection } from '@/components/ui/collapsible-section'
 import { RotateCcw, Move } from 'lucide-react'
 import { 
   useSpacingConfig, 
@@ -79,12 +79,18 @@ export function SpacingControls() {
   }), [spacingControls])
 
   return (
-    <Card className="w-full">
-      <CardHeader className="pb-4">
+    <CollapsibleSection
+      title="Spacing Controls"
+      icon={<Move className="h-5 w-5 text-purple-600" />}
+      defaultExpanded={false}
+      className="w-full"
+    >
+      <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Move className="h-5 w-5 text-purple-600" />
-            <CardTitle className="text-lg font-semibold">Spacing Controls</CardTitle>
+            <Badge variant="secondary" className="text-xs bg-purple-50 text-purple-700 border-purple-200">
+              {currentPreset ? currentPreset.charAt(0).toUpperCase() + currentPreset.slice(1).replace('-', ' ') : 'Custom'}
+            </Badge>
           </div>
           <Button
             variant="outline"
@@ -121,9 +127,6 @@ export function SpacingControls() {
             </p>
           )}
         </div>
-      </CardHeader>
-
-      <CardContent className="space-y-6">
         {/* Header Spacing */}
         <div className="space-y-3">
           <Label className="text-sm font-semibold text-blue-600">Header Spacing</Label>
@@ -177,8 +180,8 @@ export function SpacingControls() {
             />
           ))}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </CollapsibleSection>
   )
 }
 

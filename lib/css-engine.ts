@@ -1,6 +1,7 @@
 // CSS Engine for dynamic template rendering
 import { CSSProperties } from 'react'
 import { FontSizeConfig, DEFAULT_FONT_SIZES, fontSizeToCSS } from './font-config'
+import { SpacingConfig, DEFAULT_SPACING, spacingToCSS } from './spacing-config'
 
 export interface TemplateCSSData {
   layout: {
@@ -44,10 +45,12 @@ export interface TemplateCSSData {
 export class CSSEngine {
   private _cssData: TemplateCSSData
   private _fontConfig: FontSizeConfig
+  private _spacingConfig: SpacingConfig
 
-  constructor(cssData: TemplateCSSData, fontConfig?: FontSizeConfig) {
+  constructor(cssData: TemplateCSSData, fontConfig?: FontSizeConfig, spacingConfig?: SpacingConfig) {
     this._cssData = cssData
     this._fontConfig = fontConfig || DEFAULT_FONT_SIZES
+    this._spacingConfig = spacingConfig || DEFAULT_SPACING
   }
 
   // Expose cssData for layout decisions
@@ -152,7 +155,7 @@ export class CSSEngine {
     return {
       fontFamily: this._cssData.typography.primaryFont,
       fontSize: this._cssData.typography.baseFontSize,
-      lineHeight: this._cssData.typography.lineHeight,
+      lineHeight: this._spacingConfig.lineHeight,
       color: this._cssData.colors.text,
     }
   }
@@ -342,7 +345,7 @@ export class CSSEngine {
   getSectionStyles(): CSSProperties {
     return {
       ...this._cssData.sections.section,
-      marginBottom: this._cssData.layout.spacing,
+      marginBottom: spacingToCSS(this._spacingConfig.sectionGaps),
     }
   }
 
@@ -352,6 +355,7 @@ export class CSSEngine {
       ...this._cssData.sections.sectionTitle,
       fontSize: fontSizeToCSS(this._fontConfig.sectionHeaders),
       fontFamily: this._cssData.typography.secondaryFont || this._cssData.typography.primaryFont,
+      marginBottom: spacingToCSS(this._spacingConfig.sectionTitleGaps),
     }
   }
 
@@ -361,7 +365,25 @@ export class CSSEngine {
       ...this._cssData.sections.header,
       background: '#ffffff', // Force white background
       color: '#1f2937', // Ensure text is visible
-      marginBottom: '0rem', // No extra spacing after header
+      marginBottom: spacingToCSS(this._spacingConfig.headerToContent),
+    }
+  }
+
+  // Get spacing-specific styles for individual elements
+  getSpacingStyles() {
+    return {
+      nameToTitle: {
+        marginBottom: spacingToCSS(this._spacingConfig.nameToTitle),
+      },
+      titleToContact: {
+        marginBottom: spacingToCSS(this._spacingConfig.titleToContact),
+      },
+      itemSpacing: {
+        marginBottom: spacingToCSS(this._spacingConfig.itemSpacing),
+      },
+      bulletSpacing: {
+        marginBottom: spacingToCSS(this._spacingConfig.bulletSpacing),
+      },
     }
   }
 
@@ -409,9 +431,9 @@ export class CSSEngine {
 }
 
 // Helper function to create CSS engine from template
-export function createCSSEngine(cssData: any, fontConfig?: FontSizeConfig): CSSEngine {
+export function createCSSEngine(cssData: any, fontConfig?: FontSizeConfig, spacingConfig?: SpacingConfig): CSSEngine {
   const validatedCssData = validateAndNormalizeCSSData(cssData, fontConfig)
-  return new CSSEngine(validatedCssData, fontConfig)
+  return new CSSEngine(validatedCssData, fontConfig, spacingConfig)
 }
 
 // Export the default CSS data for external use (with optional font config)

@@ -5,6 +5,7 @@
 
 import type { ResumeData } from '@/lib/resume-store'
 import { FontSizeConfig } from '@/lib/font-config'
+import { SpacingConfig } from '@/lib/spacing-config'
 import { pdfService, type PDFGenerationOptions } from '@/lib/pdf'
 import { initializePDFTemplates, mapTemplateId, arePDFTemplatesReady } from '@/lib/pdf/templates/index'
 
@@ -12,6 +13,7 @@ export interface PDFExportOptions {
   templateId?: string
   pageSize?: 'A4' | 'LETTER'
   fontConfig?: FontSizeConfig
+  spacingConfig?: SpacingConfig
   margins?: [number, number, number, number]
 }
 
@@ -97,6 +99,7 @@ export async function generateResumePDFBlob(
       template: templateId as 'modern' | 'classic' | 'creative',
       templateData: templateData || undefined,
       fontConfig: options.fontConfig,
+      spacingConfig: options.spacingConfig,
       pageSize: options.pageSize || 'LETTER', // Same as Resume Builder
       margins: options.margins || [40, 20, 40, 20] // Same as Resume Builder
     }

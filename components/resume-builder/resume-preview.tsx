@@ -20,11 +20,13 @@ import { useResumeStore } from "@/lib/resume-store"
 import { exportResumeToPDFMake, generatePDFFilename } from "@/lib/pdf-make-utils"
 import { EnhancedResumeRenderer } from "./enhanced-resume-renderer"
 import { useFontConfig } from "@/lib/font-config-store"
+import { useSpacingConfig } from "@/lib/spacing-config-store"
 
 export function ResumePreview() {
   const { resumeData, selectedTemplate, getCompletionPercentage, hasUnsavedChanges, isSaving } = useResumeStore()
   const { toast } = useToast()
   const fontConfig = useFontConfig()
+  const spacingConfig = useSpacingConfig()
   const previewRef = useRef<HTMLDivElement>(null)
   
   const [zoom, setZoom] = useState(0.75)
@@ -46,7 +48,7 @@ export function ResumePreview() {
     }
 
     updatePreview()
-  }, [resumeData, selectedTemplate, fontConfig])
+  }, [resumeData, selectedTemplate, fontConfig, spacingConfig])
 
   // Force refresh preview (useful for debugging)
   const handleRefresh = () => {
@@ -83,7 +85,8 @@ export function ResumePreview() {
       await exportResumeToPDFMake(resumeData, {
         filename,
         templateId: selectedTemplate?.id,
-        fontConfig: fontConfig
+        fontConfig: fontConfig,
+        spacingConfig: spacingConfig
       })
       
       toast({

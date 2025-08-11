@@ -5,6 +5,7 @@
 
 import type { ResumeData } from '@/lib/resume-store'
 import { FontSizeConfig } from '@/lib/font-config'
+import { SpacingConfig } from '@/lib/spacing-config'
 import { pdfService, type PDFGenerationOptions } from '@/lib/pdf'
 import { initializePDFTemplates, mapTemplateId, arePDFTemplatesReady } from '@/lib/pdf/templates/index'
 
@@ -13,6 +14,7 @@ export interface PDFMakeExportOptions {
   templateId?: string
   pageSize?: 'A4' | 'LETTER'
   fontConfig?: FontSizeConfig
+  spacingConfig?: SpacingConfig
   margins?: [number, number, number, number]
   fallbackToHtml2pdf?: boolean
 }
@@ -145,6 +147,7 @@ export async function exportResumeToPDFMake(
       template: templateId as 'modern' | 'classic' | 'creative',
       templateData: templateData || undefined,
       fontConfig: options.fontConfig,
+      spacingConfig: options.spacingConfig,
       filename,
       pageSize: options.pageSize || 'LETTER',
       margins: options.margins || [40, 20, 40, 20]
@@ -214,6 +217,8 @@ export async function generateResumePDFBlob(
     const pdfOptions: PDFGenerationOptions = {
       template: templateId as 'modern' | 'classic' | 'creative',
       templateData: templateData || undefined,
+      fontConfig: options.fontConfig,
+      spacingConfig: options.spacingConfig,
       pageSize: options.pageSize || 'LETTER',
       margins: options.margins || [40, 20, 40, 20]
     }

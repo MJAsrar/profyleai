@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma"
 import { getAuthenticatedUser, createAuthError, checkResourceOwnership, createOwnershipError } from "@/lib/auth-utils"
 import { generateResumePDFBlob } from "@/lib/pdf-export-utils"
 import { FontSizeConfig } from "@/lib/font-config"
+import { SpacingConfig } from "@/lib/spacing-config"
 
 interface RouteParams {
   params: Promise<{
@@ -14,7 +15,7 @@ interface RouteParams {
  * GET /api/resumes/[id]/download - Download resume as PDF (legacy)
  * POST /api/resumes/[id]/download - Download resume as PDF with font configuration
  */
-async function handleDownload(req: NextRequest, { params }: RouteParams, fontConfig?: FontSizeConfig) {
+async function handleDownload(req: NextRequest, { params }: RouteParams, fontConfig?: FontSizeConfig, spacingConfig?: SpacingConfig) {
   try {
     // Check authentication
     const user = await getAuthenticatedUser(req)
@@ -75,7 +76,8 @@ async function handleDownload(req: NextRequest, { params }: RouteParams, fontCon
       templateId: resume.template?.id || 'modern',
       pageSize: 'LETTER', // Same as Resume Builder
       margins: [40, 20, 40, 20], // Fixed: Match cover letter margins (no header gap)
-      fontConfig // Pass through the user's font configuration
+      fontConfig, // Pass through the user's font configuration
+      spacingConfig // Pass through the user's spacing configuration
     })
     const pdfBuffer = Buffer.from(await pdfBlob.arrayBuffer())
 
@@ -110,8 +112,9 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
   try {
     const body = await req.json()
     const fontConfig = body.fontConfig as FontSizeConfig | undefined
+    const spacingConfig = body.spacingConfig as SpacingConfig | undefined
     
-    return handleDownload(req, { params }, fontConfig)
+    return handleDownload(req, { params }, fontConfig, spacingConfig)
   } catch (error) {
     console.error("POST /api/resumes/[id]/download error:", error)
     return NextResponse.json(

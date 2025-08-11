@@ -8,6 +8,7 @@ import { DynamicPDFTemplate } from './templates/dynamic-template'
 import type { TemplateCSSData } from '@/lib/css-engine'
 import { FontLoader } from './font-loader'
 import type { FontSizeConfig } from '@/lib/font-config'
+import type { SpacingConfig } from '@/lib/spacing-config'
 
 export interface PDFGenerationOptions {
   template: 'modern' | 'classic' | 'creative' | string
@@ -17,6 +18,7 @@ export interface PDFGenerationOptions {
     cssData?: TemplateCSSData
   }
   fontConfig?: FontSizeConfig
+  spacingConfig?: SpacingConfig
   filename?: string
   pageSize?: 'A4' | 'LETTER'
   margins?: [number, number, number, number] // [left, top, right, bottom]
@@ -204,7 +206,7 @@ export class PDFService {
 
     // Use dynamic template if cssData is provided
     if (options.templateData?.cssData) {
-      template = new DynamicPDFTemplate(options.templateData.cssData, options.fontConfig)
+      template = new DynamicPDFTemplate(options.templateData.cssData, options.fontConfig, options.spacingConfig)
     } else {
       // Fallback to hardcoded templates
       const foundTemplate = this.templates.get(options.template)
@@ -270,7 +272,7 @@ export class PDFService {
 
     // Use dynamic template if cssData is provided
     if (options.templateData?.cssData) {
-      template = new DynamicPDFTemplate(options.templateData.cssData, options.fontConfig)
+      template = new DynamicPDFTemplate(options.templateData.cssData, options.fontConfig, options.spacingConfig)
     } else {
       const foundTemplate = this.templates.get(options.template)
       if (!foundTemplate) {

@@ -4,6 +4,7 @@ import React from 'react'
 import { CSSEngine, createCSSEngine, mergeStyles } from '@/lib/css-engine'
 import type { ResumeData, ResumeTemplate } from '@/lib/resume-store'
 import { useFontConfig } from '@/lib/font-config-store'
+import { useSpacingConfig } from '@/lib/spacing-config-store'
 
 interface SectionedDynamicRendererProps {
   template: ResumeTemplate
@@ -19,19 +20,20 @@ export function SectionedDynamicRenderer({
   itemData 
 }: SectionedDynamicRendererProps) {
   
-  // Get current font configuration
+  // Get current font and spacing configuration
   const fontConfig = useFontConfig()
+  const spacingConfig = useSpacingConfig()
   
-  // Create CSS engine from template data with dynamic font sizes
+  // Create CSS engine from template data with dynamic font sizes and spacing
   const cssEngine = React.useMemo(() => {
     if (template?.cssData) {
-      return createCSSEngine(template.cssData, fontConfig)
+      return createCSSEngine(template.cssData, fontConfig, spacingConfig)
     }
     if (template?.cssMetadata) {
-      return createCSSEngine(constructCSSDataFromMetadata(template), fontConfig)
+      return createCSSEngine(constructCSSDataFromMetadata(template), fontConfig, spacingConfig)
     }
-    return createCSSEngine(null, fontConfig)
-  }, [template, fontConfig])
+    return createCSSEngine(null, fontConfig, spacingConfig)
+  }, [template, fontConfig, spacingConfig])
 
   const utilities = cssEngine.getUtilityStyles()
   

@@ -4,6 +4,7 @@ import React from 'react'
 import { CSSEngine, createCSSEngine, mergeStyles } from '@/lib/css-engine'
 import type { ResumeData, ResumeTemplate } from '@/lib/resume-store'
 import { useFontConfig } from '@/lib/font-config-store'
+import { useSpacingConfig } from '@/lib/spacing-config-store'
 
 interface DynamicTemplateRendererProps {
   template: ResumeTemplate
@@ -18,8 +19,9 @@ export function DynamicTemplateRenderer({
   scale = 1,
   className = "" 
 }: DynamicTemplateRendererProps) {
-  // Get font configuration from store
+  // Get font and spacing configuration from store
   const fontConfig = useFontConfig()
+  const spacingConfig = useSpacingConfig()
   // Helper function to generate stable keys
   const generateStableKey = React.useCallback((prefix: string, index: number, id?: string) => {
     return id ? `${prefix}-${id}` : `${prefix}-${index}`
@@ -48,24 +50,24 @@ export function DynamicTemplateRenderer({
     isPublic: data.isPublic || false
   }), [data])
 
-  // Create CSS engine from template data with font configuration
+  // Create CSS engine from template data with font and spacing configuration
   const cssEngine = React.useMemo(() => {
     // First try to use the full cssData from the database
     if (template?.cssData) {
       console.log('Using full cssData for template:', template.name, template.cssData)
-      return createCSSEngine(template.cssData, fontConfig)
+      return createCSSEngine(template.cssData, fontConfig, spacingConfig)
     }
     
     // Fallback to constructing from metadata if cssData doesn't exist
     if (template?.cssMetadata) {
       console.log('Using cssMetadata fallback for template:', template.name)
-      return createCSSEngine(constructCSSDataFromMetadata(template), fontConfig)
+      return createCSSEngine(constructCSSDataFromMetadata(template), fontConfig, spacingConfig)
     }
     
     // Final fallback to default styles
     console.log('Using default cssData fallback for template:', template?.name || 'unknown')
-    return createCSSEngine(null, fontConfig)
-  }, [template, fontConfig])
+    return createCSSEngine(null, fontConfig, spacingConfig)
+  }, [template, fontConfig, spacingConfig])
 
   const containerStyles = mergeStyles(
     cssEngine.getContainerStyles(),

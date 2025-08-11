@@ -7,6 +7,7 @@ import type { ResumeData } from '@/lib/resume-store'
 import type { TemplateCSSData } from '@/lib/css-engine'
 import { CSSEngine, createCSSEngine } from '@/lib/css-engine'
 import { FontSizeConfig, DEFAULT_FONT_SIZES, fontSizeToPDF } from '@/lib/font-config'
+import { SpacingConfig, DEFAULT_SPACING, spacingToPDF } from '@/lib/spacing-config'
 import { FontLoader } from '../font-loader'
 
 export class DynamicPDFTemplate {
@@ -15,17 +16,19 @@ export class DynamicPDFTemplate {
   private cssData: TemplateCSSData
   private cssEngine: CSSEngine
   private fontConfig: FontSizeConfig
+  private spacingConfig: SpacingConfig
   
-  constructor(cssData: TemplateCSSData, fontConfig?: FontSizeConfig) {
+  constructor(cssData: TemplateCSSData, fontConfig?: FontSizeConfig, spacingConfig?: SpacingConfig) {
     this.cssData = cssData
     this.fontConfig = fontConfig || DEFAULT_FONT_SIZES
+    this.spacingConfig = spacingConfig || DEFAULT_SPACING
     console.log('🏗️ DynamicPDFTemplate constructor called with cssData:', cssData)
     
     // Validate and normalize cssData
     this.cssData = this.validateCSSData(cssData)
     
     // Create CSS engine to use same calculations as web renderer
-    this.cssEngine = createCSSEngine(this.cssData, this.fontConfig)
+    this.cssEngine = createCSSEngine(this.cssData, this.fontConfig, this.spacingConfig)
   }
 
   /**
@@ -652,17 +655,18 @@ export class DynamicPDFTemplate {
 
     return {
       header: {
-        margin: [0, 0, 0, 8] as [number, number, number, number], // Add line spacing after header
+        margin: [0, 0, 0, spacingToPDF(this.spacingConfig.headerToContent)] as [number, number, number, number],
         alignment: this.convertAlignment(headerStyles.textAlign?.toString())
       },
       name: {
         ...this.convertElementStyle('name'),
-        fontSize: fontSizeToPDF(this.fontConfig.name)
+        fontSize: fontSizeToPDF(this.fontConfig.name),
+        margin: [0, 0, 0, spacingToPDF(this.spacingConfig.nameToTitle)] as [number, number, number, number]
       },
       title: {
         ...this.convertElementStyle('title'),
         fontSize: fontSizeToPDF(this.fontConfig.jobTitle),
-        margin: [0, 0, 0, 0] as [number, number, number, number]
+        margin: [0, 0, 0, spacingToPDF(this.spacingConfig.titleToContact)] as [number, number, number, number]
       },
       contact: {
         ...this.convertElementStyle('contact'),
@@ -670,14 +674,13 @@ export class DynamicPDFTemplate {
       },
       section: {
         ...this.convertCSSStyleToPDF(sectionStyles), // Apply CSS section styles (including borders)
-        margin: [0, 0, 0, 12] as [number, number, number, number], // Increased section gap for better readability
-        // Debug: Log what CSS styles we're getting
+        margin: [0, 0, 0, spacingToPDF(this.spacingConfig.sectionGaps)] as [number, number, number, number],
         // Note: This style will be applied to section containers
       },
       sectionTitle: {
         ...this.convertCSSStyleToPDF(sectionTitleStyles),
         fontSize: fontSizeToPDF(this.fontConfig.sectionHeaders),
-        margin: [0, 0, 0, 2] as [number, number, number, number] // Doubled spacing between title and content
+        margin: [0, 0, 0, spacingToPDF(this.spacingConfig.sectionTitleGaps)] as [number, number, number, number]
       },
       jobTitle: {
         ...this.convertElementStyle('jobTitle'),
@@ -693,20 +696,25 @@ export class DynamicPDFTemplate {
       },
       bodyText: {
         fontSize: fontSizeToPDF(this.fontConfig.content),
-        lineHeight: (() => {
-          const lineHeight = this.cssData.typography.lineHeight
-          if (typeof lineHeight === 'number' && !isNaN(lineHeight) && lineHeight > 0) {
-            return lineHeight
-          }
-          return 1.3 // Reduced fallback for tighter spacing
-        })(),
+        lineHeight: this.spacingConfig.lineHeight,
         color: this.getColorFromCSS(this.cssData.colors.text)
       },
       summaryText: {
         fontSize: fontSizeToPDF(this.fontConfig.summary),
-        lineHeight: 1.3, // Comfortable reading line height to match web renderer
+        lineHeight: this.spacingConfig.lineHeight,
         color: this.getColorFromCSS(this.cssData.colors.text),
         alignment: 'justify' // Justified alignment for summary
+      },
+      bulletItem: {
+        fontSize: fontSizeToPDF(this.fontConfig.bulletPoints),
+        lineHeight: this.spacingConfig.lineHeight,
+        margin: [0, 0, 0, spacingToPDF(this.spacingConfig.bulletSpacing)] as [number, number, number, number]
+      },
+      experienceItem: {
+        margin: [0, 0, 0, spacingToPDF(this.spacingConfig.itemSpacing)] as [number, number, number, number]
+      },
+      educationItem: {
+        margin: [0, 0, 0, spacingToPDF(this.spacingConfig.itemSpacing)] as [number, number, number, number]
       },
       bulletPoints: this.convertElementStyle('bulletPoints'),
       // Skills styles

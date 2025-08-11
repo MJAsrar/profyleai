@@ -21,7 +21,7 @@ export interface PDFGenerationOptions {
   pageSize?: 'A4' | 'LETTER'
   margins?: [number, number, number, number] // [left, top, right, bottom]
 }
-
+//hi
 export interface PDFTemplate {
   id: string
   name: string

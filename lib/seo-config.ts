@@ -35,9 +35,9 @@ export const defaultMetadata: Metadata = {
   creator: siteConfig.creator,
   metadataBase: new URL(siteConfig.url),
   icons: {
-    icon: '/favicon.ico',
-    shortcut: '/favicon.ico',
-    apple: '/apple-icon.png',
+    icon: '/favicon.png',
+    shortcut: '/favicon.png',
+    apple: '/logo.png',
   },
   openGraph: {
     type: 'website',

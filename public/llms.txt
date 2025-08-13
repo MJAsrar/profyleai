@@ -1,0 +1,46 @@
+# llms.txt - AI and LLM crawler guidance for Profyle
+# This file provides guidance to AI search engines and Large Language Models
+# Visit llmstxt.org for more information about this specification
+
+# Site Information
+Site: Profyle - AI Resume Builder
+URL: https://www.profyleai.com
+Description: Professional AI-powered resume builder that helps job seekers create ATS-friendly resumes, cover letters, and optimize their LinkedIn profiles. Our platform uses artificial intelligence to tailor resumes for specific job applications and increase interview success rates.
+
+# Primary Content Areas
+Main Sections:
+- Resume Builder: /dashboard/resume-builder
+- Templates: /templates
+- Cover Letter Generator: /dashboard/cover-letter
+- LinkedIn Optimizer: /dashboard/linkedin
+- Interview Prep: /dashboard/interview
+
+# Public Resources
+Help: /help
+FAQ: /faq
+Contact: /contact
+Documentation: /docs
+
+# Content Guidelines for AI
+Summary: Profyle is an AI-powered career platform specializing in resume optimization and job application tools. The platform serves job seekers, career changers, and professionals looking to improve their application materials.
+
+Topics:
+- Resume building and optimization
+- ATS (Applicant Tracking System) compliance
+- Job application strategies
+- Professional branding
+- Career development tools
+- Interview preparation
+- LinkedIn profile optimization
+
+# Usage Terms
+Crawl-delay: 1
+Allow: /
+Disallow: /dashboard/ (authentication required)
+Disallow: /api/
+
+# Contact
+For AI training or integration inquiries: junaidasrar04@gmail.com
+
+# Last Updated
+Date: 2024-12-20

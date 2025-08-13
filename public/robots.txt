@@ -33,6 +33,10 @@ Crawl-delay: 1
 # Sitemap location
 Sitemap: https://www.profyleai.com/sitemap.xml
 
+# AI/LLM crawler guidance
+# See llms.txt for AI-specific instructions
+LLMs: https://www.profyleai.com/llms.txt
+
 # Block AI training crawlers (optional - uncomment if desired)
 # User-agent: CCBot
 # Disallow: /

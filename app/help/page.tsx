@@ -3,7 +3,7 @@ import { Footer } from "@/components/footer"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { HelpCircle, Search, FileText, Users, Sparkles, Download, MessageSquare, Linkedin, Target, Video, BookOpen, ArrowRight } from "lucide-react"
+import { HelpCircle, Search, FileText, Users, Sparkles, Download, MessageSquare, Linkedin, Target, Video, BookOpen, ArrowRight, Shield } from "lucide-react"
 import Link from "next/link"
 
 export default function HelpCenterPage() {
@@ -49,6 +49,20 @@ export default function HelpCenterPage() {
       description: "Enhance your LinkedIn presence",
       articles: 5,
       color: "indigo"
+    },
+    {
+      icon: Users,
+      title: "Account Management",
+      description: "Manage your profile and settings",
+      articles: 8,
+      color: "gray"
+    },
+    {
+      icon: Shield,
+      title: "Privacy & Security",
+      description: "Keep your data safe and secure",
+      articles: 6,
+      color: "red"
     }
   ]
 
@@ -73,9 +87,17 @@ export default function HelpCenterPage() {
             </div>
           </div>
           <h1 className="text-4xl font-bold tracking-tight mb-4">Help Center</h1>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8">
-            Find answers to your questions and learn how to make the most of Profyle
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-6">
+            Find answers to your questions and learn how to make the most of Profyle's AI-powered resume builder
           </p>
+          <div className="max-w-4xl mx-auto text-center mb-8">
+            <p className="text-base text-muted-foreground leading-relaxed mb-4">
+              Welcome to the Profyle Help Center! Whether you're creating your first resume or looking to master advanced features, our comprehensive resource library has everything you need. From step-by-step tutorials to troubleshooting guides, we're here to help you build professional resumes that get results.
+            </p>
+            <p className="text-base text-muted-foreground leading-relaxed">
+              Our help center includes video tutorials, detailed documentation, best practices for resume writing, and tips for using AI features effectively. Browse by category below or use the search function to find specific information quickly.
+            </p>
+          </div>
           
           {/* Search Bar */}
           <div className="max-w-xl mx-auto relative">
@@ -148,7 +170,9 @@ export default function HelpCenterPage() {
                 purple: "border-purple-200 hover:border-purple-300 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950/20 dark:to-purple-900/20",
                 orange: "border-orange-200 hover:border-orange-300 bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-950/20 dark:to-orange-900/20",
                 pink: "border-pink-200 hover:border-pink-300 bg-gradient-to-br from-pink-50 to-pink-100 dark:from-pink-950/20 dark:to-pink-900/20",
-                indigo: "border-indigo-200 hover:border-indigo-300 bg-gradient-to-br from-indigo-50 to-indigo-100 dark:from-indigo-950/20 dark:to-indigo-900/20"
+                indigo: "border-indigo-200 hover:border-indigo-300 bg-gradient-to-br from-indigo-50 to-indigo-100 dark:from-indigo-950/20 dark:to-indigo-900/20",
+                gray: "border-gray-200 hover:border-gray-300 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950/20 dark:to-gray-900/20",
+                red: "border-red-200 hover:border-red-300 bg-gradient-to-br from-red-50 to-red-100 dark:from-red-950/20 dark:to-red-900/20"
               }
               
               const iconColors = {
@@ -157,7 +181,9 @@ export default function HelpCenterPage() {
                 purple: "text-purple-600",
                 orange: "text-orange-600",
                 pink: "text-pink-600",
-                indigo: "text-indigo-600"
+                indigo: "text-indigo-600",
+                gray: "text-gray-600",
+                red: "text-red-600"
               }
               
               return (

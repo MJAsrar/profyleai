@@ -66,9 +66,17 @@ export default function ContactPage() {
             </div>
           </div>
           <h1 className="text-4xl font-bold tracking-tight mb-4">Contact Us</h1>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-6">
             We're here to help! Reach out to our team and we'll get back to you as soon as possible.
           </p>
+          <div className="max-w-3xl mx-auto text-center">
+            <p className="text-base text-muted-foreground leading-relaxed mb-4">
+              Our dedicated support team is committed to helping you succeed in your job search. Whether you need assistance with our AI resume builder, have questions about premium features, or require technical support, we're here to provide comprehensive help and guidance.
+            </p>
+            <p className="text-base text-muted-foreground leading-relaxed">
+              We understand that job searching can be challenging, and we want to ensure you have all the tools and support needed to create outstanding resumes, cover letters, and LinkedIn profiles. Our team responds to all inquiries within 24 hours, and we offer multiple ways to get in touch based on your preferences and urgency.
+            </p>
+          </div>
         </div>
 
         <div className="grid lg:grid-cols-3 gap-12">
@@ -236,8 +244,28 @@ export default function ContactPage() {
           <Card className="p-8 text-center bg-gradient-to-br from-primary/5 to-secondary/5">
             <h2 className="text-2xl font-bold mb-4">Frequently Asked Questions</h2>
             <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
-              Before reaching out, check our FAQ section - you might find your answer there!
+              Before reaching out, check our FAQ section - you might find your answer there! We've compiled answers to the most common questions about resume building, account management, billing, and technical issues.
             </p>
+            <div className="grid md:grid-cols-2 gap-6 mb-8 text-left">
+              <div className="space-y-3">
+                <h3 className="font-semibold text-sm uppercase tracking-wide text-primary">Quick Answers</h3>
+                <ul className="space-y-2 text-sm text-muted-foreground">
+                  <li>• How to create your first resume</li>
+                  <li>• Using AI content suggestions</li>
+                  <li>• Downloading and sharing resumes</li>
+                  <li>• Account and billing questions</li>
+                </ul>
+              </div>
+              <div className="space-y-3">
+                <h3 className="font-semibold text-sm uppercase tracking-wide text-primary">Support Topics</h3>
+                <ul className="space-y-2 text-sm text-muted-foreground">
+                  <li>• Technical troubleshooting</li>
+                  <li>• Template customization help</li>
+                  <li>• Privacy and security information</li>
+                  <li>• Feature requests and feedback</li>
+                </ul>
+              </div>
+            </div>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button size="lg" variant="outline">
                 <HelpCircle className="mr-2 h-4 w-4" />

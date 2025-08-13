@@ -6,7 +6,7 @@ import { Footer } from "@/components/footer"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { HelpCircle, Search, ChevronDown, ChevronUp, MessageSquare, FileText, CreditCard, Shield, Users } from "lucide-react"
+import { HelpCircle, Search, ChevronDown, ChevronUp, MessageSquare, FileText, CreditCard, Shield, Users, Target } from "lucide-react"
 import Link from "next/link"
 
 export default function FAQPage() {
@@ -87,6 +87,56 @@ export default function FAQPage() {
         {
           question: "Can I change my email address?",
           answer: "Yes, you can update your email address in your account settings. You'll need to verify the new email address for security purposes."
+        },
+        {
+          question: "How do I delete my account?",
+          answer: "To delete your account, go to Account Settings > Privacy & Data > Delete Account. This action is permanent and will remove all your resumes and data."
+        }
+      ]
+    },
+    {
+      icon: MessageSquare,
+      title: "Templates & Customization",
+      color: "indigo",
+      faqs: [
+        {
+          question: "How many resume templates are available?",
+          answer: "We offer 20+ professionally designed resume templates, including ATS-friendly, modern, creative, and classic designs suitable for various industries and career levels."
+        },
+        {
+          question: "Can I customize the colors and fonts?",
+          answer: "Yes! Pro users can customize colors, fonts, spacing, and layout elements to match their personal brand and industry preferences."
+        },
+        {
+          question: "Are the templates ATS-friendly?",
+          answer: "Absolutely! All our templates are designed to pass through Applicant Tracking Systems (ATS) while maintaining professional appearance and readability."
+        },
+        {
+          question: "Can I switch templates after creating my resume?",
+          answer: "Yes, you can easily switch between templates at any time. Your content will automatically adapt to the new template's layout and design."
+        }
+      ]
+    },
+    {
+      icon: Target,
+      title: "AI Features & Content",
+      color: "emerald",
+      faqs: [
+        {
+          question: "How does the AI content suggestion work?",
+          answer: "Our AI analyzes your job title, industry, and experience level to suggest relevant bullet points, skills, and keywords that align with current job market trends and employer expectations."
+        },
+        {
+          question: "Can I edit AI-generated content?",
+          answer: "Absolutely! All AI suggestions are fully editable. You can modify, accept, or reject any suggestion to ensure your resume reflects your unique experience and voice."
+        },
+        {
+          question: "Does the AI help with cover letters too?",
+          answer: "Yes! Our AI can generate personalized cover letters based on your resume content and the specific job you're applying for, including relevant keywords and compelling opening statements."
+        },
+        {
+          question: "How accurate are the AI suggestions?",
+          answer: "Our AI is trained on successful resumes and job market data, providing highly relevant suggestions. However, we always recommend reviewing and personalizing the content to match your specific experience."
         }
       ]
     }
@@ -121,14 +171,18 @@ export default function FAQPage() {
     blue: "border-blue-200 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/20 dark:to-blue-900/20",
     green: "border-green-200 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950/20 dark:to-green-900/20",
     purple: "border-purple-200 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950/20 dark:to-purple-900/20",
-    orange: "border-orange-200 bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-950/20 dark:to-orange-900/20"
+    orange: "border-orange-200 bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-950/20 dark:to-orange-900/20",
+    indigo: "border-indigo-200 bg-gradient-to-br from-indigo-50 to-indigo-100 dark:from-indigo-950/20 dark:to-indigo-900/20",
+    emerald: "border-emerald-200 bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950/20 dark:to-emerald-900/20"
   }
 
   const iconColors = {
     blue: "text-blue-600",
     green: "text-green-600",
     purple: "text-purple-600",
-    orange: "text-orange-600"
+    orange: "text-orange-600",
+    indigo: "text-indigo-600",
+    emerald: "text-emerald-600"
   }
 
   return (
@@ -144,9 +198,14 @@ export default function FAQPage() {
             </div>
           </div>
           <h1 className="text-4xl font-bold tracking-tight mb-4">Frequently Asked Questions</h1>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8">
-            Find quick answers to common questions about Profyle
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-6">
+            Find quick answers to common questions about Profyle's AI resume builder, features, billing, and support.
           </p>
+          <div className="max-w-3xl mx-auto text-center mb-8">
+            <p className="text-base text-muted-foreground leading-relaxed">
+              We've compiled the most frequently asked questions from our users to help you get the most out of Profyle. From getting started with your first resume to advanced AI features and account management, find detailed answers to help you succeed in your job search.
+            </p>
+          </div>
           
           {/* Search Bar */}
           <div className="max-w-xl mx-auto relative">

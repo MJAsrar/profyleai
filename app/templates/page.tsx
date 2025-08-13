@@ -37,22 +37,22 @@ interface Template {
 const categoryDescriptions = {
   MODERN: {
     title: "Modern Templates",
-    description: "Clean, contemporary designs perfect for tech and startups",
+    description: "Clean, contemporary designs perfect for tech, startups, and forward-thinking companies. These templates feature minimalist layouts, subtle colors, and modern typography that appeal to innovative employers.",
     color: "bg-blue-100 text-blue-800 border-blue-200"
   },
   CLASSIC: {
     title: "Classic Templates", 
-    description: "Traditional, professional templates for corporate environments",
+    description: "Traditional, professional templates for corporate environments, finance, law, and established industries. These templates emphasize professionalism with conservative layouts and proven design principles.",
     color: "bg-gray-100 text-gray-800 border-gray-200"
   },
   CREATIVE: {
     title: "Creative Templates",
-    description: "Bold, artistic designs for creative professionals",
+    description: "Bold, artistic designs for creative professionals in design, marketing, media, and arts. These templates showcase your creativity while maintaining readability and professional standards.",
     color: "bg-purple-100 text-purple-800 border-purple-200"
   },
   ATS: {
     title: "ATS-Friendly Templates",
-    description: "Optimized for Applicant Tracking Systems with simple, clean formatting",
+    description: "Specifically optimized for Applicant Tracking Systems used by most large companies. These templates ensure your resume passes automated screening while maintaining professional appearance and clear formatting.",
     color: "bg-green-100 text-green-800 border-green-200"
   }
 }
@@ -108,10 +108,15 @@ export default function TemplatesPage() {
                       Templates
                     </span>
                   </h1>
-                  <p className="text-lg leading-8 text-muted-foreground max-w-2xl mx-auto text-balance">
+                  <p className="text-lg leading-8 text-muted-foreground max-w-2xl mx-auto text-balance mb-4">
                     Choose from our collection of professionally designed, ATS-friendly resume templates. 
                     Start building your perfect resume in minutes.
                   </p>
+                  <div className="max-w-3xl mx-auto text-center">
+                    <p className="text-base text-muted-foreground leading-relaxed">
+                      Our resume templates are crafted by design experts and tested with hiring managers across various industries. Each template is optimized for Applicant Tracking Systems (ATS) while maintaining visual appeal and professional formatting. Whether you're a recent graduate, experienced professional, or career changer, find the perfect template that showcases your unique qualifications and helps you stand out in today's competitive job market.
+                    </p>
+                  </div>
                 </div>
                 
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -199,7 +204,7 @@ export default function TemplatesPage() {
                   ))}
                 </div>
               ) : (
-                <MotionWrapper animation="stagger" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <MotionWrapper animation="fade-in" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                   {filteredTemplates.map((template, index) => (
                     <MotionWrapper
                       key={template.id}

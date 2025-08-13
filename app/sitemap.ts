@@ -68,14 +68,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
   ]
 
-  // Authentication pages (lower priority, but should be indexed)
+  // Authentication pages (only include indexable pages)
   const authPages = [
-    {
-      url: `${baseUrl}/login`,
-      lastModified: new Date(),
-      changeFrequency: 'monthly' as const,
-      priority: 0.3,
-    },
     {
       url: `${baseUrl}/signup`,
       lastModified: new Date(),
@@ -84,39 +78,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
   ]
 
-  // Dashboard pages (lower priority, not frequently updated)
-  const dashboardPages = [
-    {
-      url: `${baseUrl}/dashboard`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly' as const,
-      priority: 0.6,
-    },
-    {
-      url: `${baseUrl}/dashboard/resume-builder`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly' as const,
-      priority: 0.7,
-    },
-    {
-      url: `${baseUrl}/dashboard/cover-letter`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly' as const,
-      priority: 0.6,
-    },
-    {
-      url: `${baseUrl}/dashboard/linkedin`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly' as const,
-      priority: 0.6,
-    },
-    {
-      url: `${baseUrl}/dashboard/interview`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly' as const,
-      priority: 0.6,
-    },
-  ]
+  // Note: Dashboard pages and login page are excluded from sitemap 
+  // because they have noindex directives and require authentication
 
-  return [...staticPages, ...authPages, ...dashboardPages]
+  return [...staticPages, ...authPages]
 }

@@ -104,6 +104,13 @@ export const pageMetadata = {
   signup: {
     title: 'Create Your Free Account',
     description: 'Join thousands of professionals who use Profyle to create stunning resumes. Sign up for free and start building your career today.',
+    keywords: [
+      'sign up resume builder',
+      'create account resume',
+      'free resume builder account',
+      'register resume builder',
+      'AI resume builder signup'
+    ]
   },
   
   dashboard: {

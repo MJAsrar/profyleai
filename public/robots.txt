@@ -4,20 +4,34 @@ User-agent: *
 Allow: /
 Disallow: /dashboard/
 Disallow: /api/
-Disallow: /login
-Disallow: /signup
-Disallow: /_next/
+Disallow: /_next/static/chunks/pages/
+Disallow: /_next/webpack-hmr
 Disallow: /*.json$
+
+# Allow essential resources for proper page rendering
+Allow: /_next/static/css/
+Allow: /_next/static/chunks/
+Allow: /_next/static/media/
 
 # Allow specific public pages
 Allow: /privacy
+Allow: /contact
+Allow: /faq
+Allow: /help
+Allow: /terms
+Allow: /security
+Allow: /docs
+Allow: /cookies
+Allow: /templates
+Allow: /login
+Allow: /signup
 Allow: /sitemap.xml
 
 # Crawl delay for polite crawling
 Crawl-delay: 1
 
 # Sitemap location
-Sitemap: https://profyleai.com/sitemap.xml
+Sitemap: https://www.profyleai.com/sitemap.xml
 
 # Block AI training crawlers (optional - uncomment if desired)
 # User-agent: CCBot

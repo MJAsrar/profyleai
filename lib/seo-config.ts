@@ -4,7 +4,7 @@ import { Metadata } from 'next'
 export const siteConfig = {
   name: 'Profyle',
   description: 'Build professional resumes with AI assistance. Create ATS-friendly resumes, cover letters, and optimize your LinkedIn profile with our AI-powered platform.',
-  url: process.env.NEXT_PUBLIC_APP_URL || 'https://profyleai.com',
+  url: process.env.NEXT_PUBLIC_APP_URL || 'https://www.profyleai.com',
   ogImage: '/og-image.png',
   creator: '@profyleai',
   keywords: [
@@ -172,13 +172,116 @@ export const pageMetadata = {
     robots: { index: false, follow: true }
   },
   
+  contact: {
+    title: 'Contact Us - Get Help with Profyle AI Resume Builder',
+    description: 'Need help with your resume? Contact our support team via email, live chat, or phone. We respond within 24 hours and offer comprehensive assistance.',
+    keywords: [
+      'contact support',
+      'customer service',
+      'resume help',
+      'technical support',
+      'Profyle support',
+      'contact profyle',
+      'resume assistance'
+    ]
+  },
+  
+  faq: {
+    title: 'Frequently Asked Questions - Profyle Resume Builder Help',
+    description: 'Find answers to common questions about creating resumes, billing, account management, and using Profyle\'s AI-powered features.',
+    keywords: [
+      'FAQ',
+      'frequently asked questions',
+      'resume builder help',
+      'Profyle questions',
+      'account help',
+      'billing questions',
+      'resume tips'
+    ]
+  },
+  
   privacy: {
-    title: 'Privacy Policy',
+    title: 'Privacy Policy - How Profyle Protects Your Data',
     description: 'Learn how Profyle protects your personal information and resume data. Read our comprehensive privacy policy and data handling practices.',
+    keywords: [
+      'privacy policy',
+      'data protection',
+      'user privacy',
+      'data security',
+      'GDPR compliance',
+      'resume data protection'
+    ]
+  },
+  
+  help: {
+    title: 'Help Center - Profyle Resume Builder Support',
+    description: 'Access tutorials, guides, and documentation for Profyle\'s resume builder. Learn to create professional resumes with our comprehensive help center.',
+    keywords: [
+      'help center',
+      'resume tutorials',
+      'user guide',
+      'how to create resume',
+      'resume builder help',
+      'documentation',
+      'support center'
+    ]
+  },
+  
+  security: {
+    title: 'Security & Data Protection - Profyle AI Resume Builder',
+    description: 'Learn about Profyle\'s security measures, data encryption, and how we protect your resume and personal information with industry-standard protocols.',
+    keywords: [
+      'security',
+      'data protection',
+      'encryption',
+      'secure resume builder',
+      'data safety',
+      'privacy security',
+      'information protection'
+    ]
+  },
+  
+  terms: {
+    title: 'Terms of Service - Profyle AI Resume Builder',
+    description: 'Read Profyle\'s terms of service, user agreement, and conditions for using our AI-powered resume builder and career tools.',
+    keywords: [
+      'terms of service',
+      'user agreement',
+      'terms and conditions',
+      'service terms',
+      'legal terms',
+      'usage policy'
+    ]
+  },
+  
+  docs: {
+    title: 'Documentation - Profyle API & Integration Guide',
+    description: 'Comprehensive documentation for Profyle\'s API, integrations, and developer resources. Build custom solutions with our resume builder platform.',
+    keywords: [
+      'API documentation',
+      'developer docs',
+      'integration guide',
+      'API reference',
+      'technical documentation',
+      'developer resources'
+    ]
+  },
+  
+  cookies: {
+    title: 'Cookie Policy - How Profyle Uses Cookies',
+    description: 'Learn about Profyle\'s cookie usage, tracking preferences, and how we use cookies to improve your resume building experience.',
+    keywords: [
+      'cookie policy',
+      'tracking cookies',
+      'website cookies',
+      'privacy preferences',
+      'cookie consent',
+      'web tracking'
+    ]
   },
   
   templates: {
-    title: 'Professional Resume Templates - Choose from 20+ ATS-Friendly Designs',
+    title: 'Professional Resume Templates - 20+ ATS Designs | Profyle',
     description: 'Browse our collection of professional resume templates. Choose from modern, classic, creative, and ATS-friendly designs to build your perfect resume.',
     keywords: [
       'resume templates',
@@ -239,7 +342,14 @@ function getPagePath(page: keyof typeof pageMetadata): string {
     linkedin: '/dashboard/linkedin',
     interview: '/dashboard/interview',
     preview: '/dashboard/preview',
+    contact: '/contact',
+    faq: '/faq',
     privacy: '/privacy',
+    help: '/help',
+    security: '/security',
+    terms: '/terms',
+    docs: '/docs',
+    cookies: '/cookies',
     templates: '/templates'
   }
   

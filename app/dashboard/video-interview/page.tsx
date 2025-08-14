@@ -29,7 +29,7 @@ import { VideoInterviewSetup } from '@/components/video-interview/video-intervie
 import { VideoInterviewRoom } from '@/components/video-interview/video-interview-room'
 import { VideoInterviewResults } from '@/components/video-interview/video-interview-results'
 import { useVideoInterviewStore } from '@/lib/stores/video-interview-store'
-import { generatePracticeQuestions, InterviewJobData, PracticeQuestion } from '@/lib/services/interview-service'
+import { InterviewJobData, PracticeQuestion } from '@/lib/services/interview-service'
 import { VideoInterviewSession, InterviewSummary } from '@/lib/services/video-interview-service'
 
 interface VideoInterviewData {
@@ -110,7 +110,17 @@ export default function VideoInterviewPage() {
     try {
       console.log('Generating questions for:', jobData)
       
-      const result = await generatePracticeQuestions(jobData, 8) // Generate 8 questions for video interview
+      // Call the existing API endpoint instead of the service directly
+      const response = await fetch('/api/interview/generate-questions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...jobData,
+          questionCount: 8 // Generate 8 questions for video interview
+        })
+      })
+
+      const result = await response.json()
       
       if (result.success && result.data) {
         setQuestions(result.data.questions)

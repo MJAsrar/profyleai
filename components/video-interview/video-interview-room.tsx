@@ -120,6 +120,10 @@ export function VideoInterviewRoom({
               if (originalCallback) originalCallback(chunk)
             }
           }
+          
+          // Ensure recording is started
+          console.log('🎙️ Starting audio recording...')
+          webrtcService.startRecording()
         }
         
         // Start the interview session
@@ -327,7 +331,7 @@ export function VideoInterviewRoom({
     try {
       console.log('🤖 Starting interview conversation...')
       
-      const welcomeMessage = `Hello! I'm your AI interviewer today. I'm excited to learn more about you and your experience for the ${session.jobData.jobTitle} position at ${session.jobData.companyName}. Let's begin with our first question: ${currentQuestion?.question}`
+      const welcomeMessage = `Hello! I'm your AI interviewer today. I'm excited to learn more about you and your experience for the ${session.jobData.jobTitle} position at ${session.jobData.companyName}. Let's begin with our first question: ${currentQuestion?.question || 'Tell me about yourself.'}`
       
       // Generate welcome speech
       const response = await fetch(`/api/video-interview/${session.sessionId}/respond`, {
@@ -341,8 +345,10 @@ export function VideoInterviewRoom({
       })
       
       const result = await response.json()
+      console.log('🤖 Welcome API response:', result)
       
       if (result.success && result.data.audioBase64) {
+        console.log('🔊 Playing AI welcome message...')
         // Play AI welcome message
         const audioBlob = new Blob(
           [Uint8Array.from(atob(result.data.audioBase64), c => c.charCodeAt(0))],
@@ -370,6 +376,19 @@ export function VideoInterviewRoom({
           content: welcomeMessage,
           timestamp: new Date()
         })
+      } else {
+        console.warn('⚠️ Welcome message API failed or no audio returned:', result)
+        
+        // Fallback: Add text to conversation history without audio
+        addConversationTurn({
+          role: 'assistant',
+          content: welcomeMessage,
+          timestamp: new Date()
+        })
+        
+        // Start recording anyway
+        const { startRecording } = useVideoInterviewStore.getState()
+        startRecording()
       }
       
     } catch (error) {
@@ -566,18 +585,59 @@ export function VideoInterviewRoom({
             {/* AI Interviewer Video */}
             <Card className="relative">
               <CardContent className="p-0">
-                <div className="relative bg-gray-900 rounded-lg overflow-hidden aspect-video">
+                <div className="relative bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 rounded-lg overflow-hidden aspect-video">
+                  {/* AI Avatar Background */}
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="text-center text-white">
+                      {/* AI Avatar Circle */}
+                      <div className={`relative mx-auto mb-4 ${isAISpeaking ? 'animate-pulse' : ''}`}>
+                        <div className="w-32 h-32 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center shadow-2xl">
+                          <div className="w-24 h-24 bg-gradient-to-br from-blue-300 to-purple-400 rounded-full flex items-center justify-center">
+                            <svg 
+                              className="w-12 h-12 text-white" 
+                              fill="currentColor" 
+                              viewBox="0 0 20 20"
+                            >
+                              <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                            </svg>
+                          </div>
+                        </div>
+                        
+                        {/* Audio Waves Animation */}
+                        {isAISpeaking && (
+                          <div className="absolute -inset-4 flex items-center justify-center">
+                            <div className="flex space-x-1">
+                              <div className="w-1 bg-blue-400 rounded-full animate-bounce" style={{ height: '20px', animationDelay: '0ms' }}></div>
+                              <div className="w-1 bg-purple-400 rounded-full animate-bounce" style={{ height: '30px', animationDelay: '150ms' }}></div>
+                              <div className="w-1 bg-indigo-400 rounded-full animate-bounce" style={{ height: '25px', animationDelay: '300ms' }}></div>
+                              <div className="w-1 bg-blue-400 rounded-full animate-bounce" style={{ height: '20px', animationDelay: '450ms' }}></div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* AI Name */}
+                      <h3 className="text-xl font-semibold mb-2">AI Interviewer</h3>
+                      <p className="text-blue-200 text-sm">
+                        {isAISpeaking ? 'Speaking...' : 
+                         isProcessingResponse ? 'Thinking...' : 
+                         'Listening...'}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {/* Hidden video element (kept for potential future use) */}
                   <video
                     ref={remoteVideoRef}
                     autoPlay
                     playsInline
-                    className="w-full h-full object-cover"
+                    className="hidden w-full h-full object-cover"
                   />
                   
                   {/* AI Speaking Indicator */}
                   {isAISpeaking && (
                     <div className="absolute top-4 left-4">
-                      <Badge className="bg-blue-500">
+                      <Badge className="bg-blue-500/90 backdrop-blur-sm">
                         <Volume2 className="h-3 w-3 mr-1" />
                         AI Speaking
                       </Badge>
@@ -586,8 +646,8 @@ export function VideoInterviewRoom({
                   
                   {/* Processing Indicator */}
                   {isProcessingResponse && (
-                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                      <div className="text-white text-center">
+                    <div className="absolute inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center">
+                      <div className="text-white text-center bg-black/50 rounded-lg p-6">
                         <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2" />
                         <p>Processing your response...</p>
                       </div>

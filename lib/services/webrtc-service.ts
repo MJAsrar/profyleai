@@ -213,8 +213,11 @@ export class WebRTCService {
 
       recorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
+          console.log('🎤 Audio chunk generated:', event.data.size, 'bytes')
           this.connectionState.recordedChunks.push(event.data)
           this.callbacks.onAudioChunk(event.data)
+        } else {
+          console.log('⚠️ Empty audio chunk received')
         }
       }
 

@@ -92,7 +92,8 @@ export function VideoInterviewRoom({
     setAISpeaking,
     updateCurrentTranscript,
     addConversationTurn,
-    moveToNextQuestion
+    moveToNextQuestion,
+    setAudioChunkHandler
   } = useVideoInterviewStore()
 
   const [isEnding, setIsEnding] = useState(false)
@@ -524,6 +525,22 @@ export function VideoInterviewRoom({
       }
     }
   }, [currentAudioUrl])
+
+  // Set up audio chunk handler
+  useEffect(() => {
+    const handleAudioChunk = (chunk: Blob) => {
+      if (isMountedRef.current) {
+        console.log('📦 Adding audio chunk to queue:', chunk.size, 'bytes')
+        setAudioChunks(prev => [...prev, chunk])
+      }
+    }
+    
+    setAudioChunkHandler(handleAudioChunk)
+    
+    return () => {
+      setAudioChunkHandler(null)
+    }
+  }, [setAudioChunkHandler])
 
   // Cleanup on component unmount
   useEffect(() => {

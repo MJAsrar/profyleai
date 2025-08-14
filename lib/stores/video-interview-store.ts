@@ -60,6 +60,9 @@ export interface VideoInterviewState {
   // Error handling
   errors: string[]
   lastError: string | null
+  
+  // Audio chunk handling
+  audioChunkHandler: ((chunk: Blob) => void) | null
 }
 
 export interface VideoInterviewActions {
@@ -107,6 +110,9 @@ export interface VideoInterviewActions {
   addError: (error: string) => void
   clearErrors: () => void
   clearLastError: () => void
+  
+  // Audio chunk handling
+  setAudioChunkHandler: (handler: ((chunk: Blob) => void) | null) => void
   
   // Cleanup
   cleanup: () => void
@@ -159,7 +165,10 @@ const initialState: VideoInterviewState = {
   
   // Error handling
   errors: [],
-  lastError: null
+  lastError: null,
+  
+  // Audio chunk handling
+  audioChunkHandler: null
 }
 
 // ===== STORE IMPLEMENTATION =====
@@ -330,6 +339,12 @@ export const useVideoInterviewStore = create<VideoInterviewStore>()(
             onAudioChunk: (chunk: Blob) => {
               // Handle audio chunk for transcription
               console.log('🎤 Received audio chunk:', chunk.size, 'bytes')
+              
+              // Call the audio chunk handler if it exists
+              const state = get()
+              if (state.audioChunkHandler) {
+                state.audioChunkHandler(chunk)
+              }
             },
             onError: (error: Error) => {
               console.error('🚨 WebRTC error:', error)
@@ -635,6 +650,14 @@ export const useVideoInterviewStore = create<VideoInterviewStore>()(
       clearLastError: () => {
         set((draft) => {
           draft.lastError = null
+        })
+      },
+
+      // ===== AUDIO CHUNK HANDLING =====
+
+      setAudioChunkHandler: (handler: ((chunk: Blob) => void) | null) => {
+        set((draft) => {
+          draft.audioChunkHandler = handler
         })
       },
 

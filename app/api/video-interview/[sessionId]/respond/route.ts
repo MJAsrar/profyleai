@@ -121,8 +121,17 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         videoInterview.aiPersonality as 'professional' | 'friendly' | 'challenging'
       )
       
-      // Start the interview (generates welcome message)
-      aiResponse = await videoInterviewService.startInterview(sessionId)
+      // Use consistent welcome message (same as frontend)
+      const firstQuestion = questions[0]?.question || 'Tell me about yourself and why you\'re interested in this role.'
+      const welcomeText = `Hello! I'm your AI interviewer today. I'm excited to learn more about you and your experience for the ${videoInterview.jobTitle} position at ${videoInterview.companyName}. Let's begin with our first question: ${firstQuestion} Please take your time to respond when you're ready.`
+      
+      aiResponse = {
+        text: welcomeText,
+        emotion: 'professional',
+        followUpType: 'open_ended',
+        shouldTransition: false,
+        nextAction: 'continue'
+      }
     } else {
       // Generate regular AI response
       if (currentQuestion) {

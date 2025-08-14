@@ -194,7 +194,19 @@ export function VideoInterviewRoom({
           // Ensure video plays
           const videoElement = localVideoRef.current
           videoElement.onloadedmetadata = () => {
-            videoElement.play().catch(console.error)
+            console.log('🎥 Local video metadata loaded, attempting to play')
+            videoElement.play().catch((error) => {
+              console.error('❌ Failed to play local video:', error)
+            })
+          }
+          
+          // Add more debugging
+          videoElement.oncanplay = () => {
+            console.log('✅ Local video can play')
+          }
+          
+          videoElement.onerror = (error) => {
+            console.error('❌ Local video error:', error)
           }
           
         } catch (error) {
@@ -420,7 +432,7 @@ export function VideoInterviewRoom({
       const companyName = session.jobData?.companyName || 'the company'
       const firstQuestion = currentQuestion?.question || 'Tell me about yourself and why you\'re interested in this role.'
       
-      const welcomeMessage = `Hello! I'm your AI interviewer today. I'm excited to learn more about you and your experience for the ${jobTitle} position at ${companyName}. Let's begin with our first question: ${firstQuestion}`
+      const welcomeMessage = `Hello! I'm your AI interviewer today. I'm excited to learn more about you and your experience for the ${jobTitle} position at ${companyName}. Let's begin with our first question: ${firstQuestion} Please take your time to respond when you're ready.`
       
       console.log('🤖 Welcome message prepared:', welcomeMessage)
       
@@ -794,6 +806,7 @@ export function VideoInterviewRoom({
                       <p className="text-blue-200 text-sm">
                         {isAISpeaking ? 'Speaking...' : 
                          isProcessingResponse ? 'Thinking...' : 
+                         isRecording ? 'Your turn to speak...' :
                          'Listening...'}
                       </p>
                     </div>
@@ -831,7 +844,7 @@ export function VideoInterviewRoom({
             </Card>
             
             {/* Candidate Video (Picture-in-Picture) */}
-            <div className="fixed bottom-20 right-4 w-48 h-36 z-10">
+            <div className="fixed bottom-20 right-4 w-48 h-36 z-50 shadow-lg">
               <Card>
                 <CardContent className="p-0">
                   <div className="relative bg-gray-900 rounded-lg overflow-hidden aspect-video">
@@ -841,13 +854,21 @@ export function VideoInterviewRoom({
                       muted
                       playsInline
                       className="w-full h-full object-cover"
-                      style={{ display: isVideoDisabled ? 'none' : 'block' }}
+                      style={{ 
+                        display: isVideoDisabled ? 'none' : 'block',
+                        backgroundColor: '#000'
+                      }}
                     />
                     {isVideoDisabled && (
-                      <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="absolute inset-0 flex items-center justify-center bg-gray-800">
                         <CameraOff className="h-8 w-8 text-white" />
                       </div>
                     )}
+                    
+                    {/* Debug indicator to show if video container is visible */}
+                    <div className="absolute top-1 left-1 text-xs text-white bg-black bg-opacity-50 px-1 rounded">
+                      {localStream ? 'Stream OK' : 'No Stream'}
+                    </div>
                     
                     {/* Recording Indicator */}
                     {isRecording && (
@@ -882,6 +903,25 @@ export function VideoInterviewRoom({
                     <Badge variant="outline" className="text-xs">
                       {currentQuestion.difficulty}
                     </Badge>
+                  </div>
+                )}
+                
+                {/* Speaking Status Indicator */}
+                {isRecording && !isAISpeaking && !isProcessingResponse && (
+                  <div className="mt-3 p-2 bg-green-50 border border-green-200 rounded-lg">
+                    <div className="flex items-center gap-2 text-green-700">
+                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                      <span className="text-sm font-medium">Your turn to speak</span>
+                    </div>
+                  </div>
+                )}
+                
+                {isProcessingResponse && (
+                  <div className="mt-3 p-2 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-center gap-2 text-blue-700">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+                      <span className="text-sm font-medium">AI is thinking...</span>
+                    </div>
                   </div>
                 )}
               </CardContent>

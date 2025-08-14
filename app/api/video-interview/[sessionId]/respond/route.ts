@@ -81,12 +81,37 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     // Create video interview service
     const videoInterviewService = createVideoInterviewService()
 
-    // Generate AI response
-    const aiResponse = await videoInterviewService.generateInterviewResponse(
-      sessionId,
-      transcript,
-      currentQuestion
-    )
+    let aiResponse
+
+    // Check if this is the welcome message (first interaction)
+    if (transcript.includes('Hello! I\'m your AI interviewer') || transcript === 'START_INTERVIEW' || videoInterview.currentQuestionIndex === 0) {
+      console.log('🎯 Generating welcome message...')
+      
+      // Create interview session context first
+      await videoInterviewService.createSession(
+        sessionId,
+        videoInterview.userId,
+        {
+          jobTitle: videoInterview.jobTitle,
+          companyName: videoInterview.companyName,
+          jobDescription: videoInterview.jobDescription || '',
+          industry: 'Technology', // Default
+          experienceLevel: 'mid' // Default
+        },
+        videoInterview.questions as PracticeQuestion[],
+        videoInterview.aiPersonality as 'professional' | 'friendly' | 'challenging'
+      )
+      
+      // Start the interview (generates welcome message)
+      aiResponse = await videoInterviewService.startInterview(sessionId)
+    } else {
+      // Generate regular AI response
+      aiResponse = await videoInterviewService.generateInterviewResponse(
+        sessionId,
+        transcript,
+        currentQuestion
+      )
+    }
 
     // Generate speech audio
     const audioBuffer = await videoInterviewService.generateSpeech(aiResponse.text)

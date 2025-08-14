@@ -103,12 +103,12 @@ export function VideoInterviewRoom({
         console.log('🎥 Initializing video interview room...')
         
         // Import the store actions
-        const { initializeWebRTC, startSession } = useVideoInterviewStore.getState()
+        const { startSession } = useVideoInterviewStore.getState()
         
-        // Initialize WebRTC with audio chunk callback
-        await initializeWebRTC()
+        // Start the interview session (this will initialize WebRTC if needed)
+        await startSession()
         
-        // Set up audio chunk handling
+        // Set up audio chunk handling after session is started
         const { webrtcService } = useVideoInterviewStore.getState()
         if (webrtcService) {
           // Override the audio chunk callback to capture audio for transcription
@@ -121,19 +121,12 @@ export function VideoInterviewRoom({
               if (originalCallback) originalCallback(chunk)
             }
           }
-          
-          // Ensure recording is started
-          console.log('🎙️ Starting audio recording...')
-          webrtcService.startRecording()
         }
-        
-        // Start the interview session
-        await startSession()
         
         // Start with AI welcome message
         setTimeout(() => {
           startInterviewConversation()
-        }, 2000) // Give 2 seconds for everything to initialize
+        }, 1000) // Give 1 second for everything to initialize
         
         console.log('✅ Video interview room initialized')
       } catch (error) {
@@ -367,7 +360,7 @@ export function VideoInterviewRoom({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          transcript: welcomeMessage, // Send the welcome message as transcript
+          transcript: 'START_INTERVIEW', // Clear signal for welcome message
           questionId: currentQuestion?.id || 'welcome',
           responseStartTime: Date.now()
         })

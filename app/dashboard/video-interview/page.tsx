@@ -28,6 +28,7 @@ import {
 import { VideoInterviewSetup } from '@/components/video-interview/video-interview-setup'
 import { VideoInterviewRoom } from '@/components/video-interview/video-interview-room'
 import { VideoInterviewResults } from '@/components/video-interview/video-interview-results'
+import { VideoInterviewErrorBoundary } from '@/components/video-interview/video-interview-error-boundary'
 import { useVideoInterviewStore } from '@/lib/stores/video-interview-store'
 import { InterviewJobData, PracticeQuestion } from '@/lib/services/interview-service'
 import { VideoInterviewSession, InterviewSummary } from '@/lib/services/video-interview-service'
@@ -281,11 +282,25 @@ export default function VideoInterviewPage() {
 
   if (currentPhase === 'interview' && currentSession) {
     return (
-      <VideoInterviewRoom
-        sessionId={currentSession.sessionId}
-        onInterviewComplete={handleInterviewComplete}
-        onInterviewEnd={handleInterviewEnd}
-      />
+      <VideoInterviewErrorBoundary
+        onReset={() => {
+          cleanup()
+          setCurrentPhase('device-setup')
+          setError(null)
+        }}
+        onGoBack={() => {
+          cleanup()
+          setCurrentPhase('setup')
+          setCurrentSession(null)
+          setError(null)
+        }}
+      >
+        <VideoInterviewRoom
+          sessionId={currentSession.sessionId}
+          onInterviewComplete={handleInterviewComplete}
+          onInterviewEnd={handleInterviewEnd}
+        />
+      </VideoInterviewErrorBoundary>
     )
   }
 

@@ -107,8 +107,10 @@ export function VideoInterviewRoom({
 
   // Initialize WebRTC connection on component mount
   useEffect(() => {
+    let initializationAborted = false
+    
     const initializeInterview = async () => {
-      if (!session) return
+      if (!session || initializationAborted) return
       
       try {
         console.log('🎥 Initializing video interview room...')
@@ -116,26 +118,34 @@ export function VideoInterviewRoom({
         // Import the store actions
         const { startSession } = useVideoInterviewStore.getState()
         
+        // Check if already aborted before async operation
+        if (initializationAborted) return
+        
         // Start the interview session (this will initialize WebRTC if needed)
         await startSession()
         
+        // Check if aborted after async operation
+        if (initializationAborted || !isMountedRef.current) return
+        
         // Set up audio chunk handling after session is started
         const { webrtcService } = useVideoInterviewStore.getState()
-        if (webrtcService) {
-          // Note: We'll handle audio chunks through the store's callback system
-          // The WebRTCService callbacks are private, so we rely on the store's onAudioChunk callback
+        if (webrtcService && !initializationAborted) {
           console.log('🎤 WebRTC service initialized, audio chunks will be handled by store callbacks')
         }
         
         // Start with AI welcome message
-        initTimeoutRef.current = setTimeout(() => {
-          if (isMountedRef.current) {
-            startInterviewConversation()
-          }
-        }, 1000) // Give 1 second for everything to initialize
+        if (!initializationAborted && isMountedRef.current) {
+          initTimeoutRef.current = setTimeout(() => {
+            if (isMountedRef.current && !initializationAborted) {
+              startInterviewConversation()
+            }
+          }, 1000) // Give 1 second for everything to initialize
+        }
         
         console.log('✅ Video interview room initialized')
       } catch (error) {
+        if (initializationAborted) return // Don't process errors if aborted
+        
         console.error('❌ Failed to initialize video interview:', error)
         
         // Add detailed error to store
@@ -145,24 +155,32 @@ export function VideoInterviewRoom({
         
         // Set connection status to failed
         const { connectionStatus } = useVideoInterviewStore.getState()
-        if (connectionStatus === 'connecting') {
+        if (connectionStatus === 'connecting' && !initializationAborted) {
           // Force update connection status
           setTimeout(() => {
             const state = useVideoInterviewStore.getState()
-            if (state.webrtcService) {
+            if (state.webrtcService && !initializationAborted) {
               state.webrtcService.cleanup()
             }
           }, 100)
         }
       } finally {
-        if (isMountedRef.current) {
+        if (isMountedRef.current && !initializationAborted) {
           setIsInitializing(false)
         }
       }
     }
     
-    initializeInterview()
-  }, [session])
+    // Only initialize if we have a session and component is mounted
+    if (session && isMountedRef.current) {
+      initializeInterview()
+    }
+    
+    // Cleanup function
+    return () => {
+      initializationAborted = true
+    }
+  }, [session?.sessionId]) // Only depend on sessionId to prevent unnecessary re-runs
 
   // Connect video streams to elements with error handling (prevent blinking)
   useEffect(() => {
@@ -231,21 +249,27 @@ export function VideoInterviewRoom({
 
   // Process audio chunks for transcription (debounced to prevent memory leaks)
   useEffect(() => {
-    if (audioChunks.length === 0 || isProcessingAudio || !session) return
+    if (audioChunks.length === 0 || isProcessingAudio || !session || !isMountedRef.current) return
     
     // Clear any existing timeout
     if (audioChunkTimeoutRef.current) {
       clearTimeout(audioChunkTimeoutRef.current)
+      audioChunkTimeoutRef.current = null
     }
     
     // Debounce processing to prevent excessive API calls
     audioChunkTimeoutRef.current = setTimeout(async () => {
+      // Double-check if component is still mounted
+      if (!isMountedRef.current || !session) return
+      
       // Capture chunks at the time of timeout execution
       const chunksToProcess = [...audioChunks]
       if (chunksToProcess.length === 0) return
       
       const latestChunk = chunksToProcess[chunksToProcess.length - 1]
       
+      // Clear chunks immediately to prevent reprocessing
+      setAudioChunks([])
       setIsProcessingAudio(true)
       
       try {
@@ -255,11 +279,21 @@ export function VideoInterviewRoom({
         const formData = new FormData()
         formData.append('audio', latestChunk, 'audio.wav')
         
-        // Send to transcription API
+        // Send to transcription API with timeout
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 5000) // 5 second timeout
+        
         const response = await fetch(`/api/video-interview/${session.sessionId}/transcribe`, {
           method: 'POST',
-          body: formData
+          body: formData,
+          signal: controller.signal
         })
+        
+        clearTimeout(timeoutId)
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
         
         const result = await response.json()
         
@@ -272,13 +306,15 @@ export function VideoInterviewRoom({
         }
         
       } catch (error) {
-        console.error('❌ Failed to process audio:', error)
+        if (error instanceof Error && error.name === 'AbortError') {
+          console.log('🎤 Audio processing aborted')
+        } else {
+          console.error('❌ Failed to process audio:', error)
+        }
       } finally {
         if (isMountedRef.current) {
           setIsProcessingAudio(false)
           audioChunkTimeoutRef.current = null
-          // Clear processed chunks AFTER processing to prevent infinite loop
-          setAudioChunks([])
         }
       }
     }, 1000) // Wait 1 second before processing to debounce
@@ -290,7 +326,7 @@ export function VideoInterviewRoom({
         audioChunkTimeoutRef.current = null
       }
     }
-  }, [audioChunks.length, session?.sessionId, isProcessingAudio]) // Remove updateCurrentTranscript from deps to prevent loops
+  }, [audioChunks.length, session?.sessionId, isProcessingAudio]) // Stable dependencies
 
   // Generate AI response
   const generateAIResponse = async (transcript: string) => {
@@ -459,41 +495,56 @@ export function VideoInterviewRoom({
 
   // Cleanup on component unmount
   useEffect(() => {
+    // Mark component as mounted
+    isMountedRef.current = true
+    
     return () => {
       console.log('🧹 Cleaning up video interview room...')
       
-      // Mark component as unmounted
+      // Mark component as unmounted FIRST
       isMountedRef.current = false
       
       // Clear all timeouts
-      if (audioChunkTimeoutRef.current) {
-        clearTimeout(audioChunkTimeoutRef.current)
-        audioChunkTimeoutRef.current = null
-      }
-      if (initTimeoutRef.current) {
-        clearTimeout(initTimeoutRef.current)
-        initTimeoutRef.current = null
-      }
-      if (nextQuestionTimeoutRef.current) {
-        clearTimeout(nextQuestionTimeoutRef.current)
-        nextQuestionTimeoutRef.current = null
-      }
+      const timeouts = [
+        audioChunkTimeoutRef.current,
+        initTimeoutRef.current,
+        nextQuestionTimeoutRef.current
+      ]
+      
+      timeouts.forEach(timeout => {
+        if (timeout) {
+          clearTimeout(timeout)
+        }
+      })
+      
+      // Reset timeout refs
+      audioChunkTimeoutRef.current = null
+      initTimeoutRef.current = null
+      nextQuestionTimeoutRef.current = null
       
       // Clear audio chunks
       setAudioChunks([])
       
       // Revoke audio URLs
       if (currentAudioUrl) {
-        URL.revokeObjectURL(currentAudioUrl)
+        try {
+          URL.revokeObjectURL(currentAudioUrl)
+        } catch (error) {
+          console.warn('Failed to revoke audio URL:', error)
+        }
       }
       
       // Cleanup WebRTC service
-      const { webrtcService } = useVideoInterviewStore.getState()
-      if (webrtcService) {
-        webrtcService.cleanup()
+      try {
+        const { webrtcService } = useVideoInterviewStore.getState()
+        if (webrtcService) {
+          webrtcService.cleanup()
+        }
+      } catch (error) {
+        console.warn('Failed to cleanup WebRTC service:', error)
       }
     }
-  }, [currentAudioUrl]) // Include currentAudioUrl to ensure proper cleanup
+  }, []) // Empty dependency array - only run once on mount/unmount
 
   const handleEndInterview = async () => {
     setIsEnding(true)
@@ -527,6 +578,7 @@ export function VideoInterviewRoom({
     return 'text-red-600'
   }
 
+  // Early return for invalid states
   if (!session) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -534,6 +586,20 @@ export function VideoInterviewRoom({
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
             No interview session found. Please start a new interview.
+          </AlertDescription>
+        </Alert>
+      </div>
+    )
+  }
+
+  // Check for WebRTC support before rendering
+  if (typeof window !== 'undefined' && (!navigator?.mediaDevices?.getUserMedia)) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <Alert>
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Your browser doesn't support video interviews. Please use a modern browser like Chrome, Firefox, or Safari.
           </AlertDescription>
         </Alert>
       </div>

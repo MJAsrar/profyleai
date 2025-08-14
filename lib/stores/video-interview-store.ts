@@ -268,8 +268,23 @@ export const useVideoInterviewStore = create<VideoInterviewStore>()(
           console.log('🔄 Starting WebRTC initialization...')
           
           // Check if WebRTC is supported
-          if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-            throw new Error('WebRTC is not supported in this browser')
+          if (typeof window === 'undefined') {
+            throw new Error('WebRTC initialization requires browser environment')
+          }
+          
+          if (!navigator?.mediaDevices?.getUserMedia) {
+            throw new Error('WebRTC is not supported in this browser. Please use a modern browser like Chrome, Firefox, or Safari.')
+          }
+
+          // Check for required permissions before initializing
+          try {
+            const permissions = await navigator.permissions.query({ name: 'camera' as PermissionName })
+            if (permissions.state === 'denied') {
+              throw new Error('Camera permission is required for video interviews. Please enable camera access and refresh the page.')
+            }
+          } catch (permError) {
+            // Permission API might not be available, continue with initialization
+            console.warn('Permission check not available:', permError)
           }
 
           const callbacks = {
@@ -293,12 +308,17 @@ export const useVideoInterviewStore = create<VideoInterviewStore>()(
             },
             onAudioChunk: (chunk: Blob) => {
               // Handle audio chunk for transcription
-              // This would typically be sent to your transcription service
               console.log('🎤 Received audio chunk:', chunk.size, 'bytes')
             },
             onError: (error: Error) => {
               console.error('🚨 WebRTC error:', error)
               get().addError(error.message)
+              
+              // Set connection status to failed on error
+              set((draft) => {
+                draft.connectionStatus = 'failed'
+                draft.lastError = error.message
+              })
             },
             onAudioAnalytics: (analytics: AudioAnalytics) => {
               get().updateAudioAnalytics(analytics)
@@ -308,27 +328,61 @@ export const useVideoInterviewStore = create<VideoInterviewStore>()(
           // Set status to connecting
           set((draft) => {
             draft.connectionStatus = 'connecting'
+            draft.lastError = null // Clear previous errors
           })
 
           const webrtcService = new WebRTCService({}, callbacks)
           
-          // Initialize media with timeout
-          const initPromise = webrtcService.initializeMedia()
-          const timeoutPromise = new Promise((_, reject) => {
-            setTimeout(() => reject(new Error('WebRTC initialization timeout')), 10000)
-          })
+          // Initialize media with timeout and retry logic
+          let initAttempt = 0
+          const maxAttempts = 3
+          const attemptDelay = 1000 // 1 second between attempts
           
-          await Promise.race([initPromise, timeoutPromise])
+          while (initAttempt < maxAttempts) {
+            try {
+              const initPromise = webrtcService.initializeMedia()
+              const timeoutPromise = new Promise((_, reject) => {
+                setTimeout(() => reject(new Error('WebRTC initialization timeout (10 seconds)')), 10000)
+              })
+              
+              await Promise.race([initPromise, timeoutPromise])
+              break // Success, exit retry loop
+              
+            } catch (attemptError) {
+              initAttempt++
+              console.warn(`WebRTC initialization attempt ${initAttempt} failed:`, attemptError)
+              
+              if (initAttempt >= maxAttempts) {
+                throw attemptError // Final attempt failed, throw error
+              }
+              
+              // Wait before retry
+              await new Promise(resolve => setTimeout(resolve, attemptDelay))
+            }
+          }
           
           set((draft) => {
             draft.webrtcService = webrtcService
             draft.connectionStatus = 'connected'
+            draft.lastError = null
           })
 
           console.log('✅ WebRTC initialized successfully')
         } catch (error) {
           console.error('❌ WebRTC initialization failed:', error)
-          const errorMessage = error instanceof Error ? error.message : 'Failed to initialize WebRTC'
+          let errorMessage = 'Failed to initialize WebRTC'
+          
+          if (error instanceof Error) {
+            if (error.message.includes('Permission denied') || error.message.includes('NotAllowedError')) {
+              errorMessage = 'Camera/microphone permission denied. Please allow access and refresh the page.'
+            } else if (error.message.includes('NotFoundError')) {
+              errorMessage = 'No camera or microphone found. Please connect a device and refresh.'
+            } else if (error.message.includes('timeout')) {
+              errorMessage = 'Connection timeout. Please check your internet connection and try again.'
+            } else {
+              errorMessage = error.message
+            }
+          }
           
           set((draft) => {
             draft.connectionStatus = 'failed'
@@ -336,7 +390,7 @@ export const useVideoInterviewStore = create<VideoInterviewStore>()(
           })
           
           get().addError(errorMessage)
-          throw error
+          throw new Error(errorMessage)
         }
       },
 

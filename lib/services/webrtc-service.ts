@@ -96,20 +96,52 @@ export class WebRTCService {
     try {
       console.log('🎥 Requesting media permissions...')
       
-      // Request permissions first
-      const stream = await navigator.mediaDevices.getUserMedia(this.config.mediaConstraints)
+      // Set status to connecting
+      this.connectionState.status = 'connecting'
+      this.callbacks.onConnectionStateChange('connecting')
+      
+      // Use a more lenient media configuration for initial connection
+      const fallbackConstraints = {
+        video: {
+          width: { min: 320, ideal: 640, max: 1280 },
+          height: { min: 240, ideal: 480, max: 720 },
+          frameRate: { min: 15, ideal: 24, max: 30 }
+        },
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true
+        }
+      }
+      
+      let stream: MediaStream
+      
+      try {
+        // Try with full constraints first
+        stream = await navigator.mediaDevices.getUserMedia(this.config.mediaConstraints)
+      } catch (primaryError) {
+        console.warn('Primary media constraints failed, trying fallback:', primaryError)
+        // Fallback to more basic constraints
+        stream = await navigator.mediaDevices.getUserMedia(fallbackConstraints)
+      }
+      
+      // Validate stream
+      if (!stream || stream.getTracks().length === 0) {
+        throw new Error('No media tracks available')
+      }
       
       this.connectionState.localStream = stream
-      this.connectionState.status = 'connected' // Set to connected since we have media
+      this.connectionState.status = 'connected'
       
+      // Notify callbacks
       this.callbacks.onLocalStream(stream)
       this.callbacks.onConnectionStateChange('connected')
       
-      // Set up audio analysis
-      await this.setupAudioAnalysis(stream)
+      // Set up audio analysis asynchronously to prevent blocking
+      this.setupAudioAnalysisAsync(stream)
       
-      // Set up recording
-      this.setupRecording(stream)
+      // Set up recording asynchronously
+      this.setupRecordingAsync(stream)
       
       console.log('✅ Media initialized successfully')
       return stream
@@ -120,6 +152,43 @@ export class WebRTCService {
       this.callbacks.onConnectionStateChange('failed')
       this.callbacks.onError(error as Error)
       throw error
+    }
+  }
+
+  /**
+   * Set up audio analysis asynchronously to prevent blocking
+   */
+  private async setupAudioAnalysisAsync(stream: MediaStream): Promise<void> {
+    try {
+      // Use requestIdleCallback or setTimeout to defer this work
+      const setupAudio = () => this.setupAudioAnalysis(stream)
+      
+      if ('requestIdleCallback' in window) {
+        requestIdleCallback(setupAudio)
+      } else {
+        setTimeout(setupAudio, 0)
+      }
+    } catch (error) {
+      console.warn('Failed to setup audio analysis:', error)
+      // Don't throw - audio analysis is not critical for basic functionality
+    }
+  }
+
+  /**
+   * Set up recording asynchronously to prevent blocking
+   */
+  private setupRecordingAsync(stream: MediaStream): void {
+    try {
+      const setupRec = () => this.setupRecording(stream)
+      
+      if ('requestIdleCallback' in window) {
+        requestIdleCallback(setupRec)
+      } else {
+        setTimeout(setupRec, 0)
+      }
+    } catch (error) {
+      console.warn('Failed to setup recording:', error)
+      // Don't throw - recording setup is not critical for initial connection
     }
   }
 

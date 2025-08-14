@@ -100,6 +100,7 @@ export function VideoInterviewRoom({
   const [isInitializing, setIsInitializing] = useState(true)
   const [audioChunks, setAudioChunks] = useState<Blob[]>([])
   const [isProcessingAudio, setIsProcessingAudio] = useState(false)
+  const audioChunkTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   // Initialize WebRTC connection on component mount
   useEffect(() => {
@@ -225,8 +226,13 @@ export function VideoInterviewRoom({
   useEffect(() => {
     if (audioChunks.length === 0 || isProcessingAudio || !session) return
     
+    // Clear any existing timeout
+    if (audioChunkTimeoutRef.current) {
+      clearTimeout(audioChunkTimeoutRef.current)
+    }
+    
     // Debounce processing to prevent excessive API calls
-    const timeoutId = setTimeout(async () => {
+    audioChunkTimeoutRef.current = setTimeout(async () => {
       const latestChunk = audioChunks[audioChunks.length - 1]
       
       setIsProcessingAudio(true)
@@ -261,14 +267,18 @@ export function VideoInterviewRoom({
         console.error('❌ Failed to process audio:', error)
       } finally {
         setIsProcessingAudio(false)
+        audioChunkTimeoutRef.current = null
       }
     }, 1000) // Wait 1 second before processing to debounce
     
     // Cleanup timeout on unmount or dependency change
     return () => {
-      clearTimeout(timeoutId)
+      if (audioChunkTimeoutRef.current) {
+        clearTimeout(audioChunkTimeoutRef.current)
+        audioChunkTimeoutRef.current = null
+      }
     }
-  }, [audioChunks.length, session, isProcessingAudio]) // Only depend on length, not the array itself
+  }, [audioChunks.length, session?.sessionId, isProcessingAudio, updateCurrentTranscript]) // Only depend on length, not the array itself
 
   // Generate AI response
   const generateAIResponse = async (transcript: string) => {
@@ -438,6 +448,12 @@ export function VideoInterviewRoom({
       // Clear audio chunks
       setAudioChunks([])
       
+      // Clear audio processing timeout
+      if (audioChunkTimeoutRef.current) {
+        clearTimeout(audioChunkTimeoutRef.current)
+        audioChunkTimeoutRef.current = null
+      }
+      
       // Revoke audio URLs
       if (currentAudioUrl) {
         URL.revokeObjectURL(currentAudioUrl)
@@ -449,11 +465,8 @@ export function VideoInterviewRoom({
         webrtcService.cleanup()
       }
       
-      // Clear any pending timeouts or intervals
-      const highestId = window.setTimeout(() => {}, 0)
-      for (let i = 0; i < highestId; i++) {
-        window.clearTimeout(i)
-      }
+      // Note: We don't clear all timeouts as it could interfere with other components
+      // Instead, we rely on proper cleanup of our specific resources above
     }
   }, []) // Empty dependency array - only run on unmount
 

@@ -265,18 +265,28 @@ export const useVideoInterviewStore = create<VideoInterviewStore>()(
 
       initializeWebRTC: async () => {
         try {
+          console.log('🔄 Starting WebRTC initialization...')
+          
+          // Check if WebRTC is supported
+          if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            throw new Error('WebRTC is not supported in this browser')
+          }
+
           const callbacks = {
             onConnectionStateChange: (status: ConnectionState['status']) => {
+              console.log('🔄 Connection status changed:', status)
               set((draft) => {
                 draft.connectionStatus = status
               })
             },
             onLocalStream: (stream: MediaStream) => {
+              console.log('📹 Local stream received')
               set((draft) => {
                 draft.localStream = stream
               })
             },
             onRemoteStream: (stream: MediaStream) => {
+              console.log('📹 Remote stream received')
               set((draft) => {
                 draft.remoteStream = stream
               })
@@ -287,6 +297,7 @@ export const useVideoInterviewStore = create<VideoInterviewStore>()(
               console.log('🎤 Received audio chunk:', chunk.size, 'bytes')
             },
             onError: (error: Error) => {
+              console.error('🚨 WebRTC error:', error)
               get().addError(error.message)
             },
             onAudioAnalytics: (analytics: AudioAnalytics) => {
@@ -294,18 +305,36 @@ export const useVideoInterviewStore = create<VideoInterviewStore>()(
             }
           }
 
+          // Set status to connecting
+          set((draft) => {
+            draft.connectionStatus = 'connecting'
+          })
+
           const webrtcService = new WebRTCService({}, callbacks)
           
-          // Initialize media
-          await webrtcService.initializeMedia()
+          // Initialize media with timeout
+          const initPromise = webrtcService.initializeMedia()
+          const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => reject(new Error('WebRTC initialization timeout')), 10000)
+          })
+          
+          await Promise.race([initPromise, timeoutPromise])
           
           set((draft) => {
             draft.webrtcService = webrtcService
+            draft.connectionStatus = 'connected'
           })
 
           console.log('✅ WebRTC initialized successfully')
         } catch (error) {
+          console.error('❌ WebRTC initialization failed:', error)
           const errorMessage = error instanceof Error ? error.message : 'Failed to initialize WebRTC'
+          
+          set((draft) => {
+            draft.connectionStatus = 'failed'
+            draft.lastError = errorMessage
+          })
+          
           get().addError(errorMessage)
           throw error
         }

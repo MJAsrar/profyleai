@@ -78,6 +78,7 @@ export class WebRTCService {
   private volumeThreshold: number = 0.01
   private silenceTimer: number = 0
   private lastVolumeCheck: number = 0
+  private stopAudioAnalysis?: () => void
 
   constructor(config: Partial<WebRTCConfig> = {}, callbacks: VideoCallCallbacks) {
     this.config = { ...DEFAULT_WEBRTC_CONFIG, ...config }
@@ -273,62 +274,83 @@ export class WebRTCService {
     const dataArray = new Uint8Array(bufferLength)
     let isAnalyzing = true
     let lastUpdate = 0
+    let animationFrameId: number | null = null
     const UPDATE_INTERVAL = 200 // Reduce frequency to 200ms to prevent CPU overload
     
     const analyze = (timestamp: number) => {
-      if (!this.analyser || !isAnalyzing) return
+      // Check if we should stop analyzing
+      if (!this.analyser || !isAnalyzing || this.connectionState.status === 'disconnected') {
+        if (animationFrameId) {
+          cancelAnimationFrame(animationFrameId)
+        }
+        return
+      }
 
       // Throttle updates significantly
       if (timestamp - lastUpdate < UPDATE_INTERVAL) {
-        requestAnimationFrame(analyze)
+        animationFrameId = requestAnimationFrame(analyze)
         return
       }
       lastUpdate = timestamp
 
-      this.analyser.getByteFrequencyData(dataArray)
-      
-      // Simplified volume calculation
-      let sum = 0
-      // Sample every 8th element to reduce CPU usage
-      for (let i = 0; i < bufferLength; i += 8) {
-        const normalized = dataArray[i] / 255
-        sum += normalized * normalized
-      }
-      const volume = Math.sqrt(sum / (bufferLength / 8))
-
-      // Detect speaking with hysteresis to prevent flickering
-      const isSpeaking = volume > this.volumeThreshold
-      
-      // Calculate silence duration
-      const now = Date.now()
-      if (isSpeaking) {
-        this.silenceTimer = now
-      }
-      const silenceDuration = now - this.silenceTimer
-
-      // Simplified frequency calculation
-      const frequency = 0 // Disable frequency calculation to save CPU
-
-      // Emit analytics less frequently
-      if (now - this.lastVolumeCheck > UPDATE_INTERVAL) {
-        const analytics: AudioAnalytics = {
-          volume,
-          frequency,
-          isSpeaking,
-          silenceDuration
+      try {
+        this.analyser.getByteFrequencyData(dataArray)
+        
+        // Simplified volume calculation
+        let sum = 0
+        // Sample every 8th element to reduce CPU usage
+        for (let i = 0; i < bufferLength; i += 8) {
+          const normalized = dataArray[i] / 255
+          sum += normalized * normalized
         }
-        this.callbacks.onAudioAnalytics(analytics)
-        this.lastVolumeCheck = now
+        const volume = Math.sqrt(sum / (bufferLength / 8))
+
+        // Detect speaking with hysteresis to prevent flickering
+        const isSpeaking = volume > this.volumeThreshold
+        
+        // Calculate silence duration
+        const now = Date.now()
+        if (isSpeaking) {
+          this.silenceTimer = now
+        }
+        const silenceDuration = now - this.silenceTimer
+
+        // Simplified frequency calculation
+        const frequency = 0 // Disable frequency calculation to save CPU
+
+        // Emit analytics less frequently
+        if (now - this.lastVolumeCheck > UPDATE_INTERVAL) {
+          const analytics: AudioAnalytics = {
+            volume,
+            frequency,
+            isSpeaking,
+            silenceDuration
+          }
+          this.callbacks.onAudioAnalytics(analytics)
+          this.lastVolumeCheck = now
+        }
+      } catch (error) {
+        console.error('Audio analysis error:', error)
+        // Stop analysis on error
+        isAnalyzing = false
+        return
       }
 
       // Continue analysis
-      requestAnimationFrame(analyze)
+      animationFrameId = requestAnimationFrame(analyze)
     }
 
-    requestAnimationFrame(analyze)
+    // Store the animation frame ID for cleanup
+    animationFrameId = requestAnimationFrame(analyze)
     
-    // Store reference to stop analysis
-    this.connectionState.recordedChunks.push = () => { isAnalyzing = false }
+    // Store cleanup function for later use
+    this.stopAudioAnalysis = () => {
+      isAnalyzing = false
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId)
+        animationFrameId = null
+      }
+    }
   }
 
   /**
@@ -499,6 +521,12 @@ export class WebRTCService {
    */
   cleanup(): void {
     console.log('🧹 Cleaning up WebRTC resources')
+
+    // Stop audio analysis first
+    if (this.stopAudioAnalysis) {
+      this.stopAudioAnalysis()
+      this.stopAudioAnalysis = undefined
+    }
 
     // Stop recording
     this.stopRecording()

@@ -31,6 +31,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     // Validate request body
     const validationResult = respondSchema.safeParse(body)
     if (!validationResult.success) {
+      console.error('❌ Request validation failed:', validationResult.error.errors)
+      console.error('❌ Request body received:', body)
       return NextResponse.json(
         { 
           success: false, 
@@ -52,13 +54,23 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     })
 
     if (!videoInterview) {
+      console.error('❌ Video interview session not found for sessionId:', sessionId, 'userId:', user.id)
       return NextResponse.json(
         { success: false, error: 'Video interview session not found' },
         { status: 404 }
       )
     }
 
+    console.log('📋 Found video interview:', {
+      id: videoInterview.id,
+      sessionId: videoInterview.sessionId,
+      status: videoInterview.status,
+      currentQuestionIndex: videoInterview.currentQuestionIndex,
+      questionsCount: Array.isArray(videoInterview.questions) ? videoInterview.questions.length : 'Invalid'
+    })
+
     if (videoInterview.status !== 'active') {
+      console.error('❌ Interview session is not active. Status:', videoInterview.status)
       return NextResponse.json(
         { success: false, error: 'Interview session is not active' },
         { status: 400 }

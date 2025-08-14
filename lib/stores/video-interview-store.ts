@@ -198,6 +198,27 @@ export const useVideoInterviewStore = create<VideoInterviewStore>()(
             draft.session!.startedAt = new Date()
           })
 
+          // Update database status to active
+          try {
+            const response = await fetch(`/api/video-interview/${state.session.sessionId}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                status: 'active',
+                startedAt: new Date().toISOString()
+              })
+            })
+            
+            if (!response.ok) {
+              console.warn('⚠️ Failed to update session status in database:', response.status)
+            } else {
+              console.log('✅ Session status updated to active in database')
+            }
+          } catch (dbError) {
+            console.warn('⚠️ Database update failed:', dbError)
+            // Don't throw - continue with session even if DB update fails
+          }
+
           // Initialize WebRTC if not already done
           if (!state.webrtcService) {
             await get().initializeWebRTC()

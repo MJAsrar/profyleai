@@ -879,7 +879,7 @@ IMPORTANT: Return ONLY the JSON object above, nothing else.`.trim()
           console.warn(`⚠️ Could not find matching closing brace. Brace count: ${braceCount}, inString: ${inString}`)
         }
       }
-      
+      //here
       // Check if JSON appears to be truncated (only if we didn't successfully extract a complete object)
       if (!cleanedResponse.trim().endsWith('}') && !jsonExtracted) {
         console.warn('⚠️ JSON appears to be truncated, attempting to fix...')

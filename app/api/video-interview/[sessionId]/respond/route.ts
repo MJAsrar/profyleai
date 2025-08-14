@@ -65,18 +65,25 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       )
     }
 
-    // Get current question
+    // Get current question - allow 'welcome' for initial message
     const questions = videoInterview.questions as PracticeQuestion[]
-    const currentQuestion = questions.find(q => q.id === questionId)
+    let currentQuestion: PracticeQuestion | null = null
     
-    if (!currentQuestion) {
+    if (questionId === 'welcome' || transcript === 'START_INTERVIEW') {
+      // For welcome message, use the first question
+      currentQuestion = questions[0] || null
+    } else {
+      currentQuestion = questions.find(q => q.id === questionId) || null
+    }
+    
+    if (!currentQuestion && questionId !== 'welcome') {
       return NextResponse.json(
         { success: false, error: 'Question not found in session' },
         { status: 400 }
       )
     }
 
-    console.log('🤖 Generating AI response for question:', currentQuestion.question)
+    console.log('🤖 Generating AI response for question:', currentQuestion?.question || 'Welcome message')
 
     // Create video interview service
     const videoInterviewService = createVideoInterviewService()
@@ -106,18 +113,34 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       aiResponse = await videoInterviewService.startInterview(sessionId)
     } else {
       // Generate regular AI response
-      aiResponse = await videoInterviewService.generateInterviewResponse(
-        sessionId,
-        transcript,
-        currentQuestion
-      )
+      if (currentQuestion) {
+        aiResponse = await videoInterviewService.generateInterviewResponse(
+          sessionId,
+          transcript,
+          currentQuestion
+        )
+      } else {
+        throw new Error('No current question available for response generation')
+      }
     }
 
     // Generate speech audio
-    const audioBuffer = await videoInterviewService.generateSpeech(aiResponse.text)
-
-    // Convert audio buffer to base64 for JSON response
-    const audioBase64 = Buffer.from(audioBuffer).toString('base64')
+    let audioBase64: string | null = null
+    try {
+      console.log('🔊 Generating speech for text:', aiResponse.text.substring(0, 100) + '...')
+      const audioBuffer = await videoInterviewService.generateSpeech(aiResponse.text)
+      
+      if (audioBuffer && audioBuffer.byteLength > 0) {
+        // Convert audio buffer to base64 for JSON response
+        audioBase64 = Buffer.from(audioBuffer).toString('base64')
+        console.log('✅ Speech generated successfully, size:', audioBuffer.byteLength, 'bytes')
+      } else {
+        console.error('❌ Empty audio buffer received from TTS service')
+      }
+    } catch (error) {
+      console.error('❌ Speech generation failed:', error)
+      // Continue without audio - the text response will still work
+    }
 
     console.log('✅ AI response generated:', aiResponse.text)
 

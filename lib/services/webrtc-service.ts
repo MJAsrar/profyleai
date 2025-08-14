@@ -184,7 +184,7 @@ export class WebRTCService {
       if ('requestIdleCallback' in window) {
         requestIdleCallback(setupRec)
       } else {
-        setTimeout(setupRec, 0)
+        setTimeout(setupRec, 50) // Increased delay for more reliable initialization
       }
     } catch (error) {
       console.warn('Failed to setup recording:', error)
@@ -219,8 +219,17 @@ export class WebRTCService {
    */
   startRecording(): void {
     if (!this.connectionState.recorder) {
-      console.error('❌ Recorder not initialized')
-      return
+      console.error('❌ Recorder not initialized, attempting to initialize...')
+      // Try to initialize recorder if we have a local stream
+      if (this.connectionState.localStream) {
+        this.setupRecording(this.connectionState.localStream)
+        // Wait a bit for async initialization
+        setTimeout(() => this.startRecording(), 100)
+        return
+      } else {
+        console.error('❌ No local stream available for recording')
+        return
+      }
     }
 
     if (this.connectionState.recorder.state === 'recording') {

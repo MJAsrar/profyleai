@@ -354,22 +354,28 @@ export function VideoInterviewRoom({
         
         // Convert base64 audio to URL
         if (result.data.audioBase64) {
-          const audioBlob = new Blob(
-            [Uint8Array.from(atob(result.data.audioBase64), c => c.charCodeAt(0))],
-            { type: 'audio/mp3' }
-          )
-          const audioUrl = URL.createObjectURL(audioBlob)
-          setCurrentAudioUrl(audioUrl)
-          setAISpeaking(true)
-          
-          // Stop AI speaking when audio ends
-          if (audioRef.current) {
-            audioRef.current.onended = () => {
-              setAISpeaking(false)
-              URL.revokeObjectURL(audioUrl)
-              setCurrentAudioUrl(null)
+          try {
+            const audioBlob = new Blob(
+              [Uint8Array.from(atob(result.data.audioBase64), c => c.charCodeAt(0))],
+              { type: 'audio/mp3' }
+            )
+            const audioUrl = URL.createObjectURL(audioBlob)
+            setCurrentAudioUrl(audioUrl)
+            setAISpeaking(true)
+            
+            // Stop AI speaking when audio ends
+            if (audioRef.current) {
+              audioRef.current.onended = () => {
+                setAISpeaking(false)
+                URL.revokeObjectURL(audioUrl)
+                setCurrentAudioUrl(null)
+              }
             }
+          } catch (audioError) {
+            console.error('❌ Failed to play AI response audio:', audioError)
           }
+        } else {
+          console.warn('⚠️ No audio returned in AI response, continuing without speech')
         }
         
         // Add to conversation history
@@ -432,37 +438,51 @@ export function VideoInterviewRoom({
       const result = await response.json()
       console.log('🤖 Welcome API response:', result)
       
-      if (result.success && result.data.audioBase64) {
-        console.log('🔊 Playing AI welcome message...')
-        // Play AI welcome message
-        const audioBlob = new Blob(
-          [Uint8Array.from(atob(result.data.audioBase64), c => c.charCodeAt(0))],
-          { type: 'audio/mp3' }
-        )
-        const audioUrl = URL.createObjectURL(audioBlob)
-        setCurrentAudioUrl(audioUrl)
-        setAISpeaking(true)
-        
-        if (audioRef.current) {
-          audioRef.current.onended = () => {
-            setAISpeaking(false)
-            URL.revokeObjectURL(audioUrl)
-            setCurrentAudioUrl(null)
-            
-            // Start recording after AI finishes speaking
-            const { startRecording } = useVideoInterviewStore.getState()
-            startRecording()
-          }
-        }
-        
-        // Add to conversation history
+      if (result.success) {
+        // Add to conversation history first
         addConversationTurn({
           role: 'assistant',
           content: welcomeMessage,
           timestamp: new Date()
         })
+        
+        if (result.data.audioBase64) {
+          console.log('🔊 Playing AI welcome message...')
+          try {
+            // Play AI welcome message
+            const audioBlob = new Blob(
+              [Uint8Array.from(atob(result.data.audioBase64), c => c.charCodeAt(0))],
+              { type: 'audio/mp3' }
+            )
+            const audioUrl = URL.createObjectURL(audioBlob)
+            setCurrentAudioUrl(audioUrl)
+            setAISpeaking(true)
+            
+            if (audioRef.current) {
+              audioRef.current.onended = () => {
+                setAISpeaking(false)
+                URL.revokeObjectURL(audioUrl)
+                setCurrentAudioUrl(null)
+                
+                // Start recording after AI finishes speaking
+                const { startRecording } = useVideoInterviewStore.getState()
+                startRecording()
+              }
+            }
+          } catch (audioError) {
+            console.error('❌ Failed to play welcome audio:', audioError)
+            // Start recording anyway if audio fails
+            const { startRecording } = useVideoInterviewStore.getState()
+            startRecording()
+          }
+        } else {
+          console.warn('⚠️ No audio returned in welcome message, continuing without speech')
+          // Start recording anyway
+          const { startRecording } = useVideoInterviewStore.getState()
+          startRecording()
+        }
       } else {
-        console.warn('⚠️ Welcome message API failed or no audio returned:', result)
+        console.warn('⚠️ Welcome message API failed:', result)
         
         // Fallback: Add text to conversation history without audio
         addConversationTurn({
@@ -811,7 +831,7 @@ export function VideoInterviewRoom({
             </Card>
             
             {/* Candidate Video (Picture-in-Picture) */}
-            <div className="absolute bottom-4 right-4 w-48 h-36">
+            <div className="fixed bottom-20 right-4 w-48 h-36 z-10">
               <Card>
                 <CardContent className="p-0">
                   <div className="relative bg-gray-900 rounded-lg overflow-hidden aspect-video">

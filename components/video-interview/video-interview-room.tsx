@@ -91,6 +91,8 @@ export function VideoInterviewRoom({
   const [isEnding, setIsEnding] = useState(false)
   const [currentAudioUrl, setCurrentAudioUrl] = useState<string | null>(null)
   const [isInitializing, setIsInitializing] = useState(true)
+  const [audioChunks, setAudioChunks] = useState<Blob[]>([])
+  const [isProcessingAudio, setIsProcessingAudio] = useState(false)
 
   // Initialize WebRTC connection on component mount
   useEffect(() => {
@@ -103,11 +105,30 @@ export function VideoInterviewRoom({
         // Import the store actions
         const { initializeWebRTC, startSession } = useVideoInterviewStore.getState()
         
-        // Initialize WebRTC
+        // Initialize WebRTC with audio chunk callback
         await initializeWebRTC()
+        
+        // Set up audio chunk handling
+        const { webrtcService } = useVideoInterviewStore.getState()
+        if (webrtcService) {
+          // Override the audio chunk callback to capture audio for transcription
+          const originalCallback = webrtcService.callbacks?.onAudioChunk
+          if (webrtcService.callbacks) {
+            webrtcService.callbacks.onAudioChunk = (chunk: Blob) => {
+              console.log('🎤 Received audio chunk:', chunk.size, 'bytes')
+              setAudioChunks(prev => [...prev.slice(-2), chunk]) // Keep only last 3 chunks
+              if (originalCallback) originalCallback(chunk)
+            }
+          }
+        }
         
         // Start the interview session
         await startSession()
+        
+        // Start with AI welcome message
+        setTimeout(() => {
+          startInterviewConversation()
+        }, 2000) // Give 2 seconds for everything to initialize
         
         console.log('✅ Video interview room initialized')
       } catch (error) {
@@ -137,16 +158,43 @@ export function VideoInterviewRoom({
     initializeInterview()
   }, [session])
 
-  // Connect video streams to elements
+  // Connect video streams to elements with error handling
   useEffect(() => {
     if (localVideoRef.current && localStream) {
-      localVideoRef.current.srcObject = localStream
+      try {
+        console.log('🎥 Connecting local video stream')
+        localVideoRef.current.srcObject = localStream
+        
+        // Ensure video plays
+        localVideoRef.current.onloadedmetadata = () => {
+          localVideoRef.current?.play().catch(console.error)
+        }
+        
+        // Handle stream ending
+        localStream.addEventListener('inactive', () => {
+          console.warn('⚠️ Local stream became inactive')
+        })
+        
+      } catch (error) {
+        console.error('❌ Failed to connect local video:', error)
+      }
     }
   }, [localStream])
 
   useEffect(() => {
     if (remoteVideoRef.current && remoteStream) {
-      remoteVideoRef.current.srcObject = remoteStream
+      try {
+        console.log('📹 Connecting remote video stream')
+        remoteVideoRef.current.srcObject = remoteStream
+        
+        // Ensure video plays
+        remoteVideoRef.current.onloadedmetadata = () => {
+          remoteVideoRef.current?.play().catch(console.error)
+        }
+        
+      } catch (error) {
+        console.error('❌ Failed to connect remote video:', error)
+      }
     }
   }, [remoteStream])
 
@@ -157,6 +205,180 @@ export function VideoInterviewRoom({
       audioRef.current.play().catch(console.error)
     }
   }, [currentAudioUrl])
+
+  // Process audio chunks for transcription
+  useEffect(() => {
+    const processAudioChunk = async (chunk: Blob) => {
+      if (!session || isProcessingAudio) return
+      
+      setIsProcessingAudio(true)
+      
+      try {
+        console.log('🎤 Processing audio chunk for transcription...')
+        
+        // Create form data for audio upload
+        const formData = new FormData()
+        formData.append('audio', chunk, 'audio.wav')
+        
+        // Send to transcription API
+        const response = await fetch(`/api/video-interview/${session.sessionId}/transcribe`, {
+          method: 'POST',
+          body: formData
+        })
+        
+        const result = await response.json()
+        
+        if (result.success && result.data.transcript) {
+          console.log('✅ Transcription received:', result.data.transcript)
+          updateCurrentTranscript(result.data.transcript)
+          
+          // Generate AI response
+          await generateAIResponse(result.data.transcript)
+        }
+        
+      } catch (error) {
+        console.error('❌ Failed to process audio:', error)
+      } finally {
+        setIsProcessingAudio(false)
+      }
+    }
+
+    // Process latest audio chunk
+    if (audioChunks.length > 0) {
+      const latestChunk = audioChunks[audioChunks.length - 1]
+      processAudioChunk(latestChunk)
+    }
+  }, [audioChunks, session, isProcessingAudio])
+
+  // Generate AI response
+  const generateAIResponse = async (transcript: string) => {
+    if (!session || !currentQuestion) return
+    
+    try {
+      console.log('🤖 Generating AI response...')
+      setProcessingResponse(true)
+      
+      const response = await fetch(`/api/video-interview/${session.sessionId}/respond`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          transcript,
+          questionId: currentQuestion.id,
+          responseStartTime: Date.now()
+        })
+      })
+      
+      const result = await response.json()
+      
+      if (result.success) {
+        console.log('✅ AI response generated:', result.data.aiResponse.text)
+        
+        // Convert base64 audio to URL
+        if (result.data.audioBase64) {
+          const audioBlob = new Blob(
+            [Uint8Array.from(atob(result.data.audioBase64), c => c.charCodeAt(0))],
+            { type: 'audio/mp3' }
+          )
+          const audioUrl = URL.createObjectURL(audioBlob)
+          setCurrentAudioUrl(audioUrl)
+          setAISpeaking(true)
+          
+          // Stop AI speaking when audio ends
+          if (audioRef.current) {
+            audioRef.current.onended = () => {
+              setAISpeaking(false)
+              URL.revokeObjectURL(audioUrl)
+              setCurrentAudioUrl(null)
+            }
+          }
+        }
+        
+        // Add to conversation history
+        addConversationTurn({
+          role: 'user',
+          content: transcript,
+          timestamp: new Date()
+        })
+        addConversationTurn({
+          role: 'assistant',
+          content: result.data.aiResponse.text,
+          timestamp: new Date()
+        })
+        
+        // Move to next question if needed
+        if (result.data.aiResponse.nextAction === 'next_question') {
+          setTimeout(() => {
+            moveToNextQuestion()
+          }, 2000) // Wait 2 seconds before next question
+        }
+      }
+      
+    } catch (error) {
+      console.error('❌ Failed to generate AI response:', error)
+    } finally {
+      setProcessingResponse(false)
+    }
+  }
+
+  // Start the interview conversation with AI welcome
+  const startInterviewConversation = async () => {
+    if (!session) return
+    
+    try {
+      console.log('🤖 Starting interview conversation...')
+      
+      const welcomeMessage = `Hello! I'm your AI interviewer today. I'm excited to learn more about you and your experience for the ${session.jobData.jobTitle} position at ${session.jobData.companyName}. Let's begin with our first question: ${currentQuestion?.question}`
+      
+      // Generate welcome speech
+      const response = await fetch(`/api/video-interview/${session.sessionId}/respond`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          transcript: 'START_INTERVIEW',
+          questionId: currentQuestion?.id || 'welcome',
+          responseStartTime: Date.now()
+        })
+      })
+      
+      const result = await response.json()
+      
+      if (result.success && result.data.audioBase64) {
+        // Play AI welcome message
+        const audioBlob = new Blob(
+          [Uint8Array.from(atob(result.data.audioBase64), c => c.charCodeAt(0))],
+          { type: 'audio/mp3' }
+        )
+        const audioUrl = URL.createObjectURL(audioBlob)
+        setCurrentAudioUrl(audioUrl)
+        setAISpeaking(true)
+        
+        if (audioRef.current) {
+          audioRef.current.onended = () => {
+            setAISpeaking(false)
+            URL.revokeObjectURL(audioUrl)
+            setCurrentAudioUrl(null)
+            
+            // Start recording after AI finishes speaking
+            const { startRecording } = useVideoInterviewStore.getState()
+            startRecording()
+          }
+        }
+        
+        // Add to conversation history
+        addConversationTurn({
+          role: 'assistant',
+          content: welcomeMessage,
+          timestamp: new Date()
+        })
+      }
+      
+    } catch (error) {
+      console.error('❌ Failed to start interview conversation:', error)
+      // Fallback: start recording anyway
+      const { startRecording } = useVideoInterviewStore.getState()
+      startRecording()
+    }
+  }
 
   // Clean up audio URL
   useEffect(() => {

@@ -224,27 +224,38 @@ export function VideoInterviewSetup({ onSetupComplete, isLoading = false }: Vide
     
     const bufferLength = analyserRef.current.frequencyBinCount
     const dataArray = new Uint8Array(bufferLength)
+    let lastUpdate = 0
+    const UPDATE_INTERVAL = 100 // Update every 100ms instead of every frame
     
-    const analyze = () => {
+    const analyze = (timestamp: number) => {
       if (!analyserRef.current || !isAudioTesting) return
+      
+      // Throttle updates to prevent CPU overload
+      if (timestamp - lastUpdate < UPDATE_INTERVAL) {
+        animationFrameRef.current = requestAnimationFrame(analyze)
+        return
+      }
+      lastUpdate = timestamp
       
       analyserRef.current.getByteFrequencyData(dataArray)
       
-      // Calculate volume (RMS)
+      // Calculate volume (RMS) with reduced complexity
       let sum = 0
-      for (let i = 0; i < bufferLength; i++) {
-        sum += (dataArray[i] / 255) * (dataArray[i] / 255)
+      // Sample only every 4th element to reduce CPU usage
+      for (let i = 0; i < bufferLength; i += 4) {
+        const normalized = dataArray[i] / 255
+        sum += normalized * normalized
       }
-      const rms = Math.sqrt(sum / bufferLength)
+      const rms = Math.sqrt(sum / (bufferLength / 4))
       
-      // Convert to percentage and apply some scaling for better visualization
-      const level = Math.min(100, Math.max(0, rms * 300))
+      // Convert to percentage with better scaling
+      const level = Math.min(100, Math.max(0, rms * 200))
       setAudioLevel(level)
       
       animationFrameRef.current = requestAnimationFrame(analyze)
     }
     
-    analyze()
+    animationFrameRef.current = requestAnimationFrame(analyze)
   }
 
   const stopAudioAnalysis = () => {

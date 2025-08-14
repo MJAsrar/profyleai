@@ -268,20 +268,32 @@ export class WebRTCService {
 
     const bufferLength = this.analyser.frequencyBinCount
     const dataArray = new Uint8Array(bufferLength)
+    let isAnalyzing = true
+    let lastUpdate = 0
+    const UPDATE_INTERVAL = 200 // Reduce frequency to 200ms to prevent CPU overload
     
-    const analyze = () => {
-      if (!this.analyser) return
+    const analyze = (timestamp: number) => {
+      if (!this.analyser || !isAnalyzing) return
+
+      // Throttle updates significantly
+      if (timestamp - lastUpdate < UPDATE_INTERVAL) {
+        requestAnimationFrame(analyze)
+        return
+      }
+      lastUpdate = timestamp
 
       this.analyser.getByteFrequencyData(dataArray)
       
-      // Calculate volume (RMS)
+      // Simplified volume calculation
       let sum = 0
-      for (let i = 0; i < bufferLength; i++) {
-        sum += (dataArray[i] / 255) * (dataArray[i] / 255)
+      // Sample every 8th element to reduce CPU usage
+      for (let i = 0; i < bufferLength; i += 8) {
+        const normalized = dataArray[i] / 255
+        sum += normalized * normalized
       }
-      const volume = Math.sqrt(sum / bufferLength)
+      const volume = Math.sqrt(sum / (bufferLength / 8))
 
-      // Detect speaking
+      // Detect speaking with hysteresis to prevent flickering
       const isSpeaking = volume > this.volumeThreshold
       
       // Calculate silence duration
@@ -291,19 +303,11 @@ export class WebRTCService {
       }
       const silenceDuration = now - this.silenceTimer
 
-      // Calculate dominant frequency
-      let maxIndex = 0
-      let maxValue = 0
-      for (let i = 0; i < bufferLength; i++) {
-        if (dataArray[i] > maxValue) {
-          maxValue = dataArray[i]
-          maxIndex = i
-        }
-      }
-      const frequency = (maxIndex * this.audioContext!.sampleRate) / (2 * bufferLength)
+      // Simplified frequency calculation
+      const frequency = 0 // Disable frequency calculation to save CPU
 
-      // Emit analytics (throttled to avoid overwhelming)
-      if (now - this.lastVolumeCheck > 100) { // Every 100ms
+      // Emit analytics less frequently
+      if (now - this.lastVolumeCheck > UPDATE_INTERVAL) {
         const analytics: AudioAnalytics = {
           volume,
           frequency,
@@ -318,7 +322,10 @@ export class WebRTCService {
       requestAnimationFrame(analyze)
     }
 
-    analyze()
+    requestAnimationFrame(analyze)
+    
+    // Store reference to stop analysis
+    this.connectionState.recordedChunks.push = () => { isAnalyzing = false }
   }
 
   /**

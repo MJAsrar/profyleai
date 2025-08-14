@@ -13,7 +13,7 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar"
-import { FileText, Eye, MessageSquare, Linkedin, Users, Settings, Sparkles, User, Target, FolderOpen } from "lucide-react"
+import { FileText, Eye, MessageSquare, Linkedin, Users, Settings, Sparkles, User, Target, FolderOpen, Video } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useSession, signOut } from "next-auth/react"
@@ -64,6 +64,12 @@ const additionalTools = [
     url: "/dashboard/interview",
     icon: Users,
     description: "Practice interviews"
+  },
+  {
+    title: "Video Interview",
+    url: "/dashboard/video-interview",
+    icon: Video,
+    description: "AI video interview practice"
   },
 ]
 

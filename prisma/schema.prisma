@@ -56,6 +56,7 @@ model User {
   coverLetters  CoverLetter[]
   interviewPreps InterviewPrep[]
   mockInterviews MockInterview[]
+  videoInterviews VideoInterview[]
 }
 
 model VerificationToken {
@@ -206,6 +207,7 @@ model InterviewPrep {
 
   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   mockInterviews MockInterview[]
+  videoInterviews VideoInterview[]
 }
 
 model MockInterview {
@@ -263,6 +265,143 @@ model InterviewAnswer {
 
   mockInterview MockInterview @relation(fields: [mockInterviewId], references: [id], onDelete: Cascade)
 }
+
+// Video Interview Models
+model VideoInterview {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId        String   @db.ObjectId
+  interviewPrepId String? @db.ObjectId // Optional - can be standalone
+  
+  // Session details
+  sessionId     String   @unique
+  title         String   // e.g., "Video Interview - Software Engineer at Google"
+  status        String   @default("scheduled") // scheduled, active, completed, cancelled
+  type          String   @default("practice") // practice, mock, assessment
+  
+  // Job context
+  jobTitle      String
+  companyName   String
+  jobDescription String?
+  
+  // Interview configuration
+  questions     Json     // Array of questions for this interview
+  currentQuestionIndex Int @default(0)
+  aiPersonality String   @default("professional") // professional, friendly, challenging
+  
+  // Media and recording
+  recordingUrl  String?  // URL to recorded video
+  recordingStatus String @default("none") // none, recording, processing, completed, failed
+  recordingDuration Int? // Duration in seconds
+  
+  // Timing
+  scheduledAt   DateTime?
+  startedAt     DateTime?
+  completedAt   DateTime?
+  totalTime     Int?     // Total time in seconds
+  
+  // Real-time session data
+  connectionStatus String @default("disconnected") // disconnected, connecting, connected
+  lastActivity  DateTime @default(now())
+  
+  // Results and analysis
+  overallScore  Int?     // 0-100
+  confidenceScore Int?   // 0-100
+  engagementScore Int?   // 0-100
+  deliveryScore Int?     // 0-100
+  contentScore  Int?     // 0-100
+  
+  // Analysis data
+  transcriptionData Json? // Full conversation transcript
+  analyticsData Json?    // Detailed analytics (voice, facial, etc.)
+  feedback      Json?    // AI-generated feedback and recommendations
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  interviewPrep InterviewPrep? @relation(fields: [interviewPrepId], references: [id], onDelete: SetNull)
+  responses     VideoInterviewResponse[]
+  analytics     VideoInterviewAnalytics[]
+}
+
+model VideoInterviewResponse {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  videoInterviewId String @db.ObjectId
+  
+  // Question and response details
+  questionId    String   // ID of the question
+  questionText  String   // The actual question text
+  questionOrder Int      // Order in the interview
+  
+  // Response data
+  responseText  String?  // Transcribed response
+  responseAudio String?  // Audio file URL
+  responseVideo String?  // Video segment URL
+  
+  // Timing
+  questionStartTime Int  // Seconds from interview start
+  responseStartTime Int? // Seconds from interview start
+  responseEndTime   Int? // Seconds from interview start
+  thinkingTime      Int? // Time before starting to respond
+  responseTime      Int? // Duration of response
+  
+  // Analysis
+  confidence    Float?   // Confidence level 0-1
+  clarity       Float?   // Speech clarity 0-1
+  engagement    Float?   // Engagement level 0-1
+  stressLevel   Float?   // Detected stress 0-1
+  
+  // AI evaluation
+  contentScore  Int?     // 0-100
+  deliveryScore Int?     // 0-100
+  starScore     Int?     // STAR framework adherence 0-100
+  feedback      Json?    // Detailed feedback object
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  videoInterview VideoInterview @relation(fields: [videoInterviewId], references: [id], onDelete: Cascade)
+}
+
+model VideoInterviewAnalytics {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  videoInterviewId String @db.ObjectId
+  
+  // Analytics type
+  type          String   // audio, facial, posture, overall
+  timestamp     Int      // Seconds from interview start
+  
+  // Audio analytics
+  volume        Float?   // Audio volume level
+  pitch         Float?   // Voice pitch
+  pace          Float?   // Speaking pace (words per minute)
+  pauseCount    Int?     // Number of pauses
+  fillerWords   Int?     // Number of filler words
+  
+  // Facial analytics
+  emotion       String?  // Detected emotion
+  confidence    Float?   // Facial confidence 0-1
+  eyeContact    Float?   // Eye contact percentage 0-1
+  smileIntensity Float?  // Smile intensity 0-1
+  
+  // Posture analytics
+  posture       String?  // Posture classification
+  gestureCount  Int?     // Number of gestures
+  movementLevel Float?   // Movement/fidgeting level 0-1
+  
+  // Engagement metrics
+  attention     Float?   // Attention level 0-1
+  engagement    Float?   // Overall engagement 0-1
+  
+  // Raw data
+  rawData       Json?    // Raw analytics data for detailed analysis
+  
+  createdAt     DateTime @default(now())
+
+  videoInterview VideoInterview @relation(fields: [videoInterviewId], references: [id], onDelete: Cascade)
+}
+
+
 
 // Progress tracking and analytics
 model InterviewProgress {

@@ -85,7 +85,14 @@ export function VideoInterviewRoom({
     toggleTranscript,
     toggleAnalytics,
     toggleFullscreen,
-    clearLastError
+    clearLastError,
+    
+    // Missing actions
+    setProcessingResponse,
+    setAISpeaking,
+    updateCurrentTranscript,
+    addConversationTurn,
+    moveToNextQuestion
   } = useVideoInterviewStore()
 
   const [isEnding, setIsEnding] = useState(false)
@@ -111,16 +118,9 @@ export function VideoInterviewRoom({
         // Set up audio chunk handling after session is started
         const { webrtcService } = useVideoInterviewStore.getState()
         if (webrtcService) {
-          // Override the audio chunk callback to capture audio for transcription
-          const originalCallback = webrtcService.callbacks?.onAudioChunk
-          if (webrtcService.callbacks) {
-            webrtcService.callbacks.onAudioChunk = (chunk: Blob) => {
-              console.log('🎤 Received audio chunk:', chunk.size, 'bytes')
-              // Only keep the latest chunk to prevent memory buildup
-              setAudioChunks([chunk])
-              if (originalCallback) originalCallback(chunk)
-            }
-          }
+          // Note: We'll handle audio chunks through the store's callback system
+          // The WebRTCService callbacks are private, so we rely on the store's onAudioChunk callback
+          console.log('🎤 WebRTC service initialized, audio chunks will be handled by store callbacks')
         }
         
         // Start with AI welcome message
@@ -347,8 +347,8 @@ export function VideoInterviewRoom({
     try {
       console.log('🤖 Starting interview conversation...')
       
-      const jobTitle = session.jobTitle || session.jobData?.jobTitle || 'this position'
-      const companyName = session.companyName || session.jobData?.companyName || 'the company'
+      const jobTitle = session.jobData?.jobTitle || 'this position'
+      const companyName = session.jobData?.companyName || 'the company'
       const firstQuestion = currentQuestion?.question || 'Tell me about yourself and why you\'re interested in this role.'
       
       const welcomeMessage = `Hello! I'm your AI interviewer today. I'm excited to learn more about you and your experience for the ${jobTitle} position at ${companyName}. Let's begin with our first question: ${firstQuestion}`

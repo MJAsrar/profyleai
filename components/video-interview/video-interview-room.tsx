@@ -86,6 +86,7 @@ export function VideoInterviewRoom({
     toggleAnalytics,
     toggleFullscreen,
     clearLastError,
+    stopRecording,
     
     // Missing actions
     setProcessingResponse,
@@ -262,7 +263,7 @@ export function VideoInterviewRoom({
 
   // Process audio chunks for transcription (debounced to prevent memory leaks)
   useEffect(() => {
-    if (audioChunks.length === 0 || isProcessingAudio || !session || !isMountedRef.current) return
+    if (audioChunks.length === 0 || isProcessingAudio || !session || !isMountedRef.current || isAISpeaking) return
     
     // Clear any existing timeout
     if (audioChunkTimeoutRef.current) {
@@ -382,8 +383,17 @@ export function VideoInterviewRoom({
                 setAISpeaking(false)
                 URL.revokeObjectURL(audioUrl)
                 setCurrentAudioUrl(null)
+                
+                // Start recording after AI finishes speaking
+                const { startRecording } = useVideoInterviewStore.getState()
+                startRecording()
               }
             }
+            
+            // Stop recording when AI starts speaking and clear pending chunks
+            const { stopRecording } = useVideoInterviewStore.getState()
+            stopRecording()
+            setAudioChunks([]) // Clear any pending chunks
           } catch (audioError) {
             console.error('❌ Failed to play AI response audio:', audioError)
           }
@@ -482,6 +492,11 @@ export function VideoInterviewRoom({
                 startRecording()
               }
             }
+            
+            // Stop recording when AI starts speaking and clear pending chunks
+            const { stopRecording } = useVideoInterviewStore.getState()
+            stopRecording()
+            setAudioChunks([]) // Clear any pending chunks
           } catch (audioError) {
             console.error('❌ Failed to play welcome audio:', audioError)
             // Start recording anyway if audio fails

@@ -57,10 +57,37 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     console.log('🎤 Processing audio chunk:', audioBuffer.length, 'bytes')
 
     // Create video interview service
-    const videoInterviewService = createVideoInterviewService()
+    let videoInterviewService
+    try {
+      videoInterviewService = createVideoInterviewService()
+      console.log('✅ Video interview service created successfully')
+    } catch (error) {
+      console.error('❌ Failed to create video interview service:', error)
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: 'Service initialization failed: ' + (error instanceof Error ? error.message : 'Unknown error')
+        },
+        { status: 500 }
+      )
+    }
 
     // Transcribe audio
-    const transcriptionResult = await videoInterviewService.transcribeAudioChunk(audioBuffer)
+    let transcriptionResult
+    try {
+      console.log('🎤 Starting audio transcription...')
+      transcriptionResult = await videoInterviewService.transcribeAudioChunk(audioBuffer)
+      console.log('✅ Transcription successful:', transcriptionResult.text.substring(0, 100) + '...')
+    } catch (error) {
+      console.error('❌ Transcription failed:', error)
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: 'Transcription failed: ' + (error instanceof Error ? error.message : 'Unknown error')
+        },
+        { status: 500 }
+      )
+    }
 
     console.log('✅ Transcription completed:', transcriptionResult.text)
 

@@ -116,7 +116,8 @@ export function VideoInterviewRoom({
           if (webrtcService.callbacks) {
             webrtcService.callbacks.onAudioChunk = (chunk: Blob) => {
               console.log('🎤 Received audio chunk:', chunk.size, 'bytes')
-              setAudioChunks(prev => [...prev.slice(-2), chunk]) // Keep only last 3 chunks
+              // Only keep the latest chunk to prevent memory buildup
+              setAudioChunks([chunk])
               if (originalCallback) originalCallback(chunk)
             }
           }
@@ -162,42 +163,59 @@ export function VideoInterviewRoom({
     initializeInterview()
   }, [session])
 
-  // Connect video streams to elements with error handling
+  // Connect video streams to elements with error handling (prevent blinking)
   useEffect(() => {
     if (localVideoRef.current && localStream) {
-      try {
-        console.log('🎥 Connecting local video stream')
-        localVideoRef.current.srcObject = localStream
-        
-        // Ensure video plays
-        localVideoRef.current.onloadedmetadata = () => {
-          localVideoRef.current?.play().catch(console.error)
+      // Only update if the stream actually changed
+      if (localVideoRef.current.srcObject !== localStream) {
+        try {
+          console.log('🎥 Connecting local video stream')
+          localVideoRef.current.srcObject = localStream
+          
+          // Ensure video plays
+          const videoElement = localVideoRef.current
+          videoElement.onloadedmetadata = () => {
+            videoElement.play().catch(console.error)
+          }
+          
+        } catch (error) {
+          console.error('❌ Failed to connect local video:', error)
         }
-        
-        // Handle stream ending
-        localStream.addEventListener('inactive', () => {
-          console.warn('⚠️ Local stream became inactive')
-        })
-        
-      } catch (error) {
-        console.error('❌ Failed to connect local video:', error)
+      }
+    }
+    
+    // Cleanup function to prevent memory leaks
+    return () => {
+      if (localVideoRef.current) {
+        localVideoRef.current.onloadedmetadata = null
       }
     }
   }, [localStream])
 
   useEffect(() => {
     if (remoteVideoRef.current && remoteStream) {
-      try {
-        console.log('📹 Connecting remote video stream')
-        remoteVideoRef.current.srcObject = remoteStream
-        
-        // Ensure video plays
-        remoteVideoRef.current.onloadedmetadata = () => {
-          remoteVideoRef.current?.play().catch(console.error)
+      // Only update if the stream actually changed
+      if (remoteVideoRef.current.srcObject !== remoteStream) {
+        try {
+          console.log('📹 Connecting remote video stream')
+          remoteVideoRef.current.srcObject = remoteStream
+          
+          // Ensure video plays
+          const videoElement = remoteVideoRef.current
+          videoElement.onloadedmetadata = () => {
+            videoElement.play().catch(console.error)
+          }
+          
+        } catch (error) {
+          console.error('❌ Failed to connect remote video:', error)
         }
-        
-      } catch (error) {
-        console.error('❌ Failed to connect remote video:', error)
+      }
+    }
+    
+    // Cleanup function to prevent memory leaks
+    return () => {
+      if (remoteVideoRef.current) {
+        remoteVideoRef.current.onloadedmetadata = null
       }
     }
   }, [remoteStream])
@@ -210,10 +228,13 @@ export function VideoInterviewRoom({
     }
   }, [currentAudioUrl])
 
-  // Process audio chunks for transcription
+  // Process audio chunks for transcription (debounced to prevent memory leaks)
   useEffect(() => {
-    const processAudioChunk = async (chunk: Blob) => {
-      if (!session || isProcessingAudio) return
+    if (audioChunks.length === 0 || isProcessingAudio || !session) return
+    
+    // Debounce processing to prevent excessive API calls
+    const timeoutId = setTimeout(async () => {
+      const latestChunk = audioChunks[audioChunks.length - 1]
       
       setIsProcessingAudio(true)
       
@@ -222,7 +243,7 @@ export function VideoInterviewRoom({
         
         // Create form data for audio upload
         const formData = new FormData()
-        formData.append('audio', chunk, 'audio.wav')
+        formData.append('audio', latestChunk, 'audio.wav')
         
         // Send to transcription API
         const response = await fetch(`/api/video-interview/${session.sessionId}/transcribe`, {
@@ -232,7 +253,7 @@ export function VideoInterviewRoom({
         
         const result = await response.json()
         
-        if (result.success && result.data.transcript) {
+        if (result.success && result.data.transcript && result.data.transcript.trim()) {
           console.log('✅ Transcription received:', result.data.transcript)
           updateCurrentTranscript(result.data.transcript)
           
@@ -240,19 +261,21 @@ export function VideoInterviewRoom({
           await generateAIResponse(result.data.transcript)
         }
         
+        // Clear processed chunks to prevent memory buildup
+        setAudioChunks([])
+        
       } catch (error) {
         console.error('❌ Failed to process audio:', error)
       } finally {
         setIsProcessingAudio(false)
       }
+    }, 1000) // Wait 1 second before processing to debounce
+    
+    // Cleanup timeout on unmount or dependency change
+    return () => {
+      clearTimeout(timeoutId)
     }
-
-    // Process latest audio chunk
-    if (audioChunks.length > 0) {
-      const latestChunk = audioChunks[audioChunks.length - 1]
-      processAudioChunk(latestChunk)
-    }
-  }, [audioChunks, session, isProcessingAudio])
+  }, [audioChunks.length, session, isProcessingAudio]) // Only depend on length, not the array itself
 
   // Generate AI response
   const generateAIResponse = async (transcript: string) => {
@@ -331,14 +354,20 @@ export function VideoInterviewRoom({
     try {
       console.log('🤖 Starting interview conversation...')
       
-      const welcomeMessage = `Hello! I'm your AI interviewer today. I'm excited to learn more about you and your experience for the ${session.jobData.jobTitle} position at ${session.jobData.companyName}. Let's begin with our first question: ${currentQuestion?.question || 'Tell me about yourself.'}`
+      const jobTitle = session.jobTitle || session.jobData?.jobTitle || 'this position'
+      const companyName = session.companyName || session.jobData?.companyName || 'the company'
+      const firstQuestion = currentQuestion?.question || 'Tell me about yourself and why you\'re interested in this role.'
+      
+      const welcomeMessage = `Hello! I'm your AI interviewer today. I'm excited to learn more about you and your experience for the ${jobTitle} position at ${companyName}. Let's begin with our first question: ${firstQuestion}`
+      
+      console.log('🤖 Welcome message prepared:', welcomeMessage)
       
       // Generate welcome speech
       const response = await fetch(`/api/video-interview/${session.sessionId}/respond`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          transcript: 'START_INTERVIEW',
+          transcript: welcomeMessage, // Send the welcome message as transcript
           questionId: currentQuestion?.id || 'welcome',
           responseStartTime: Date.now()
         })
@@ -399,7 +428,7 @@ export function VideoInterviewRoom({
     }
   }
 
-  // Clean up audio URL
+  // Clean up audio URL and resources
   useEffect(() => {
     return () => {
       if (currentAudioUrl) {
@@ -407,6 +436,33 @@ export function VideoInterviewRoom({
       }
     }
   }, [currentAudioUrl])
+
+  // Cleanup on component unmount
+  useEffect(() => {
+    return () => {
+      console.log('🧹 Cleaning up video interview room...')
+      
+      // Clear audio chunks
+      setAudioChunks([])
+      
+      // Revoke audio URLs
+      if (currentAudioUrl) {
+        URL.revokeObjectURL(currentAudioUrl)
+      }
+      
+      // Cleanup WebRTC service
+      const { webrtcService } = useVideoInterviewStore.getState()
+      if (webrtcService) {
+        webrtcService.cleanup()
+      }
+      
+      // Clear any pending timeouts or intervals
+      const highestId = window.setTimeout(() => {}, 0)
+      for (let i = 0; i < highestId; i++) {
+        window.clearTimeout(i)
+      }
+    }
+  }, []) // Empty dependency array - only run on unmount
 
   const handleEndInterview = async () => {
     setIsEnding(true)

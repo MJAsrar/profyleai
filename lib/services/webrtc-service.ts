@@ -510,10 +510,30 @@ export class WebRTCService {
       })
     }
 
-    // Close audio context
-    if (this.audioContext && this.audioContext.state !== 'closed') {
-      this.audioContext.close()
+    // Close audio context properly
+    if (this.audioContext) {
+      try {
+        if (this.audioContext.state !== 'closed') {
+          this.audioContext.close()
+          console.log('🔇 Audio context closed')
+        }
+      } catch (error) {
+        console.warn('⚠️ Error closing audio context:', error)
+      }
     }
+
+    // Clear recorded chunks to free memory
+    this.connectionState.recordedChunks.forEach(chunk => {
+      try {
+        // Revoke any object URLs that might have been created
+        if (chunk instanceof Blob && chunk.size > 0) {
+          const url = URL.createObjectURL(chunk)
+          URL.revokeObjectURL(url)
+        }
+      } catch (error) {
+        // Ignore - chunk might not be valid
+      }
+    })
 
     // Reset state
     this.connectionState = {
@@ -521,7 +541,12 @@ export class WebRTCService {
       recordedChunks: []
     }
 
+    // Clear references
+    this.audioContext = null
+    this.analyser = null
+
     this.callbacks.onConnectionStateChange('disconnected')
+    console.log('✅ WebRTC cleanup completed')
   }
 }
 

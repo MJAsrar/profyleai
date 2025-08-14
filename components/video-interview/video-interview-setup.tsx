@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -53,6 +53,12 @@ export function VideoInterviewSetup({ onSetupComplete, isLoading = false }: Vide
   const [videoEnabled, setVideoEnabled] = useState(true)
   const [audioEnabled, setAudioEnabled] = useState(true)
   const [setupStep, setSetupStep] = useState<'checking' | 'devices' | 'preview' | 'ready'>('checking')
+  const [audioLevel, setAudioLevel] = useState<number>(0)
+  const [isAudioTesting, setIsAudioTesting] = useState(false)
+  
+  const audioContextRef = useRef<AudioContext | null>(null)
+  const analyserRef = useRef<AnalyserNode | null>(null)
+  const animationFrameRef = useRef<number | null>(null)
 
   // System compatibility check
   useEffect(() => {
@@ -76,6 +82,7 @@ export function VideoInterviewSetup({ onSetupComplete, isLoading = false }: Vide
       if (previewStream) {
         previewStream.getTracks().forEach(track => track.stop())
       }
+      stopAudioAnalysis()
     }
   }, [selectedVideoDevice, selectedAudioDevice, setupStep])
 
@@ -155,6 +162,7 @@ export function VideoInterviewSetup({ onSetupComplete, isLoading = false }: Vide
     try {
       if (previewStream) {
         previewStream.getTracks().forEach(track => track.stop())
+        stopAudioAnalysis()
       }
 
       const constraints = {
@@ -170,9 +178,90 @@ export function VideoInterviewSetup({ onSetupComplete, isLoading = false }: Vide
       if (videoElement) {
         videoElement.srcObject = stream
       }
+      
+      // Start audio analysis for level indicator
+      if (audioEnabled) {
+        await startAudioAnalysis(stream)
+      }
     } catch (error) {
       console.error('Failed to start preview:', error)
     }
+  }
+
+  const startAudioAnalysis = async (stream: MediaStream) => {
+    try {
+      // Clean up previous analysis
+      stopAudioAnalysis()
+      
+      // Create audio context
+      audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)()
+      
+      // Resume audio context if suspended
+      if (audioContextRef.current.state === 'suspended') {
+        await audioContextRef.current.resume()
+      }
+      
+      // Create analyser
+      analyserRef.current = audioContextRef.current.createAnalyser()
+      analyserRef.current.fftSize = 256
+      analyserRef.current.smoothingTimeConstant = 0.8
+      
+      // Connect audio stream
+      const source = audioContextRef.current.createMediaStreamSource(stream)
+      source.connect(analyserRef.current)
+      
+      // Start analysis loop
+      setIsAudioTesting(true)
+      analyzeAudio()
+      
+    } catch (error) {
+      console.error('Failed to start audio analysis:', error)
+    }
+  }
+
+  const analyzeAudio = () => {
+    if (!analyserRef.current) return
+    
+    const bufferLength = analyserRef.current.frequencyBinCount
+    const dataArray = new Uint8Array(bufferLength)
+    
+    const analyze = () => {
+      if (!analyserRef.current || !isAudioTesting) return
+      
+      analyserRef.current.getByteFrequencyData(dataArray)
+      
+      // Calculate volume (RMS)
+      let sum = 0
+      for (let i = 0; i < bufferLength; i++) {
+        sum += (dataArray[i] / 255) * (dataArray[i] / 255)
+      }
+      const rms = Math.sqrt(sum / bufferLength)
+      
+      // Convert to percentage and apply some scaling for better visualization
+      const level = Math.min(100, Math.max(0, rms * 300))
+      setAudioLevel(level)
+      
+      animationFrameRef.current = requestAnimationFrame(analyze)
+    }
+    
+    analyze()
+  }
+
+  const stopAudioAnalysis = () => {
+    setIsAudioTesting(false)
+    
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current)
+      animationFrameRef.current = null
+    }
+    
+    if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+      audioContextRef.current.close()
+      audioContextRef.current = null
+    }
+    
+    analyserRef.current = null
+    setAudioLevel(0)
   }
 
   const testDevices = async () => {
@@ -398,15 +487,30 @@ export function VideoInterviewSetup({ onSetupComplete, isLoading = false }: Vide
               {audioEnabled && (
                 <div>
                   <label className="text-sm font-medium mb-2 block">Audio Level</label>
-                  <div className="h-2 bg-muted rounded-full overflow-hidden">
+                  <div className="h-3 bg-muted rounded-full overflow-hidden">
                     <div 
-                      className="h-full bg-green-500 transition-all duration-100"
-                      style={{ width: '60%' }} // Placeholder - implement actual audio level
+                      className={`h-full transition-all duration-75 ${
+                        audioLevel > 70 ? 'bg-red-500' : 
+                        audioLevel > 40 ? 'bg-yellow-500' : 
+                        audioLevel > 10 ? 'bg-green-500' : 
+                        'bg-gray-400'
+                      }`}
+                      style={{ width: `${Math.max(2, audioLevel)}%` }}
                     />
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Speak to test your microphone
-                  </p>
+                  <div className="flex justify-between items-center mt-1">
+                    <p className="text-xs text-muted-foreground">
+                      {isAudioTesting ? 'Speak to test your microphone' : 'Audio testing stopped'}
+                    </p>
+                    <span className="text-xs font-mono text-muted-foreground">
+                      {Math.round(audioLevel)}%
+                    </span>
+                  </div>
+                  {audioLevel < 5 && isAudioTesting && (
+                    <p className="text-xs text-amber-600 mt-1">
+                      ⚠️ No audio detected. Check microphone permissions and volume.
+                    </p>
+                  )}
                 </div>
               )}
             </div>

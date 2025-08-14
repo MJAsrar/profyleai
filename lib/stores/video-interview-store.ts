@@ -318,9 +318,9 @@ export const useVideoInterviewStore = create<VideoInterviewStore>()(
         }
 
         try {
-          await webrtcService.createPeerConnection(true)
+          await webrtcService.createConnection()
         } catch (error) {
-          get().addError(error instanceof Error ? error.message : 'Failed to connect peer')
+          get().addError(error instanceof Error ? error.message : 'Failed to connect')
           throw error
         }
       },

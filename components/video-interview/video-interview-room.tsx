@@ -90,6 +90,52 @@ export function VideoInterviewRoom({
 
   const [isEnding, setIsEnding] = useState(false)
   const [currentAudioUrl, setCurrentAudioUrl] = useState<string | null>(null)
+  const [isInitializing, setIsInitializing] = useState(true)
+
+  // Initialize WebRTC connection on component mount
+  useEffect(() => {
+    const initializeInterview = async () => {
+      if (!session) return
+      
+      try {
+        console.log('🎥 Initializing video interview room...')
+        
+        // Import the store actions
+        const { initializeWebRTC, startSession } = useVideoInterviewStore.getState()
+        
+        // Initialize WebRTC
+        await initializeWebRTC()
+        
+        // Start the interview session
+        await startSession()
+        
+        console.log('✅ Video interview room initialized')
+      } catch (error) {
+        console.error('❌ Failed to initialize video interview:', error)
+        
+        // Add detailed error to store
+        const { addError } = useVideoInterviewStore.getState()
+        const errorMessage = error instanceof Error ? error.message : 'Failed to initialize interview'
+        addError(`Initialization failed: ${errorMessage}`)
+        
+        // Set connection status to failed
+        const { connectionStatus } = useVideoInterviewStore.getState()
+        if (connectionStatus === 'connecting') {
+          // Force update connection status
+          setTimeout(() => {
+            const state = useVideoInterviewStore.getState()
+            if (state.webrtcService) {
+              state.webrtcService.cleanup()
+            }
+          }, 100)
+        }
+      } finally {
+        setIsInitializing(false)
+      }
+    }
+    
+    initializeInterview()
+  }, [session])
 
   // Connect video streams to elements
   useEffect(() => {
@@ -162,6 +208,55 @@ export function VideoInterviewRoom({
             No interview session found. Please start a new interview.
           </AlertDescription>
         </Alert>
+      </div>
+    )
+  }
+
+  if (isInitializing) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center space-y-4">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto" />
+          <div className="space-y-2">
+            <h3 className="font-medium">Initializing Interview</h3>
+            <p className="text-sm text-muted-foreground">
+              Setting up camera, microphone, and AI interviewer...
+            </p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Show connection error if initialization failed
+  if (connectionStatus === 'failed' || connectionStatus === 'disconnected') {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center space-y-4 max-w-md">
+          <AlertCircle className="h-12 w-12 mx-auto text-red-500" />
+          <div className="space-y-2">
+            <h3 className="font-medium text-red-600">Connection Failed</h3>
+            <p className="text-sm text-muted-foreground">
+              Unable to access camera or microphone. Please check your browser permissions and try again.
+            </p>
+            {lastError && (
+              <p className="text-xs text-red-600 bg-red-50 p-2 rounded">
+                {lastError}
+              </p>
+            )}
+          </div>
+          <div className="space-x-2">
+            <Button 
+              onClick={() => window.location.reload()} 
+              variant="outline"
+            >
+              Retry
+            </Button>
+            <Button onClick={onInterviewEnd} variant="default">
+              End Interview
+            </Button>
+          </div>
+        </div>
       </div>
     )
   }

@@ -1,7 +1,5 @@
 'use client'
 
-import SimplePeer from 'simple-peer'
-
 // ===== WEBRTC TYPES =====
 
 export interface MediaConstraints {
@@ -19,7 +17,7 @@ export interface ConnectionState {
   status: 'disconnected' | 'connecting' | 'connected' | 'failed' | 'closed'
   localStream?: MediaStream
   remoteStream?: MediaStream
-  peer?: SimplePeer.Instance
+  peerConnection?: RTCPeerConnection
   recorder?: MediaRecorder
   recordedChunks: Blob[]
 }
@@ -95,11 +93,16 @@ export class WebRTCService {
    */
   async initializeMedia(): Promise<MediaStream> {
     try {
+      console.log('🎥 Requesting media permissions...')
+      
       // Request permissions first
       const stream = await navigator.mediaDevices.getUserMedia(this.config.mediaConstraints)
       
       this.connectionState.localStream = stream
+      this.connectionState.status = 'connected' // Set to connected since we have media
+      
       this.callbacks.onLocalStream(stream)
+      this.callbacks.onConnectionStateChange('connected')
       
       // Set up audio analysis
       await this.setupAudioAnalysis(stream)
@@ -112,86 +115,33 @@ export class WebRTCService {
       
     } catch (error) {
       console.error('❌ Failed to initialize media:', error)
+      this.connectionState.status = 'failed'
+      this.callbacks.onConnectionStateChange('failed')
       this.callbacks.onError(error as Error)
       throw error
     }
   }
 
   /**
-   * Create WebRTC peer connection
+   * Create a simple connection (for video interview, we don't need peer-to-peer)
    */
-  async createPeerConnection(isInitiator: boolean = false): Promise<SimplePeer.Instance> {
+  async createConnection(): Promise<boolean> {
     try {
       if (!this.connectionState.localStream) {
-        throw new Error('Local stream not initialized. Call initializeMedia() first.')
+        await this.initializeMedia()
       }
 
-      this.connectionState.status = 'connecting'
-      this.callbacks.onConnectionStateChange('connecting')
-
-      const peer = new SimplePeer({
-        initiator: isInitiator,
-        trickle: false,
-        stream: this.connectionState.localStream,
-        config: {
-          iceServers: this.config.iceServers
-        }
-      })
-
-      // Set up peer event handlers
-      this.setupPeerEventHandlers(peer)
-      
-      this.connectionState.peer = peer
-      
-      return peer
+      // For video interview, we just need media capture, not peer connection
+      console.log('✅ Connection established (media only)')
+      return true
       
     } catch (error) {
-      console.error('❌ Failed to create peer connection:', error)
+      console.error('❌ Failed to create connection:', error)
       this.connectionState.status = 'failed'
       this.callbacks.onConnectionStateChange('failed')
       this.callbacks.onError(error as Error)
       throw error
     }
-  }
-
-  /**
-   * Set up peer connection event handlers
-   */
-  private setupPeerEventHandlers(peer: SimplePeer.Instance): void {
-    peer.on('signal', (data) => {
-      console.log('📡 Peer signal data:', data)
-      // In a real implementation, you'd send this signal data to the remote peer
-      // through your signaling server (Socket.io, WebSocket, etc.)
-    })
-
-    peer.on('connect', () => {
-      console.log('✅ Peer connection established')
-      this.connectionState.status = 'connected'
-      this.callbacks.onConnectionStateChange('connected')
-    })
-
-    peer.on('stream', (remoteStream: MediaStream) => {
-      console.log('📹 Received remote stream')
-      this.connectionState.remoteStream = remoteStream
-      this.callbacks.onRemoteStream(remoteStream)
-    })
-
-    peer.on('data', (data) => {
-      console.log('📨 Received data:', data)
-    })
-
-    peer.on('error', (error) => {
-      console.error('❌ Peer connection error:', error)
-      this.connectionState.status = 'failed'
-      this.callbacks.onConnectionStateChange('failed')
-      this.callbacks.onError(error)
-    })
-
-    peer.on('close', () => {
-      console.log('🔌 Peer connection closed')
-      this.connectionState.status = 'closed'
-      this.callbacks.onConnectionStateChange('closed')
-    })
   }
 
   /**
@@ -418,9 +368,8 @@ export class WebRTCService {
       this.connectionState.localStream.addTrack(newVideoTrack)
 
       // Update peer connection if active
-      if (this.connectionState.peer && this.connectionState.status === 'connected') {
-        await this.connectionState.peer.replaceTrack(videoTrack, newVideoTrack, this.connectionState.localStream)
-      }
+              // For video interview, we don't need peer connection track replacement
+        console.log('✅ Video track replaced in local stream')
 
       console.log('✅ Camera switched successfully')
       
@@ -460,10 +409,8 @@ export class WebRTCService {
       this.connectionState.localStream.removeTrack(audioTrack)
       this.connectionState.localStream.addTrack(newAudioTrack)
 
-      // Update peer connection if active
-      if (this.connectionState.peer && this.connectionState.status === 'connected') {
-        await this.connectionState.peer.replaceTrack(audioTrack, newAudioTrack, this.connectionState.localStream)
-      }
+              // For video interview, we don't need peer connection track replacement
+        console.log('✅ Audio track replaced in local stream')
 
       // Restart recording with new audio track
       this.stopRecording()
@@ -545,11 +492,6 @@ export class WebRTCService {
 
     // Stop recording
     this.stopRecording()
-
-    // Close peer connection
-    if (this.connectionState.peer) {
-      this.connectionState.peer.destroy()
-    }
 
     // Stop local stream
     if (this.connectionState.localStream) {

@@ -101,6 +101,9 @@ export function VideoInterviewRoom({
   const [audioChunks, setAudioChunks] = useState<Blob[]>([])
   const [isProcessingAudio, setIsProcessingAudio] = useState(false)
   const audioChunkTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const initTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const nextQuestionTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const isMountedRef = useRef(true)
 
   // Initialize WebRTC connection on component mount
   useEffect(() => {
@@ -125,8 +128,10 @@ export function VideoInterviewRoom({
         }
         
         // Start with AI welcome message
-        setTimeout(() => {
-          startInterviewConversation()
+        initTimeoutRef.current = setTimeout(() => {
+          if (isMountedRef.current) {
+            startInterviewConversation()
+          }
         }, 1000) // Give 1 second for everything to initialize
         
         console.log('✅ Video interview room initialized')
@@ -150,7 +155,9 @@ export function VideoInterviewRoom({
           }, 100)
         }
       } finally {
-        setIsInitializing(false)
+        if (isMountedRef.current) {
+          setIsInitializing(false)
+        }
       }
     }
     
@@ -233,7 +240,11 @@ export function VideoInterviewRoom({
     
     // Debounce processing to prevent excessive API calls
     audioChunkTimeoutRef.current = setTimeout(async () => {
-      const latestChunk = audioChunks[audioChunks.length - 1]
+      // Capture chunks at the time of timeout execution
+      const chunksToProcess = [...audioChunks]
+      if (chunksToProcess.length === 0) return
+      
+      const latestChunk = chunksToProcess[chunksToProcess.length - 1]
       
       setIsProcessingAudio(true)
       
@@ -252,7 +263,7 @@ export function VideoInterviewRoom({
         
         const result = await response.json()
         
-        if (result.success && result.data.transcript && result.data.transcript.trim()) {
+        if (result.success && result.data.transcript && result.data.transcript.trim() && isMountedRef.current) {
           console.log('✅ Transcription received:', result.data.transcript)
           updateCurrentTranscript(result.data.transcript)
           
@@ -260,14 +271,15 @@ export function VideoInterviewRoom({
           await generateAIResponse(result.data.transcript)
         }
         
-        // Clear processed chunks to prevent memory buildup
-        setAudioChunks([])
-        
       } catch (error) {
         console.error('❌ Failed to process audio:', error)
       } finally {
-        setIsProcessingAudio(false)
-        audioChunkTimeoutRef.current = null
+        if (isMountedRef.current) {
+          setIsProcessingAudio(false)
+          audioChunkTimeoutRef.current = null
+          // Clear processed chunks AFTER processing to prevent infinite loop
+          setAudioChunks([])
+        }
       }
     }, 1000) // Wait 1 second before processing to debounce
     
@@ -278,7 +290,7 @@ export function VideoInterviewRoom({
         audioChunkTimeoutRef.current = null
       }
     }
-  }, [audioChunks.length, session?.sessionId, isProcessingAudio, updateCurrentTranscript]) // Only depend on length, not the array itself
+  }, [audioChunks.length, session?.sessionId, isProcessingAudio]) // Remove updateCurrentTranscript from deps to prevent loops
 
   // Generate AI response
   const generateAIResponse = async (transcript: string) => {
@@ -286,6 +298,7 @@ export function VideoInterviewRoom({
     
     try {
       console.log('🤖 Generating AI response...')
+      if (!isMountedRef.current) return
       setProcessingResponse(true)
       
       const response = await fetch(`/api/video-interview/${session.sessionId}/respond`, {
@@ -300,7 +313,7 @@ export function VideoInterviewRoom({
       
       const result = await response.json()
       
-      if (result.success) {
+      if (result.success && isMountedRef.current) {
         console.log('✅ AI response generated:', result.data.aiResponse.text)
         
         // Convert base64 audio to URL
@@ -337,8 +350,10 @@ export function VideoInterviewRoom({
         
         // Move to next question if needed
         if (result.data.aiResponse.nextAction === 'next_question') {
-          setTimeout(() => {
-            moveToNextQuestion()
+          nextQuestionTimeoutRef.current = setTimeout(() => {
+            if (isMountedRef.current) {
+              moveToNextQuestion()
+            }
           }, 2000) // Wait 2 seconds before next question
         }
       }
@@ -346,7 +361,9 @@ export function VideoInterviewRoom({
     } catch (error) {
       console.error('❌ Failed to generate AI response:', error)
     } finally {
-      setProcessingResponse(false)
+      if (isMountedRef.current) {
+        setProcessingResponse(false)
+      }
     }
   }
 
@@ -445,14 +462,25 @@ export function VideoInterviewRoom({
     return () => {
       console.log('🧹 Cleaning up video interview room...')
       
-      // Clear audio chunks
-      setAudioChunks([])
+      // Mark component as unmounted
+      isMountedRef.current = false
       
-      // Clear audio processing timeout
+      // Clear all timeouts
       if (audioChunkTimeoutRef.current) {
         clearTimeout(audioChunkTimeoutRef.current)
         audioChunkTimeoutRef.current = null
       }
+      if (initTimeoutRef.current) {
+        clearTimeout(initTimeoutRef.current)
+        initTimeoutRef.current = null
+      }
+      if (nextQuestionTimeoutRef.current) {
+        clearTimeout(nextQuestionTimeoutRef.current)
+        nextQuestionTimeoutRef.current = null
+      }
+      
+      // Clear audio chunks
+      setAudioChunks([])
       
       // Revoke audio URLs
       if (currentAudioUrl) {
@@ -464,11 +492,8 @@ export function VideoInterviewRoom({
       if (webrtcService) {
         webrtcService.cleanup()
       }
-      
-      // Note: We don't clear all timeouts as it could interfere with other components
-      // Instead, we rely on proper cleanup of our specific resources above
     }
-  }, []) // Empty dependency array - only run on unmount
+  }, [currentAudioUrl]) // Include currentAudioUrl to ensure proper cleanup
 
   const handleEndInterview = async () => {
     setIsEnding(true)

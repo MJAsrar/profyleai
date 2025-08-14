@@ -107,7 +107,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       console.log('🎯 Generating welcome message...')
       
       // Create interview session context first
-      await videoInterviewService.createSession(
+      await videoInterviewService.initializeSession(
         sessionId,
         videoInterview.userId,
         {

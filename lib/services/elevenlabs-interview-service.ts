@@ -85,11 +85,11 @@ export class ElevenLabsInterviewService {
 
       console.log('✅ Media stream acquired')
       
+      // Store job context first, before connecting
+      await this.sendJobContext(jobTitle, companyName, jobDescription, questions, resumeData)
+      
       // Connect to ElevenLabs WebSocket
       await this.connectWebSocket()
-      
-      // Send job context to agent after connection
-      await this.sendJobContext(jobTitle, companyName, jobDescription, questions, resumeData)
 
     } catch (error) {
       console.error('❌ Failed to initialize interview:', error)
@@ -142,8 +142,8 @@ export class ElevenLabsInterviewService {
           this.callbacks.onConnectionStateChange('connected')
           this.startAudioStreaming()
           
-          // Send conversation variables for context
-          this.sendConversationVariables()
+          // Set conversation variables for context
+          this.setConversationVariables()
           
           resolve()
         }
@@ -314,9 +314,9 @@ export class ElevenLabsInterviewService {
   }
 
   /**
-   * Send conversation variables to ElevenLabs for context
+   * Set conversation variables via ElevenLabs REST API
    */
-  private sendConversationVariables(): void {
+  private async setConversationVariables(): Promise<void> {
     if (!this.pendingContext) {
       console.log('❌ No pending context to send as variables')
       return
@@ -337,19 +337,31 @@ export class ElevenLabsInterviewService {
       interview_questions: this.buildQuestionsList(questions)
     }
 
-    if (this.websocket?.readyState === WebSocket.OPEN) {
-      // Try sending variables using ElevenLabs variable update format
-      const message = {
-        type: "conversation_initiation_client_data",
-        conversation_initiation_client_data: {
-          custom_llm_extra_body: variables
-        }
-      }
+    try {
+      // Try to set variables via REST API (if supported)
+      console.log('📋 Attempting to set conversation variables via REST API...')
       
-      this.websocket.send(JSON.stringify(message))
-      console.log('📋 Sent conversation variables to ElevenLabs:', variables)
-    } else {
-      console.error('❌ WebSocket not ready to send variables')
+      const response = await fetch(
+        `https://api.elevenlabs.io/v1/convai/conversation/${this.session?.conversationId}/variables`,
+        {
+          method: 'POST',
+          headers: {
+            'xi-api-key': this.config.apiKey,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(variables)
+        }
+      )
+      
+      if (response.ok) {
+        console.log('✅ Successfully set conversation variables')
+      } else {
+        console.log('ℹ️ REST API variable setting not available, variables logged for manual configuration')
+        console.log('📋 Context variables for manual setup:', variables)
+      }
+    } catch (error) {
+      console.log('ℹ️ REST API variable setting not available, variables logged for manual configuration')
+      console.log('📋 Context variables for manual setup:', variables)
     }
   }
 

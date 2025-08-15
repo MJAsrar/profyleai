@@ -198,10 +198,14 @@ export class ElevenLabsInterviewService {
         case 'conversation_initiation_metadata':
           console.log('🎤 Conversation initiated successfully')
           console.log('📊 Conversation metadata:', data.conversation_initiation_metadata_event)
-          // Now it's safe to send the context message
+          // Send contextual update with interview context first
           setTimeout(() => {
-            this.sendInitialContextDirectly()
-          }, 2000) // Wait 2 seconds to ensure everything is ready
+            this.sendContextualUpdate()
+          }, 1000) // Wait 1 second
+          // Then send user message to start the conversation
+          setTimeout(() => {
+            this.sendInitialUserMessage()
+          }, 2000) // Wait 2 seconds
           break
           
         case 'agent_response':
@@ -434,29 +438,67 @@ Begin the interview now with your greeting.`
   }
 
   /**
-   * Send initial context directly (for signed URL authentication)
+   * Send contextual update with interview information
    */
-  private sendInitialContextDirectly(): void {
+  private sendContextualUpdate(): void {
     if (!this.pendingContext) {
       console.log('❌ No pending context to send')
       return
     }
     
-    const { jobTitle, companyName, jobDescription, questions, resumeData } = this.pendingContext
+    const { jobTitle, companyName, jobDescription, resumeData } = this.pendingContext
     
-    // Start with a simple message first
-    const candidateName = resumeData?.personalInfo?.fullName || 'there'
-    const simpleGreeting = `Hello ${candidateName}! I'm Sarah, your interviewer for the ${jobTitle} position at ${companyName}. I'm excited to get started. How are you doing today?`
+    // Send contextual information as background data
+    let contextInfo = `Interview Context: ${jobTitle} position at ${companyName}.`
+    
+    if (resumeData) {
+      const candidateName = resumeData.personalInfo?.fullName || 'Candidate'
+      const experienceCount = resumeData.experience?.length || 0
+      contextInfo += ` Candidate: ${candidateName}, ${experienceCount} previous positions.`
+      
+      if (resumeData.summary) {
+        contextInfo += ` Summary: ${resumeData.summary.substring(0, 150)}.`
+      }
+    }
 
     if (this.websocket?.readyState === WebSocket.OPEN) {
-      console.log('📋 Sending initial greeting to agent...')
+      console.log('📋 Sending contextual update...')
       const message = {
-        user_message: simpleGreeting
+        type: "contextual_update",
+        text: contextInfo
       }
       this.websocket.send(JSON.stringify(message))
-      console.log('📋 Sent initial greeting:', simpleGreeting)
+      console.log('📋 Sent contextual update:', contextInfo)
     } else {
-      console.error('❌ WebSocket not ready to send message')
+      console.error('❌ WebSocket not ready to send contextual update')
+    }
+  }
+
+  /**
+   * Send initial user message to start the conversation
+   */
+  private sendInitialUserMessage(): void {
+    if (!this.pendingContext) {
+      console.log('❌ No pending context to send')
+      return
+    }
+    
+    const { resumeData } = this.pendingContext
+    const candidateName = resumeData?.personalInfo?.fullName || 'there'
+    
+    // Simple user message to start the interview
+    const userMessage = `Hello! I'm ready to start the interview.`
+
+    if (this.websocket?.readyState === WebSocket.OPEN) {
+      console.log('📋 Sending initial user message...')
+      const message = {
+        type: "user_message",
+        text: userMessage
+      }
+      this.websocket.send(JSON.stringify(message))
+      console.log('📋 Sent initial user message:', userMessage)
+    } else {
+      console.error('❌ WebSocket not ready to send user message')
     }
   }
 
@@ -466,7 +508,8 @@ Begin the interview now with your greeting.`
   sendMessage(message: string): void {
     if (this.websocket?.readyState === WebSocket.OPEN) {
       const textMessage = {
-        user_message: message
+        type: "user_message",
+        text: message
       }
       this.websocket.send(JSON.stringify(textMessage))
       console.log('💬 Sent message:', message)

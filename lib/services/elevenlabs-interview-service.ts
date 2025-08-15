@@ -142,7 +142,8 @@ export class ElevenLabsInterviewService {
           this.callbacks.onConnectionStateChange('connected')
           this.startAudioStreaming()
           
-          // Don't send context immediately - wait for conversation_initiation_metadata
+          // Send conversation variables for context
+          this.sendConversationVariables()
           
           resolve()
         }
@@ -191,21 +192,13 @@ export class ElevenLabsInterviewService {
       switch (data.type) {
         case 'session_init_ack':
           console.log('🎤 Session initialization acknowledged')
-          // Now we can send the context message
-          this.sendInitialContext()
+          // Session is ready - no additional context messages needed
           break
           
         case 'conversation_initiation_metadata':
           console.log('🎤 Conversation initiated successfully')
           console.log('📊 Conversation metadata:', data.conversation_initiation_metadata_event)
-          // Send contextual update with interview context first
-          setTimeout(() => {
-            this.sendContextualUpdate()
-          }, 1000) // Wait 1 second
-          // Then send user message to start the conversation
-          setTimeout(() => {
-            this.sendInitialUserMessage()
-          }, 2000) // Wait 2 seconds
+          // Conversation is ready - agent will start based on system prompt and variables
           break
           
         case 'agent_response':
@@ -299,7 +292,7 @@ export class ElevenLabsInterviewService {
   }
 
   /**
-   * Send comprehensive job and resume context to the agent
+   * Store job and resume context for sending as variables
    */
   private async sendJobContext(
     jobTitle: string, 
@@ -308,59 +301,7 @@ export class ElevenLabsInterviewService {
     questions: PracticeQuestion[],
     resumeData?: any
   ): Promise<void> {
-    // Wait a moment for connection to stabilize
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
-    // Build comprehensive context message
-    let contextMessage = `INTERVIEW_CONTEXT:
-
-POSITION: ${jobTitle} at ${companyName}
-${jobDescription ? `JOB DESCRIPTION: ${jobDescription.substring(0, 600)}` : ''}
-
-`
-
-    // Add candidate information if resume provided
-    if (resumeData) {
-      const candidateName = resumeData.personalInfo?.fullName || 'the candidate'
-      const experienceCount = resumeData.experience?.length || 0
-      const skillCategories = resumeData.skills?.map((s: any) => s.category).join(', ') || ''
-      const recentExperience = resumeData.experience?.[0]
-      
-      contextMessage += `CANDIDATE: ${candidateName}
-
-RESUME SUMMARY:
-- Name: ${candidateName}
-- Experience: ${experienceCount} previous positions
-- Skills: ${skillCategories}
-${resumeData.summary ? `- Summary: ${resumeData.summary.substring(0, 200)}` : ''}
-${recentExperience ? `- Recent Role: ${recentExperience.jobTitle} at ${recentExperience.company}` : ''}
-
-KEY PROJECTS:
-${resumeData.projects?.slice(0, 2).map((p: any, i: number) => 
-  `${i + 1}. ${p.name}: ${p.description?.substring(0, 100) || 'No description'}`
-).join('\n') || 'No projects listed'}
-
-`
-    }
-
-    contextMessage += `INTERVIEW QUESTIONS TO COVER:
-${questions.slice(0, 6).map((q: PracticeQuestion, i: number) => `${i + 1}. ${q.question}`).join('\n')}
-
-INSTRUCTIONS:
-${resumeData ? 
-  `1. Start with: "Hello ${resumeData.personalInfo?.fullName || 'there'}! I'm Sarah, your interviewer for the ${jobTitle} position at ${companyName}. I've had a chance to review your background and I'm excited to learn more about your experience."
-2. Reference their specific experience naturally during the conversation
-3. Ask targeted questions based on their resume and the job requirements
-4. Keep responses conversational (1-3 sentences typically)
-5. Show genuine interest in their background and projects` :
-  `1. Start with: "Hello! I'm Sarah, your interviewer for the ${jobTitle} position at ${companyName}. I'm excited to learn more about your background and experience."
-2. Ask engaging questions about their experience and skills
-3. Keep responses conversational and natural`
-}
-
-Begin the interview now with your greeting.`
-
-    // Store context for later sending after session_init_ack
+    // Store context for sending as variables when WebSocket connects
     this.pendingContext = {
       jobTitle,
       companyName, 
@@ -368,151 +309,118 @@ Begin the interview now with your greeting.`
       questions,
       resumeData
     }
+    
+    console.log('📋 Stored job and resume context for variable passing')
   }
 
   /**
-   * Send initial context after session is initialized
+   * Send conversation variables to ElevenLabs for context
    */
-  private sendInitialContext(): void {
-    if (!this.pendingContext) return
+  private sendConversationVariables(): void {
+    if (!this.pendingContext) {
+      console.log('❌ No pending context to send as variables')
+      return
+    }
     
     const { jobTitle, companyName, jobDescription, questions, resumeData } = this.pendingContext
     
-    // Build comprehensive context message (same as before)
-    let contextMessage = `INTERVIEW_CONTEXT:
+    // Prepare variables for ElevenLabs
+    const variables = {
+      job_title: jobTitle,
+      company_name: companyName,
+      job_description: jobDescription?.substring(0, 500) || 'No job description provided',
+      candidate_name: resumeData?.personalInfo?.fullName || 'there',
+      experience_summary: this.buildExperienceSummary(resumeData),
+      key_skills: this.buildSkillsSummary(resumeData),
+      recent_role: this.buildRecentRole(resumeData),
+      notable_projects: this.buildProjectsSummary(resumeData),
+      interview_questions: this.buildQuestionsList(questions)
+    }
 
-POSITION: ${jobTitle} at ${companyName}
-${jobDescription ? `JOB DESCRIPTION: ${jobDescription.substring(0, 600)}` : ''}
-
-`
-
-    // Add candidate information if resume provided
-    if (resumeData) {
-      const candidateName = resumeData.personalInfo?.fullName || 'the candidate'
-      const experienceCount = resumeData.experience?.length || 0
-      const skillCategories = resumeData.skills?.map((s: any) => s.category).join(', ') || ''
-      const recentExperience = resumeData.experience?.[0]
+    if (this.websocket?.readyState === WebSocket.OPEN) {
+      // Try sending variables using ElevenLabs variable update format
+      const message = {
+        type: "conversation_initiation_client_data",
+        conversation_initiation_client_data: {
+          custom_llm_extra_body: variables
+        }
+      }
       
-      contextMessage += `CANDIDATE: ${candidateName}
-
-RESUME SUMMARY:
-- Name: ${candidateName}
-- Experience: ${experienceCount} previous positions
-- Skills: ${skillCategories}
-${resumeData.summary ? `- Summary: ${resumeData.summary.substring(0, 200)}` : ''}
-${recentExperience ? `- Recent Role: ${recentExperience.jobTitle} at ${recentExperience.company}` : ''}
-
-KEY PROJECTS:
-${resumeData.projects?.slice(0, 2).map((p: any, i: number) => 
-  `${i + 1}. ${p.name}: ${p.description?.substring(0, 100) || 'No description'}`
-).join('\n') || 'No projects listed'}
-
-`
-    }
-
-    contextMessage += `INTERVIEW QUESTIONS TO COVER:
-${questions.slice(0, 6).map((q: PracticeQuestion, i: number) => `${i + 1}. ${q.question}`).join('\n')}
-
-INSTRUCTIONS:
-${resumeData ? 
-  `1. Start with: "Hello ${resumeData.personalInfo?.fullName || 'there'}! I'm Sarah, your interviewer for the ${jobTitle} position at ${companyName}. I've had a chance to review your background and I'm excited to learn more about your experience."
-2. Reference their specific experience naturally during the conversation
-3. Ask targeted questions based on their resume and the job requirements
-4. Keep responses conversational (1-3 sentences typically)
-5. Show genuine interest in their background and projects` :
-  `1. Start with: "Hello! I'm Sarah, your interviewer for the ${jobTitle} position at ${companyName}. I'm excited to learn more about your background and experience."
-2. Ask engaging questions about their experience and skills
-3. Keep responses conversational and natural`
-}
-
-Begin the interview now with your greeting.`
-
-    if (this.websocket?.readyState === WebSocket.OPEN) {
-      const message = {
-        type: "input_text",
-        text: contextMessage
-      }
       this.websocket.send(JSON.stringify(message))
-      console.log('📋 Sent comprehensive job and resume context to agent')
-    }
-  }
-
-  /**
-   * Send contextual update with interview information
-   */
-  private sendContextualUpdate(): void {
-    if (!this.pendingContext) {
-      console.log('❌ No pending context to send')
-      return
-    }
-    
-    const { jobTitle, companyName, jobDescription, resumeData } = this.pendingContext
-    
-    // Send contextual information as background data
-    let contextInfo = `Interview Context: ${jobTitle} position at ${companyName}.`
-    
-    if (resumeData) {
-      const candidateName = resumeData.personalInfo?.fullName || 'Candidate'
-      const experienceCount = resumeData.experience?.length || 0
-      contextInfo += ` Candidate: ${candidateName}, ${experienceCount} previous positions.`
-      
-      if (resumeData.summary) {
-        contextInfo += ` Summary: ${resumeData.summary.substring(0, 150)}.`
-      }
-    }
-
-    if (this.websocket?.readyState === WebSocket.OPEN) {
-      console.log('📋 Sending contextual update...')
-      const message = {
-        type: "contextual_update",
-        text: contextInfo
-      }
-      this.websocket.send(JSON.stringify(message))
-      console.log('📋 Sent contextual update:', contextInfo)
+      console.log('📋 Sent conversation variables to ElevenLabs:', variables)
     } else {
-      console.error('❌ WebSocket not ready to send contextual update')
+      console.error('❌ WebSocket not ready to send variables')
     }
   }
 
   /**
-   * Send initial user message to start the conversation
+   * Build experience summary for variables
    */
-  private sendInitialUserMessage(): void {
-    if (!this.pendingContext) {
-      console.log('❌ No pending context to send')
-      return
-    }
+  private buildExperienceSummary(resumeData: any): string {
+    if (!resumeData?.experience) return 'No experience data provided'
     
-    const { resumeData } = this.pendingContext
-    const candidateName = resumeData?.personalInfo?.fullName || 'there'
-    
-    // Simple user message to start the interview
-    const userMessage = `Hello! I'm ready to start the interview.`
-
-    if (this.websocket?.readyState === WebSocket.OPEN) {
-      console.log('📋 Sending initial user message...')
-      const message = {
-        type: "user_message",
-        text: userMessage
-      }
-      this.websocket.send(JSON.stringify(message))
-      console.log('📋 Sent initial user message:', userMessage)
-    } else {
-      console.error('❌ WebSocket not ready to send user message')
-    }
+    const count = resumeData.experience.length
+    const recent = resumeData.experience[0]
+    return `${count} previous positions. Most recent: ${recent?.jobTitle || 'N/A'} at ${recent?.company || 'N/A'}`
   }
 
   /**
-   * Send a text message to the agent
+   * Build skills summary for variables
+   */
+  private buildSkillsSummary(resumeData: any): string {
+    if (!resumeData?.skills) return 'No skills data provided'
+    
+    return resumeData.skills
+      .slice(0, 3) // First 3 skill categories
+      .map((skillGroup: any) => skillGroup.category)
+      .join(', ')
+  }
+
+  /**
+   * Build recent role summary for variables
+   */
+  private buildRecentRole(resumeData: any): string {
+    const recent = resumeData?.experience?.[0]
+    if (!recent) return 'No recent role data'
+    
+    return `${recent.jobTitle} at ${recent.company} (${recent.startDate || 'Unknown'} - ${recent.endDate || 'Present'})`
+  }
+
+  /**
+   * Build projects summary for variables
+   */
+  private buildProjectsSummary(resumeData: any): string {
+    if (!resumeData?.projects) return 'No projects listed'
+    
+    return resumeData.projects
+      .slice(0, 2) // First 2 projects
+      .map((project: any) => `${project.name}: ${project.description?.substring(0, 100) || 'No description'}`)
+      .join('; ')
+  }
+
+  /**
+   * Build questions list for variables
+   */
+  private buildQuestionsList(questions: any[]): string {
+    return questions
+      .slice(0, 6) // First 6 questions
+      .map((q: any, i: number) => `${i + 1}. ${q.question}`)
+      .join('\n')
+  }
+
+  /**
+   * Send a text message to the agent (converted to speech)
    */
   sendMessage(message: string): void {
     if (this.websocket?.readyState === WebSocket.OPEN) {
-      const textMessage = {
-        type: "user_message",
-        text: message
-      }
-      this.websocket.send(JSON.stringify(textMessage))
-      console.log('💬 Sent message:', message)
+      // For now, we'll log the message but not send it via WebSocket
+      // since text messages use invalid message types
+      // In a full implementation, you'd convert text to speech and send as audio
+      console.log('💬 Text message (not sent via WebSocket):', message)
+      console.log('ℹ️ To send text messages, implement text-to-speech conversion')
+      
+      // Alternative: You could implement text-to-speech here and send as audio
+      // this.convertTextToSpeechAndSend(message)
     }
   }
 

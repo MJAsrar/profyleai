@@ -1,7 +1,6 @@
-'use client'
-
 import OpenAI from 'openai'
 import { PracticeQuestion } from './interview-service'
+import { Readable } from 'stream'
 
 // ===== TYPES =====
 
@@ -227,17 +226,22 @@ export class VideoInterviewService {
    */
   async transcribeAudioChunk(audioChunk: Buffer): Promise<TranscriptionResult> {
     try {
-      // Create a temporary file-like object for the API
-      const file = new File([audioChunk], 'audio.wav', { type: 'audio/wav' })
+      console.log('🎤 Transcribing audio chunk:', audioChunk.length, 'bytes')
+      
+      // Create a readable stream from the buffer for Node.js
+      const audioStream = Readable.from(audioChunk)
+      audioStream.path = 'audio.wav' // Set filename for OpenAI
       
       const response = await this.openai.audio.transcriptions.create({
-        file: file,
+        file: audioStream as any,
         model: this.config.models.transcription,
         language: 'en',
         response_format: 'verbose_json',
         timestamp_granularities: ['word']
       })
 
+      console.log('✅ Transcription completed:', response.text.substring(0, 100) + '...')
+      
       return {
         text: response.text,
         confidence: 0.9, // Whisper doesn't provide confidence, using default
@@ -249,8 +253,11 @@ export class VideoInterviewService {
         }))
       }
     } catch (error) {
-      console.error('Transcription error:', error)
-      throw new Error('Failed to transcribe audio')
+      console.error('❌ Transcription error:', error)
+      if (error instanceof Error) {
+        console.error('Transcription error details:', error.message, error.stack)
+      }
+      throw new Error('Failed to transcribe audio: ' + (error instanceof Error ? error.message : 'Unknown error'))
     }
   }
 

@@ -344,7 +344,7 @@ ${resumeData.projects?.slice(0, 2).map((p: any, i: number) =>
     }
 
     contextMessage += `INTERVIEW QUESTIONS TO COVER:
-${questions.slice(0, 6).map((q, i) => `${i + 1}. ${q.question}`).join('\n')}
+${questions.slice(0, 6).map((q: PracticeQuestion, i: number) => `${i + 1}. ${q.question}`).join('\n')}
 
 INSTRUCTIONS:
 ${resumeData ? 
@@ -411,7 +411,7 @@ ${resumeData.projects?.slice(0, 2).map((p: any, i: number) =>
     }
 
     contextMessage += `INTERVIEW QUESTIONS TO COVER:
-${questions.slice(0, 6).map((q, i) => `${i + 1}. ${q.question}`).join('\n')}
+${questions.slice(0, 6).map((q: PracticeQuestion, i: number) => `${i + 1}. ${q.question}`).join('\n')}
 
 INSTRUCTIONS:
 ${resumeData ? 

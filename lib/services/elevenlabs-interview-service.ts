@@ -104,14 +104,27 @@ export class ElevenLabsInterviewService {
     return new Promise((resolve, reject) => {
       const wsUrl = `wss://api.elevenlabs.io/v1/convai/conversation?agent_id=${this.config.agentId}`
       
-      this.websocket = new WebSocket(wsUrl, [], {
-        headers: {
-          'xi-api-key': this.config.apiKey
-        }
-      } as any)
+      console.log('🔌 Connecting to ElevenLabs WebSocket:', wsUrl)
+      console.log('🔑 Using API key:', this.config.apiKey ? `${this.config.apiKey.substring(0, 10)}...` : 'NOT SET')
+      
+      // WebSocket constructor doesn't support headers in browser
+      // We need to pass the API key differently
+      this.websocket = new WebSocket(wsUrl)
 
       this.websocket.onopen = () => {
         console.log('✅ Connected to ElevenLabs WebSocket')
+        
+        // Send authentication message immediately after connection
+        const authMessage = {
+          type: 'auth',
+          api_key: this.config.apiKey
+        }
+        
+        if (this.websocket?.readyState === WebSocket.OPEN) {
+          this.websocket.send(JSON.stringify(authMessage))
+          console.log('🔑 Sent authentication message')
+        }
+        
         this.session!.status = 'connected'
         this.callbacks.onConnectionStateChange('connected')
         this.startAudioStreaming()
@@ -128,8 +141,19 @@ export class ElevenLabsInterviewService {
         reject(error)
       }
 
-      this.websocket.onclose = () => {
-        console.log('🔌 WebSocket connection closed')
+      this.websocket.onclose = (event) => {
+        console.log('🔌 WebSocket connection closed:', {
+          code: event.code,
+          reason: event.reason,
+          wasClean: event.wasClean
+        })
+        
+        // Check if this was an unexpected closure
+        if (event.code !== 1000) { // 1000 = normal closure
+          console.error('❌ Unexpected WebSocket closure:', event.code, event.reason)
+          this.callbacks.onError(new Error(`WebSocket closed unexpectedly: ${event.reason || event.code}`))
+        }
+        
         this.session!.status = 'ended'
         this.callbacks.onConnectionStateChange('ended')
       }
@@ -142,10 +166,11 @@ export class ElevenLabsInterviewService {
   private handleWebSocketMessage(event: MessageEvent): void {
     try {
       const data = JSON.parse(event.data)
+      console.log('📨 WebSocket message received:', data.type, data)
       
       switch (data.type) {
         case 'conversation_initiation_metadata':
-          console.log('🎤 Conversation initiated')
+          console.log('🎤 Conversation initiated successfully')
           break
           
         case 'agent_response':
@@ -172,19 +197,25 @@ export class ElevenLabsInterviewService {
           // Respond to ping to keep connection alive
           if (this.websocket?.readyState === WebSocket.OPEN) {
             this.websocket.send(JSON.stringify({ type: 'pong' }))
+            console.log('🏓 Responded to ping')
           }
           break
           
         case 'conversation_end':
-          console.log('🏁 Conversation ended')
+          console.log('🏁 Conversation ended by agent:', data)
           this.callbacks.onConversationEnd(data)
           break
           
+        case 'error':
+          console.error('❌ ElevenLabs error:', data)
+          this.callbacks.onError(new Error(data.message || 'ElevenLabs API error'))
+          break
+          
         default:
-          console.log('📨 Unknown message type:', data.type)
+          console.log('📨 Unknown message type:', data.type, data)
       }
     } catch (error) {
-      console.error('❌ Error handling WebSocket message:', error)
+      console.error('❌ Error handling WebSocket message:', error, event.data)
     }
   }
 

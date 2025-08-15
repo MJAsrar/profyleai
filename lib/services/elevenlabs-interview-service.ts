@@ -101,35 +101,40 @@ export class ElevenLabsInterviewService {
    * Connect to ElevenLabs WebSocket
    */
   private async connectWebSocket(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      const wsUrl = `wss://api.elevenlabs.io/v1/convai/conversation?agent_id=${this.config.agentId}`
+    try {
+      // First, get the signed URL for private agents
+      console.log('🔑 Getting signed WebSocket URL for agent:', this.config.agentId)
       
-      console.log('🔌 Connecting to ElevenLabs WebSocket:', wsUrl)
-      console.log('🔑 Using API key:', this.config.apiKey ? `${this.config.apiKey.substring(0, 10)}...` : 'NOT SET')
+      const signedUrlResponse = await fetch(
+        `https://api.elevenlabs.io/v1/convai/conversation/get_signed_url?agent_id=${this.config.agentId}`,
+        {
+          method: 'GET',
+          headers: {
+            'xi-api-key': this.config.apiKey,
+          },
+        }
+      )
       
-      // WebSocket constructor doesn't support headers in browser
-      // We need to pass the API key differently
-      this.websocket = new WebSocket(wsUrl)
-
-      this.websocket.onopen = () => {
-        console.log('✅ Connected to ElevenLabs WebSocket')
-        
-        // Send authentication message immediately after connection
-        const authMessage = {
-          type: 'auth',
-          api_key: this.config.apiKey
-        }
-        
-        if (this.websocket?.readyState === WebSocket.OPEN) {
-          this.websocket.send(JSON.stringify(authMessage))
-          console.log('🔑 Sent authentication message')
-        }
-        
-        this.session!.status = 'connected'
-        this.callbacks.onConnectionStateChange('connected')
-        this.startAudioStreaming()
-        resolve()
+      if (!signedUrlResponse.ok) {
+        throw new Error(`Failed to get signed URL: ${signedUrlResponse.status} ${signedUrlResponse.statusText}`)
       }
+      
+      const signedUrlData = await signedUrlResponse.json()
+      const wsUrl = signedUrlData.signed_url
+      
+      console.log('🔌 Connecting to ElevenLabs WebSocket with signed URL')
+      
+      return new Promise((resolve, reject) => {
+        this.websocket = new WebSocket(wsUrl)
+
+        this.websocket.onopen = () => {
+          console.log('✅ Connected to ElevenLabs WebSocket (authenticated via signed URL)')
+          
+          this.session!.status = 'connected'
+          this.callbacks.onConnectionStateChange('connected')
+          this.startAudioStreaming()
+          resolve()
+        }
 
       this.websocket.onmessage = (event) => {
         this.handleWebSocketMessage(event)
@@ -157,7 +162,11 @@ export class ElevenLabsInterviewService {
         this.session!.status = 'ended'
         this.callbacks.onConnectionStateChange('ended')
       }
-    })
+      })
+    } catch (error) {
+      console.error('❌ Failed to get signed WebSocket URL:', error)
+      throw error
+    }
   }
 
   /**
@@ -326,9 +335,10 @@ ${resumeData ?
 Begin the interview now with your greeting.`
 
     if (this.websocket?.readyState === WebSocket.OPEN) {
-      this.websocket.send(JSON.stringify({
-        user_message: contextMessage
-      }))
+      const message = {
+        text: contextMessage
+      }
+      this.websocket.send(JSON.stringify(message))
       console.log('📋 Sent comprehensive job and resume context to agent')
     }
   }
@@ -339,7 +349,7 @@ Begin the interview now with your greeting.`
   sendMessage(message: string): void {
     if (this.websocket?.readyState === WebSocket.OPEN) {
       const textMessage = {
-        user_message: message
+        text: message
       }
       this.websocket.send(JSON.stringify(textMessage))
       console.log('💬 Sent message:', message)

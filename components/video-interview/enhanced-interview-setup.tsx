@@ -22,37 +22,25 @@ import {
 } from 'lucide-react'
 import { InterviewJobData, PracticeQuestion } from '@/lib/services/interview-service'
 
-// Resume data interface (simplified from your existing structure)
+// Resume data interface (matches database structure)
 interface ResumeData {
   id: string
   title: string
-  personalInfo: {
-    fullName: string
-    email: string
-    phone: string
-    location: string
-  }
+  personalInfo: any // JSON field from database
   summary?: string
-  experience: Array<{
-    jobTitle: string
-    company: string
-    duration: string
-    description: string
-  }>
-  skills: Array<{
-    category: string
-    skills: string[]
-  }>
-  education: Array<{
-    degree: string
-    institution: string
-    year: string
-  }>
-  projects: Array<{
+  experience: any[] // JSON array from database
+  skills: any[] // JSON array from database
+  education: any[] // JSON array from database
+  projects: any[] // JSON array from database
+  certifications?: any[] // JSON array from database
+  template?: {
+    id: string
     name: string
-    description: string
-    technologies: string[]
-  }>
+    category: string
+    previewUrl?: string
+  }
+  createdAt?: string
+  updatedAt?: string
 }
 
 interface EnhancedInterviewSetupProps {
@@ -97,11 +85,15 @@ export function EnhancedInterviewSetup({ onSetupComplete, isLoading = false }: E
       const response = await fetch('/api/resumes')
       const data = await response.json()
       
+      console.log('📄 Resume API Response:', data)
+      
       if (data.success) {
-        setResumes(data.data.resumes || [])
+        const resumesData = data.data || []
+        console.log('📋 Found resumes:', resumesData.length, resumesData)
+        setResumes(resumesData)
         // Auto-select first resume if available
-        if (data.data.resumes?.length > 0) {
-          setSelectedResumeId(data.data.resumes[0].id)
+        if (resumesData.length > 0) {
+          setSelectedResumeId(resumesData[0].id)
         }
       } else {
         throw new Error(data.error || 'Failed to load resumes')
@@ -191,9 +183,11 @@ export function EnhancedInterviewSetup({ onSetupComplete, isLoading = false }: E
 
   // Generate resume summary for display
   const getResumeSummary = (resume: ResumeData) => {
-    const experienceYears = resume.experience.length
-    const skillCount = resume.skills.reduce((acc, cat) => acc + cat.skills.length, 0)
-    return `${experienceYears} positions • ${skillCount} skills • ${resume.projects.length} projects`
+    const experienceCount = Array.isArray(resume.experience) ? resume.experience.length : 0
+    const skillCount = Array.isArray(resume.skills) ? 
+      resume.skills.reduce((acc, cat) => acc + (Array.isArray(cat.skills) ? cat.skills.length : 0), 0) : 0
+    const projectCount = Array.isArray(resume.projects) ? resume.projects.length : 0
+    return `${experienceCount} positions • ${skillCount} skills • ${projectCount} projects`
   }
 
   return (
@@ -358,7 +352,7 @@ export function EnhancedInterviewSetup({ onSetupComplete, isLoading = false }: E
                           )}
                         </div>
                         <p className="text-sm text-muted-foreground mb-2">
-                          {resume.personalInfo.fullName}
+                          {resume.personalInfo?.fullName || 'No name provided'}
                         </p>
                         <p className="text-xs text-muted-foreground">
                           {getResumeSummary(resume)}

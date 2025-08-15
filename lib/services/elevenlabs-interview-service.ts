@@ -142,8 +142,7 @@ export class ElevenLabsInterviewService {
           this.callbacks.onConnectionStateChange('connected')
           this.startAudioStreaming()
           
-          // Send initial context immediately since we're authenticated
-          this.sendInitialContextDirectly()
+          // Don't send context immediately - wait for conversation_initiation_metadata
           
           resolve()
         }
@@ -198,6 +197,11 @@ export class ElevenLabsInterviewService {
           
         case 'conversation_initiation_metadata':
           console.log('🎤 Conversation initiated successfully')
+          console.log('📊 Conversation metadata:', data.conversation_initiation_metadata_event)
+          // Now it's safe to send the context message
+          setTimeout(() => {
+            this.sendInitialContextDirectly()
+          }, 2000) // Wait 2 seconds to ensure everything is ready
           break
           
         case 'agent_response':
@@ -433,66 +437,26 @@ Begin the interview now with your greeting.`
    * Send initial context directly (for signed URL authentication)
    */
   private sendInitialContextDirectly(): void {
-    if (!this.pendingContext) return
+    if (!this.pendingContext) {
+      console.log('❌ No pending context to send')
+      return
+    }
     
     const { jobTitle, companyName, jobDescription, questions, resumeData } = this.pendingContext
     
-    // Build comprehensive context message (same as before)
-    let contextMessage = `INTERVIEW_CONTEXT:
-
-POSITION: ${jobTitle} at ${companyName}
-${jobDescription ? `JOB DESCRIPTION: ${jobDescription.substring(0, 600)}` : ''}
-
-`
-
-    // Add candidate information if resume provided
-    if (resumeData) {
-      const candidateName = resumeData.personalInfo?.fullName || 'the candidate'
-      const experienceCount = resumeData.experience?.length || 0
-      const skillCategories = resumeData.skills?.map((s: any) => s.category).join(', ') || ''
-      const recentExperience = resumeData.experience?.[0]
-      
-      contextMessage += `CANDIDATE: ${candidateName}
-
-RESUME SUMMARY:
-- Name: ${candidateName}
-- Experience: ${experienceCount} previous positions
-- Skills: ${skillCategories}
-${resumeData.summary ? `- Summary: ${resumeData.summary.substring(0, 200)}` : ''}
-${recentExperience ? `- Recent Role: ${recentExperience.jobTitle} at ${recentExperience.company}` : ''}
-
-KEY PROJECTS:
-${resumeData.projects?.slice(0, 2).map((p: any, i: number) => 
-  `${i + 1}. ${p.name}: ${p.description?.substring(0, 100) || 'No description'}`
-).join('\n') || 'No projects listed'}
-
-`
-    }
-
-    contextMessage += `INTERVIEW QUESTIONS TO COVER:
-${questions.slice(0, 6).map((q, i) => `${i + 1}. ${q.question}`).join('\n')}
-
-INSTRUCTIONS:
-${resumeData ? 
-  `1. Start with: "Hello ${resumeData.personalInfo?.fullName || 'there'}! I'm Sarah, your interviewer for the ${jobTitle} position at ${companyName}. I've had a chance to review your background and I'm excited to learn more about your experience."
-2. Reference their specific experience naturally during the conversation
-3. Ask targeted questions based on their resume and the job requirements
-4. Keep responses conversational (1-3 sentences typically)
-5. Show genuine interest in their background and projects` :
-  `1. Start with: "Hello! I'm Sarah, your interviewer for the ${jobTitle} position at ${companyName}. I'm excited to learn more about your background and experience."
-2. Ask engaging questions about their experience and skills
-3. Keep responses conversational and natural`
-}
-
-Begin the interview now with your greeting.`
+    // Start with a simple message first
+    const candidateName = resumeData?.personalInfo?.fullName || 'there'
+    const simpleGreeting = `Hello ${candidateName}! I'm Sarah, your interviewer for the ${jobTitle} position at ${companyName}. I'm excited to get started. How are you doing today?`
 
     if (this.websocket?.readyState === WebSocket.OPEN) {
-      // Try the original message format for the signed URL approach
+      console.log('📋 Sending initial greeting to agent...')
       const message = {
-        user_message: contextMessage
+        user_message: simpleGreeting
       }
       this.websocket.send(JSON.stringify(message))
-      console.log('📋 Sent comprehensive job and resume context to agent (signed URL)')
+      console.log('📋 Sent initial greeting:', simpleGreeting)
+    } else {
+      console.error('❌ WebSocket not ready to send message')
     }
   }
 

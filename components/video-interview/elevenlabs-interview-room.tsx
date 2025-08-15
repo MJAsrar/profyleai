@@ -32,6 +32,7 @@ import {
 } from 'lucide-react'
 import { useElevenLabsInterviewStore, elevenLabsInterviewSelectors } from '@/lib/stores/elevenlabs-interview-store'
 import { PracticeQuestion } from '@/lib/services/interview-service'
+import { AiAvatar } from './ai-avatar'
 
 interface ElevenLabsInterviewRoomProps {
   sessionId: string
@@ -104,6 +105,7 @@ export function ElevenLabsInterviewRoom({
 
         // Get user media for video display (audio handled by ElevenLabs)
         try {
+          console.log('🎥 Requesting user media...')
           const stream = await navigator.mediaDevices.getUserMedia({
             video: {
               width: { min: 320, ideal: 640, max: 1280 },
@@ -113,21 +115,53 @@ export function ElevenLabsInterviewRoom({
             audio: false // Audio handled by ElevenLabs service
           })
 
+          console.log('📹 Got media stream:', stream)
+          console.log('📹 Video tracks:', stream.getVideoTracks())
+          
           setLocalStream(stream)
           setStreamError(null)
 
-          if (localVideoRef.current) {
+          // Wait for component to be ready
+          await new Promise(resolve => setTimeout(resolve, 100))
+
+          if (localVideoRef.current && stream) {
+            console.log('📺 Setting video srcObject...')
             localVideoRef.current.srcObject = stream
-            // Ensure video plays
-            localVideoRef.current.onloadedmetadata = () => {
-              localVideoRef.current?.play().catch(console.error)
+            
+            // Ensure video plays and is visible
+            localVideoRef.current.onloadedmetadata = async () => {
+              try {
+                console.log('📺 Video metadata loaded, attempting to play...')
+                if (localVideoRef.current) {
+                  localVideoRef.current.muted = true // Ensure muted for autoplay
+                  localVideoRef.current.playsInline = true
+                  await localVideoRef.current.play()
+                  console.log('✅ Video is now playing')
+                }
+              } catch (playError) {
+                console.error('❌ Video play failed:', playError)
+              }
             }
+
+            // Force play attempt
+            setTimeout(async () => {
+              if (localVideoRef.current && localVideoRef.current.readyState >= 2) {
+                try {
+                  await localVideoRef.current.play()
+                  console.log('✅ Video force-play successful')
+                } catch (err) {
+                  console.error('❌ Video force-play failed:', err)
+                }
+              }
+            }, 500)
+          } else {
+            console.error('❌ Video ref not available or stream is null')
           }
 
-          console.log('✅ Video stream initialized successfully')
+          console.log('✅ Video stream setup completed')
         } catch (videoError) {
           console.error('❌ Failed to get video stream:', videoError)
-          setStreamError('Failed to access camera. Please check permissions.')
+          setStreamError(`Failed to access camera: ${videoError.message}`)
         }
 
         // Initialize ElevenLabs interview
@@ -155,6 +189,34 @@ export function ElevenLabsInterviewRoom({
       cleanup()
     }
   }, [sessionId, jobTitle, companyName, jobDescription, resumeData, questions])
+
+  // Handle video stream assignment
+  useEffect(() => {
+    if (localStream && localVideoRef.current && isVideoEnabled) {
+      console.log('🔄 Updating video srcObject in useEffect')
+      localVideoRef.current.srcObject = localStream
+      
+      // Ensure video plays
+      const playVideo = async () => {
+        if (localVideoRef.current) {
+          try {
+            localVideoRef.current.muted = true
+            localVideoRef.current.playsInline = true
+            await localVideoRef.current.play()
+            console.log('✅ Video playing from useEffect')
+          } catch (error) {
+            console.error('❌ Video play error in useEffect:', error)
+          }
+        }
+      }
+      
+      if (localVideoRef.current.readyState >= 2) {
+        playVideo()
+      } else {
+        localVideoRef.current.onloadeddata = playVideo
+      }
+    }
+  }, [localStream, isVideoEnabled])
 
   // Handle audio playback
   useEffect(() => {
@@ -309,16 +371,33 @@ export function ElevenLabsInterviewRoom({
                 <div className={`relative h-full rounded-xl overflow-hidden bg-gradient-to-br from-gray-900 to-gray-800 ${isFullscreen ? 'fixed inset-0 z-50' : ''}`}>
                   {/* Video Stream */}
                   <div className="relative h-full">
-                    {localStream && isVideoEnabled ? (
-                      <video
-                        ref={localVideoRef}
-                        autoPlay
-                        muted
-                        playsInline
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-gray-800">
+                    {/* Always show video element, but conditionally style it */}
+                    <video
+                      ref={localVideoRef}
+                      autoPlay
+                      muted
+                      playsInline
+                      controls={false}
+                      className={`w-full h-full object-cover transition-opacity duration-300 ${
+                        localStream && isVideoEnabled ? 'opacity-100' : 'opacity-0'
+                      }`}
+                      style={{
+                        transform: 'scaleX(-1)', // Mirror the video like a selfie camera
+                        backgroundColor: '#1f2937'
+                      }}
+                      onCanPlay={() => {
+                        console.log('📺 Video can play event fired')
+                        if (localVideoRef.current) {
+                          localVideoRef.current.play().catch(console.error)
+                        }
+                      }}
+                      onPlaying={() => console.log('📺 Video is playing')}
+                      onError={(e) => console.error('📺 Video error:', e)}
+                    />
+                    
+                    {/* Fallback when video is off or unavailable */}
+                    {(!localStream || !isVideoEnabled) && (
+                      <div className="absolute inset-0 w-full h-full flex items-center justify-center bg-gray-800">
                         <div className="text-center text-white">
                           <div className="w-20 h-20 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
                             <User className="w-10 h-10" />
@@ -366,35 +445,13 @@ export function ElevenLabsInterviewRoom({
                       </div>
                     </div>
 
-                    {/* AI Status Indicator */}
+                    {/* AI Avatar */}
                     <div className="absolute top-6 right-6">
-                      <div className={`px-4 py-3 rounded-2xl backdrop-blur-md border ${
-                        isAgentSpeaking 
-                          ? 'bg-blue-500/90 border-blue-400/50' 
-                          : connectionStatus === 'connected' 
-                            ? 'bg-green-500/90 border-green-400/50'
-                            : 'bg-yellow-500/90 border-yellow-400/50'
-                      }`}>
-                        <div className="flex items-center gap-3">
-                          <div className="flex items-center justify-center w-10 h-10 bg-white/20 rounded-full">
-                            {isAgentSpeaking ? (
-                              <Volume2 className="w-5 h-5 text-white animate-pulse" />
-                            ) : connectionStatus === 'connected' ? (
-                              <CheckCircle2 className="w-5 h-5 text-white" />
-                            ) : (
-                              <Circle className="w-5 h-5 text-white animate-spin" />
-                            )}
-                          </div>
-                          <div className="text-white">
-                            <h3 className="font-semibold text-sm">Sarah</h3>
-                            <p className="text-xs opacity-90">
-                              {isAgentSpeaking ? 'Speaking...' : 
-                               connectionStatus === 'connected' ? 'Listening' :
-                               'Connecting...'}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
+                      <AiAvatar 
+                        isActive={connectionStatus === 'connected' || connectionStatus === 'speaking'}
+                        isSpeaking={isAgentSpeaking}
+                        name="Sarah"
+                      />
                     </div>
 
                     {/* User Speaking Indicator */}
@@ -409,6 +466,18 @@ export function ElevenLabsInterviewRoom({
                               <p className="text-sm font-medium">You're speaking</p>
                             </div>
                           </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Debug Info (only in development) */}
+                    {process.env.NODE_ENV === 'development' && (
+                      <div className="absolute bottom-6 left-6">
+                        <div className="px-3 py-2 bg-black/70 backdrop-blur-sm rounded-lg text-white text-xs">
+                          <div>Stream: {localStream ? '✅' : '❌'}</div>
+                          <div>Video Enabled: {isVideoEnabled ? '✅' : '❌'}</div>
+                          <div>Video Ref: {localVideoRef.current ? '✅' : '❌'}</div>
+                          <div>Stream Error: {streamError || 'None'}</div>
                         </div>
                       </div>
                     )}

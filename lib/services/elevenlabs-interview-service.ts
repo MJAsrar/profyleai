@@ -40,6 +40,7 @@ export class ElevenLabsInterviewService {
   private session: InterviewSession | null = null
   private audioContext: AudioContext | null = null
   private mediaStream: MediaStream | null = null
+  private pendingContext: any = null
 
   constructor(config: ElevenLabsConfig, callbacks: ElevenLabsCallbacks) {
     this.config = config
@@ -101,40 +102,35 @@ export class ElevenLabsInterviewService {
    * Connect to ElevenLabs WebSocket
    */
   private async connectWebSocket(): Promise<void> {
-    try {
-      // First, get the signed URL for private agents
-      console.log('🔑 Getting signed WebSocket URL for agent:', this.config.agentId)
+    return new Promise((resolve, reject) => {
+      const wsUrl = `wss://api.elevenlabs.io/v1/convai/ws?agent_id=${this.config.agentId}`
       
-      const signedUrlResponse = await fetch(
-        `https://api.elevenlabs.io/v1/convai/conversation/get_signed_url?agent_id=${this.config.agentId}`,
-        {
-          method: 'GET',
-          headers: {
-            'xi-api-key': this.config.apiKey,
-          },
-        }
-      )
+      console.log('🔌 Connecting to ElevenLabs WebSocket:', wsUrl)
+      console.log('🔑 Using API key:', this.config.apiKey ? `${this.config.apiKey.substring(0, 10)}...` : 'NOT SET')
       
-      if (!signedUrlResponse.ok) {
-        throw new Error(`Failed to get signed URL: ${signedUrlResponse.status} ${signedUrlResponse.statusText}`)
-      }
-      
-      const signedUrlData = await signedUrlResponse.json()
-      const wsUrl = signedUrlData.signed_url
-      
-      console.log('🔌 Connecting to ElevenLabs WebSocket with signed URL')
-      
-      return new Promise((resolve, reject) => {
-        this.websocket = new WebSocket(wsUrl)
+      // Note: Browser WebSocket doesn't support headers, so we'll send auth in first message
+      this.websocket = new WebSocket(wsUrl)
 
-        this.websocket.onopen = () => {
-          console.log('✅ Connected to ElevenLabs WebSocket (authenticated via signed URL)')
-          
-          this.session!.status = 'connected'
-          this.callbacks.onConnectionStateChange('connected')
-          this.startAudioStreaming()
-          resolve()
+      this.websocket.onopen = () => {
+        console.log('✅ Connected to ElevenLabs WebSocket')
+        
+        // Send session_init message with authentication
+        const sessionInitMessage = {
+          type: "session_init",
+          authorization: `Bearer ${this.config.apiKey}`,
+          conversation: {
+            // Optional: context, metadata, etc.
+          }
         }
+        
+        this.websocket!.send(JSON.stringify(sessionInitMessage))
+        console.log('🔑 Sent session_init message')
+        
+        this.session!.status = 'connected'
+        this.callbacks.onConnectionStateChange('connected')
+        this.startAudioStreaming()
+        resolve()
+      }
 
       this.websocket.onmessage = (event) => {
         this.handleWebSocketMessage(event)
@@ -162,11 +158,7 @@ export class ElevenLabsInterviewService {
         this.session!.status = 'ended'
         this.callbacks.onConnectionStateChange('ended')
       }
-      })
-    } catch (error) {
-      console.error('❌ Failed to get signed WebSocket URL:', error)
-      throw error
-    }
+    })
   }
 
   /**
@@ -178,6 +170,12 @@ export class ElevenLabsInterviewService {
       console.log('📨 WebSocket message received:', data.type, data)
       
       switch (data.type) {
+        case 'session_init_ack':
+          console.log('🎤 Session initialization acknowledged')
+          // Now we can send the context message
+          this.sendInitialContext()
+          break
+          
         case 'conversation_initiation_metadata':
           console.log('🎤 Conversation initiated successfully')
           break
@@ -334,8 +332,76 @@ ${resumeData ?
 
 Begin the interview now with your greeting.`
 
+    // Store context for later sending after session_init_ack
+    this.pendingContext = {
+      jobTitle,
+      companyName, 
+      jobDescription,
+      questions,
+      resumeData
+    }
+  }
+
+  /**
+   * Send initial context after session is initialized
+   */
+  private sendInitialContext(): void {
+    if (!this.pendingContext) return
+    
+    const { jobTitle, companyName, jobDescription, questions, resumeData } = this.pendingContext
+    
+    // Build comprehensive context message (same as before)
+    let contextMessage = `INTERVIEW_CONTEXT:
+
+POSITION: ${jobTitle} at ${companyName}
+${jobDescription ? `JOB DESCRIPTION: ${jobDescription.substring(0, 600)}` : ''}
+
+`
+
+    // Add candidate information if resume provided
+    if (resumeData) {
+      const candidateName = resumeData.personalInfo?.fullName || 'the candidate'
+      const experienceCount = resumeData.experience?.length || 0
+      const skillCategories = resumeData.skills?.map((s: any) => s.category).join(', ') || ''
+      const recentExperience = resumeData.experience?.[0]
+      
+      contextMessage += `CANDIDATE: ${candidateName}
+
+RESUME SUMMARY:
+- Name: ${candidateName}
+- Experience: ${experienceCount} previous positions
+- Skills: ${skillCategories}
+${resumeData.summary ? `- Summary: ${resumeData.summary.substring(0, 200)}` : ''}
+${recentExperience ? `- Recent Role: ${recentExperience.jobTitle} at ${recentExperience.company}` : ''}
+
+KEY PROJECTS:
+${resumeData.projects?.slice(0, 2).map((p: any, i: number) => 
+  `${i + 1}. ${p.name}: ${p.description?.substring(0, 100) || 'No description'}`
+).join('\n') || 'No projects listed'}
+
+`
+    }
+
+    contextMessage += `INTERVIEW QUESTIONS TO COVER:
+${questions.slice(0, 6).map((q, i) => `${i + 1}. ${q.question}`).join('\n')}
+
+INSTRUCTIONS:
+${resumeData ? 
+  `1. Start with: "Hello ${resumeData.personalInfo?.fullName || 'there'}! I'm Sarah, your interviewer for the ${jobTitle} position at ${companyName}. I've had a chance to review your background and I'm excited to learn more about your experience."
+2. Reference their specific experience naturally during the conversation
+3. Ask targeted questions based on their resume and the job requirements
+4. Keep responses conversational (1-3 sentences typically)
+5. Show genuine interest in their background and projects` :
+  `1. Start with: "Hello! I'm Sarah, your interviewer for the ${jobTitle} position at ${companyName}. I'm excited to learn more about your background and experience."
+2. Ask engaging questions about their experience and skills
+3. Keep responses conversational and natural`
+}
+
+Begin the interview now with your greeting.`
+
     if (this.websocket?.readyState === WebSocket.OPEN) {
       const message = {
+        type: "input_text",
         text: contextMessage
       }
       this.websocket.send(JSON.stringify(message))
@@ -349,6 +415,7 @@ Begin the interview now with your greeting.`
   sendMessage(message: string): void {
     if (this.websocket?.readyState === WebSocket.OPEN) {
       const textMessage = {
+        type: "input_text",
         text: message
       }
       this.websocket.send(JSON.stringify(textMessage))

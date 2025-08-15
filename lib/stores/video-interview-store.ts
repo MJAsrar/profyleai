@@ -253,10 +253,8 @@ export const useVideoInterviewStore = create<VideoInterviewStore>()(
             await get().initializeWebRTC()
           }
 
-          // Start recording
-          get().startRecording()
-
-          console.log('✅ Video interview session started')
+          // DON'T start recording yet - wait for AI to speak first
+          console.log('✅ Video interview session started - waiting for AI welcome message')
         } catch (error) {
           set((draft) => {
             draft.isSessionActive = false
@@ -657,6 +655,10 @@ export const useVideoInterviewStore = create<VideoInterviewStore>()(
           set((draft) => {
             draft.isAISpeaking = true
           })
+          
+          // Stop recording when AI starts speaking to prevent feedback
+          get().stopRecording()
+          console.log('🔊 AI starting to speak, stopped recording')
 
           // Convert base64 to audio blob
           const audioBytes = atob(audioBase64)
@@ -677,7 +679,9 @@ export const useVideoInterviewStore = create<VideoInterviewStore>()(
                 draft.isAISpeaking = false
                 draft.waitingForUserResponse = true
               })
-              console.log('🔊 AI finished speaking, waiting for user response')
+              // Start recording after AI finishes speaking
+              get().startRecording()
+              console.log('🔊 AI finished speaking, starting recording for user response')
               resolve()
             }
             
@@ -688,6 +692,9 @@ export const useVideoInterviewStore = create<VideoInterviewStore>()(
                 draft.isAISpeaking = false
                 draft.waitingForUserResponse = true
               })
+              // Start recording even if audio fails
+              get().startRecording()
+              console.log('🔊 AI audio failed, starting recording for user response')
               resolve()
             }
             
@@ -698,6 +705,9 @@ export const useVideoInterviewStore = create<VideoInterviewStore>()(
                 draft.isAISpeaking = false
                 draft.waitingForUserResponse = true
               })
+              // Start recording even if play fails
+              get().startRecording()
+              console.log('🔊 AI play failed, starting recording for user response')
               resolve()
             })
           })
@@ -707,6 +717,9 @@ export const useVideoInterviewStore = create<VideoInterviewStore>()(
             draft.isAISpeaking = false
             draft.waitingForUserResponse = true
           })
+          // Start recording even if there's an error
+          get().startRecording()
+          console.log('🔊 AI response error, starting recording for user response')
         }
       },
 

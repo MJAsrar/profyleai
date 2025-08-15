@@ -92,9 +92,11 @@ export class WebRTCService {
   private speechEndTime: number = 0
   private silenceDuration: number = 0
   private speechBuffer: Blob[] = []
-  private vadThreshold: number = 0.02
-  private silenceThreshold: number = 1500 // ms of silence before considering turn complete
-  private minSpeechDuration: number = 500 // ms minimum speech to consider valid
+  private vadThreshold: number = 0.05 // Increased from 0.02 to reduce false positives
+  private silenceThreshold: number = 2000 // Increased to 2 seconds for more natural pauses
+  private minSpeechDuration: number = 800 // Increased minimum speech duration
+  private backgroundNoiseLevel: number = 0
+  private backgroundNoiseCalibrated: boolean = false
 
   constructor(config: Partial<WebRTCConfig> = {}, callbacks: VideoCallCallbacks) {
     this.config = { ...DEFAULT_WEBRTC_CONFIG, ...config }
@@ -405,8 +407,30 @@ export class WebRTCService {
         }
         const volume = Math.sqrt(sum / bufferLength)
 
-        // Voice Activity Detection with hysteresis
-        const currentlySpeaking = volume > this.vadThreshold
+        // Basic frequency analysis for speech detection (moved up)
+        let speechFrequencyEnergy = 0
+        const speechBandStart = Math.floor(300 * bufferLength / (this.audioContext!.sampleRate / 2))
+        const speechBandEnd = Math.floor(3000 * bufferLength / (this.audioContext!.sampleRate / 2))
+        
+        for (let i = speechBandStart; i < speechBandEnd && i < bufferLength; i++) {
+          speechFrequencyEnergy += dataArray[i] / 255
+        }
+        const avgSpeechEnergy = speechFrequencyEnergy / (speechBandEnd - speechBandStart)
+
+        // Calibrate background noise level (first 3 seconds)
+        if (!this.backgroundNoiseCalibrated && timestamp < 3000) {
+          this.backgroundNoiseLevel = Math.max(this.backgroundNoiseLevel, volume)
+          if (timestamp > 2500) {
+            this.backgroundNoiseCalibrated = true
+            // Set threshold relative to background noise
+            this.vadThreshold = Math.max(this.backgroundNoiseLevel * 3, 0.05)
+            console.log('🎤 Background noise calibrated:', this.backgroundNoiseLevel, 'VAD threshold:', this.vadThreshold)
+          }
+        }
+
+        // Voice Activity Detection with improved logic
+        const dynamicThreshold = this.backgroundNoiseCalibrated ? this.vadThreshold : 0.05
+        const currentlySpeaking = volume > dynamicThreshold && avgSpeechEnergy > 0.1
         const now = Date.now()
         
         // Handle voice activity transitions
@@ -457,17 +481,7 @@ export class WebRTCService {
         }
 
         // Calculate speech probability based on volume and frequency content
-        const speechProbability = Math.min(volume / this.vadThreshold, 1.0)
-        
-        // Basic frequency analysis for speech detection
-        let speechFrequencyEnergy = 0
-        const speechBandStart = Math.floor(300 * bufferLength / (this.audioContext!.sampleRate / 2))
-        const speechBandEnd = Math.floor(3000 * bufferLength / (this.audioContext!.sampleRate / 2))
-        
-        for (let i = speechBandStart; i < speechBandEnd && i < bufferLength; i++) {
-          speechFrequencyEnergy += dataArray[i] / 255
-        }
-        const avgSpeechEnergy = speechFrequencyEnergy / (speechBandEnd - speechBandStart)
+        const speechProbability = Math.min(volume / dynamicThreshold, 1.0)
 
         // Update silence timer for display
         if (currentlySpeaking) {

@@ -323,8 +323,11 @@ export function VideoInterviewRoom({
                 URL.revokeObjectURL(audioUrl)
                 setCurrentAudioUrl(null)
                 
-                // Set waiting for user response after welcome
+                // Set waiting for user response after welcome and start recording
                 setWaitingForUser(true)
+                const { startRecording } = useVideoInterviewStore.getState()
+                startRecording()
+                console.log('🎤 AI finished speaking, starting recording for user response')
               }
             }
             
@@ -333,13 +336,19 @@ export function VideoInterviewRoom({
             stopRecording()
           } catch (audioError) {
             console.error('❌ Failed to play welcome audio:', audioError)
-            // Set waiting for user response if audio fails
+            // Set waiting for user response if audio fails and start recording
             setWaitingForUser(true)
+            const { startRecording } = useVideoInterviewStore.getState()
+            startRecording()
+            console.log('🎤 Audio failed, starting recording for user response')
           }
         } else {
           console.warn('⚠️ No audio returned in welcome message, continuing without speech')
-          // Set waiting for user response
+          // Set waiting for user response and start recording
           setWaitingForUser(true)
+          const { startRecording } = useVideoInterviewStore.getState()
+          startRecording()
+          console.log('🎤 No audio returned, starting recording for user response')
         }
       } else {
         console.warn('⚠️ Welcome message API failed:', result)
@@ -351,14 +360,20 @@ export function VideoInterviewRoom({
           timestamp: new Date()
         })
         
-        // Set waiting for user response
+        // Set waiting for user response and start recording
         setWaitingForUser(true)
+        const { startRecording } = useVideoInterviewStore.getState()
+        startRecording()
+        console.log('🎤 Welcome API failed, starting recording for user response')
       }
       
     } catch (error) {
       console.error('❌ Failed to start interview conversation:', error)
-      // Fallback: set waiting for user response
+      // Fallback: set waiting for user response and start recording
       setWaitingForUser(true)
+      const { startRecording } = useVideoInterviewStore.getState()
+      startRecording()
+      console.log('🎤 Error in conversation start, starting recording for user response')
     }
   }
 

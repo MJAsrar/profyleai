@@ -31,8 +31,6 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     // Validate request body
     const validationResult = respondSchema.safeParse(body)
     if (!validationResult.success) {
-      console.error('❌ Request validation failed:', validationResult.error.errors)
-      console.error('❌ Request body received:', body)
       return NextResponse.json(
         { 
           success: false, 
@@ -54,48 +52,31 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     })
 
     if (!videoInterview) {
-      console.error('❌ Video interview session not found for sessionId:', sessionId, 'userId:', user.id)
       return NextResponse.json(
         { success: false, error: 'Video interview session not found' },
         { status: 404 }
       )
     }
 
-    console.log('📋 Found video interview:', {
-      id: videoInterview.id,
-      sessionId: videoInterview.sessionId,
-      status: videoInterview.status,
-      currentQuestionIndex: videoInterview.currentQuestionIndex,
-      questionsCount: Array.isArray(videoInterview.questions) ? videoInterview.questions.length : 'Invalid'
-    })
-
     if (videoInterview.status !== 'active') {
-      console.error('❌ Interview session is not active. Status:', videoInterview.status)
       return NextResponse.json(
         { success: false, error: 'Interview session is not active' },
         { status: 400 }
       )
     }
 
-    // Get current question - allow 'welcome' for initial message
+    // Get current question
     const questions = videoInterview.questions as PracticeQuestion[]
-    let currentQuestion: PracticeQuestion | null = null
+    const currentQuestion = questions.find(q => q.id === questionId)
     
-    if (questionId === 'welcome' || transcript === 'START_INTERVIEW') {
-      // For welcome message, use the first question
-      currentQuestion = questions[0] || null
-    } else {
-      currentQuestion = questions.find(q => q.id === questionId) || null
-    }
-    
-    if (!currentQuestion && questionId !== 'welcome') {
+    if (!currentQuestion) {
       return NextResponse.json(
         { success: false, error: 'Question not found in session' },
         { status: 400 }
       )
     }
 
-    console.log('🤖 Generating AI response for question:', currentQuestion?.question || 'Welcome message')
+    console.log('🤖 Generating AI response for question:', currentQuestion.question)
 
     // Create video interview service
     const videoInterviewService = createVideoInterviewService()
@@ -107,7 +88,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       console.log('🎯 Generating welcome message...')
       
       // Create interview session context first
-      await videoInterviewService.initializeSession(
+      await videoInterviewService.createSession(
         sessionId,
         videoInterview.userId,
         {
@@ -121,47 +102,22 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         videoInterview.aiPersonality as 'professional' | 'friendly' | 'challenging'
       )
       
-      // Use consistent welcome message (same as frontend)
-      const firstQuestion = questions[0]?.question || 'Tell me about yourself and why you\'re interested in this role.'
-      const welcomeText = `Hello! I'm your AI interviewer today. I'm excited to learn more about you and your experience for the ${videoInterview.jobTitle} position at ${videoInterview.companyName}. Let's begin with our first question: ${firstQuestion} Please take your time to respond when you're ready.`
-      
-      aiResponse = {
-        text: welcomeText,
-        emotion: 'professional',
-        followUpType: 'open_ended',
-        shouldTransition: false,
-        nextAction: 'continue'
-      }
+      // Start the interview (generates welcome message)
+      aiResponse = await videoInterviewService.startInterview(sessionId)
     } else {
       // Generate regular AI response
-      if (currentQuestion) {
-        aiResponse = await videoInterviewService.generateInterviewResponse(
-          sessionId,
-          transcript,
-          currentQuestion
-        )
-      } else {
-        throw new Error('No current question available for response generation')
-      }
+      aiResponse = await videoInterviewService.generateInterviewResponse(
+        sessionId,
+        transcript,
+        currentQuestion
+      )
     }
 
     // Generate speech audio
-    let audioBase64: string | null = null
-    try {
-      console.log('🔊 Generating speech for text:', aiResponse.text.substring(0, 100) + '...')
-      const audioBuffer = await videoInterviewService.generateSpeech(aiResponse.text)
-      
-      if (audioBuffer && audioBuffer.byteLength > 0) {
-        // Convert audio buffer to base64 for JSON response
-        audioBase64 = Buffer.from(audioBuffer).toString('base64')
-        console.log('✅ Speech generated successfully, size:', audioBuffer.byteLength, 'bytes')
-      } else {
-        console.error('❌ Empty audio buffer received from TTS service')
-      }
-    } catch (error) {
-      console.error('❌ Speech generation failed:', error)
-      // Continue without audio - the text response will still work
-    }
+    const audioBuffer = await videoInterviewService.generateSpeech(aiResponse.text)
+
+    // Convert audio buffer to base64 for JSON response
+    const audioBase64 = Buffer.from(audioBuffer).toString('base64')
 
     console.log('✅ AI response generated:', aiResponse.text)
 

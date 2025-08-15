@@ -78,6 +78,11 @@ export function VideoInterviewRoom({
     // Errors
     lastError,
     
+    // Voice Activity Detection
+    isUserSpeaking,
+    waitingForUserResponse,
+    turnInProgress,
+    
     // Actions
     toggleMute,
     toggleVideo,
@@ -94,15 +99,13 @@ export function VideoInterviewRoom({
     updateCurrentTranscript,
     addConversationTurn,
     moveToNextQuestion,
-    setAudioChunkHandler
+    setAudioChunkHandler,
+    setWaitingForUser
   } = useVideoInterviewStore()
 
   const [isEnding, setIsEnding] = useState(false)
   const [currentAudioUrl, setCurrentAudioUrl] = useState<string | null>(null)
   const [isInitializing, setIsInitializing] = useState(true)
-  const [audioChunks, setAudioChunks] = useState<Blob[]>([])
-  const [isProcessingAudio, setIsProcessingAudio] = useState(false)
-  const audioChunkTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const initTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const nextQuestionTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const isMountedRef = useRef(true)
@@ -261,176 +264,9 @@ export function VideoInterviewRoom({
     }
   }, [currentAudioUrl])
 
-  // Process audio chunks for transcription (debounced to prevent memory leaks)
-  useEffect(() => {
-    if (audioChunks.length === 0 || isProcessingAudio || !session || !isMountedRef.current || isAISpeaking) return
-    
-    // Clear any existing timeout
-    if (audioChunkTimeoutRef.current) {
-      clearTimeout(audioChunkTimeoutRef.current)
-      audioChunkTimeoutRef.current = null
-    }
-    
-    // Debounce processing to prevent excessive API calls
-    audioChunkTimeoutRef.current = setTimeout(async () => {
-      // Double-check if component is still mounted
-      if (!isMountedRef.current || !session) return
-      
-      // Capture chunks at the time of timeout execution
-      const chunksToProcess = [...audioChunks]
-      if (chunksToProcess.length === 0) return
-      
-      const latestChunk = chunksToProcess[chunksToProcess.length - 1]
-      
-      // Clear chunks immediately to prevent reprocessing
-      setAudioChunks([])
-      setIsProcessingAudio(true)
-      
-      try {
-        console.log('🎤 Processing audio chunk for transcription...')
-        
-        // Create form data for audio upload
-        const formData = new FormData()
-        formData.append('audio', latestChunk, 'audio.wav')
-        
-        // Send to transcription API with timeout
-        const controller = new AbortController()
-        const timeoutId = setTimeout(() => controller.abort(), 5000) // 5 second timeout
-        
-        const response = await fetch(`/api/video-interview/${session.sessionId}/transcribe`, {
-          method: 'POST',
-          body: formData,
-          signal: controller.signal
-        })
-        
-        clearTimeout(timeoutId)
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
-        }
-        
-        const result = await response.json()
-        
-        if (result.success && result.data.transcript && result.data.transcript.trim() && isMountedRef.current) {
-          console.log('✅ Transcription received:', result.data.transcript)
-          updateCurrentTranscript(result.data.transcript)
-          
-          // Generate AI response
-          await generateAIResponse(result.data.transcript)
-        }
-        
-      } catch (error) {
-        if (error instanceof Error && error.name === 'AbortError') {
-          console.log('🎤 Audio processing aborted')
-        } else {
-          console.error('❌ Failed to process audio:', error)
-        }
-      } finally {
-        if (isMountedRef.current) {
-          setIsProcessingAudio(false)
-          audioChunkTimeoutRef.current = null
-        }
-      }
-    }, 1000) // Wait 1 second before processing to debounce
-    
-    // Cleanup timeout on unmount or dependency change
-    return () => {
-      if (audioChunkTimeoutRef.current) {
-        clearTimeout(audioChunkTimeoutRef.current)
-        audioChunkTimeoutRef.current = null
-      }
-    }
-  }, [audioChunks.length, session?.sessionId, isProcessingAudio]) // Stable dependencies
+  // VAD-based system now handles audio processing automatically
 
-  // Generate AI response
-  const generateAIResponse = async (transcript: string) => {
-    if (!session || !currentQuestion) return
-    
-    try {
-      console.log('🤖 Generating AI response...')
-      if (!isMountedRef.current) return
-      setProcessingResponse(true)
-      
-      const response = await fetch(`/api/video-interview/${session.sessionId}/respond`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          transcript,
-          questionId: currentQuestion.id,
-          responseStartTime: Date.now()
-        })
-      })
-      
-      const result = await response.json()
-      
-      if (result.success && isMountedRef.current) {
-        console.log('✅ AI response generated:', result.data.aiResponse.text)
-        
-        // Convert base64 audio to URL
-        if (result.data.audioBase64) {
-          try {
-            const audioBlob = new Blob(
-              [Uint8Array.from(atob(result.data.audioBase64), c => c.charCodeAt(0))],
-              { type: 'audio/mp3' }
-            )
-            const audioUrl = URL.createObjectURL(audioBlob)
-            setCurrentAudioUrl(audioUrl)
-            setAISpeaking(true)
-            
-            // Stop AI speaking when audio ends
-            if (audioRef.current) {
-              audioRef.current.onended = () => {
-                setAISpeaking(false)
-                URL.revokeObjectURL(audioUrl)
-                setCurrentAudioUrl(null)
-                
-                // Start recording after AI finishes speaking
-                const { startRecording } = useVideoInterviewStore.getState()
-                startRecording()
-              }
-            }
-            
-            // Stop recording when AI starts speaking and clear pending chunks
-            const { stopRecording } = useVideoInterviewStore.getState()
-            stopRecording()
-            setAudioChunks([]) // Clear any pending chunks
-          } catch (audioError) {
-            console.error('❌ Failed to play AI response audio:', audioError)
-          }
-        } else {
-          console.warn('⚠️ No audio returned in AI response, continuing without speech')
-        }
-        
-        // Add to conversation history
-        addConversationTurn({
-          role: 'user',
-          content: transcript,
-          timestamp: new Date()
-        })
-        addConversationTurn({
-          role: 'assistant',
-          content: result.data.aiResponse.text,
-          timestamp: new Date()
-        })
-        
-        // Move to next question if needed
-        if (result.data.aiResponse.nextAction === 'next_question') {
-          nextQuestionTimeoutRef.current = setTimeout(() => {
-            if (isMountedRef.current) {
-              moveToNextQuestion()
-            }
-          }, 2000) // Wait 2 seconds before next question
-        }
-      }
-      
-    } catch (error) {
-      console.error('❌ Failed to generate AI response:', error)
-    } finally {
-      if (isMountedRef.current) {
-        setProcessingResponse(false)
-      }
-    }
-  }
+  // AI response generation is now handled by the store via VAD system
 
   // Start the interview conversation with AI welcome
   const startInterviewConversation = async () => {
@@ -487,27 +323,23 @@ export function VideoInterviewRoom({
                 URL.revokeObjectURL(audioUrl)
                 setCurrentAudioUrl(null)
                 
-                // Start recording after AI finishes speaking
-                const { startRecording } = useVideoInterviewStore.getState()
-                startRecording()
+                // Set waiting for user response after welcome
+                setWaitingForUser(true)
               }
             }
             
-            // Stop recording when AI starts speaking and clear pending chunks
+            // Stop recording when AI starts speaking (VAD will handle this automatically)
             const { stopRecording } = useVideoInterviewStore.getState()
             stopRecording()
-            setAudioChunks([]) // Clear any pending chunks
           } catch (audioError) {
             console.error('❌ Failed to play welcome audio:', audioError)
-            // Start recording anyway if audio fails
-            const { startRecording } = useVideoInterviewStore.getState()
-            startRecording()
+            // Set waiting for user response if audio fails
+            setWaitingForUser(true)
           }
         } else {
           console.warn('⚠️ No audio returned in welcome message, continuing without speech')
-          // Start recording anyway
-          const { startRecording } = useVideoInterviewStore.getState()
-          startRecording()
+          // Set waiting for user response
+          setWaitingForUser(true)
         }
       } else {
         console.warn('⚠️ Welcome message API failed:', result)
@@ -519,16 +351,14 @@ export function VideoInterviewRoom({
           timestamp: new Date()
         })
         
-        // Start recording anyway
-        const { startRecording } = useVideoInterviewStore.getState()
-        startRecording()
+        // Set waiting for user response
+        setWaitingForUser(true)
       }
       
     } catch (error) {
       console.error('❌ Failed to start interview conversation:', error)
-      // Fallback: start recording anyway
-      const { startRecording } = useVideoInterviewStore.getState()
-      startRecording()
+      // Fallback: set waiting for user response
+      setWaitingForUser(true)
     }
   }
 
@@ -541,21 +371,7 @@ export function VideoInterviewRoom({
     }
   }, [currentAudioUrl])
 
-  // Set up audio chunk handler
-  useEffect(() => {
-    const handleAudioChunk = (chunk: Blob) => {
-      if (isMountedRef.current) {
-        console.log('📦 Adding audio chunk to queue:', chunk.size, 'bytes')
-        setAudioChunks(prev => [...prev, chunk])
-      }
-    }
-    
-    setAudioChunkHandler(handleAudioChunk)
-    
-    return () => {
-      setAudioChunkHandler(null)
-    }
-  }, [setAudioChunkHandler])
+  // Audio chunk handling is now done automatically by VAD system
 
   // Cleanup on component unmount
   useEffect(() => {
@@ -570,7 +386,6 @@ export function VideoInterviewRoom({
       
       // Clear all timeouts
       const timeouts = [
-        audioChunkTimeoutRef.current,
         initTimeoutRef.current,
         nextQuestionTimeoutRef.current
       ]
@@ -582,12 +397,8 @@ export function VideoInterviewRoom({
       })
       
       // Reset timeout refs
-      audioChunkTimeoutRef.current = null
       initTimeoutRef.current = null
       nextQuestionTimeoutRef.current = null
-      
-      // Clear audio chunks
-      setAudioChunks([])
       
       // Revoke audio URLs
       if (currentAudioUrl) {
@@ -838,8 +649,10 @@ export function VideoInterviewRoom({
                       <p className="text-blue-200 text-sm">
                         {isAISpeaking ? 'Speaking...' : 
                          isProcessingResponse ? 'Thinking...' : 
-                         isRecording ? 'Your turn to speak...' :
-                         'Listening...'}
+                         turnInProgress ? 'Processing your response...' :
+                         waitingForUserResponse ? 'Your turn to speak...' :
+                         isUserSpeaking ? 'Listening to you...' :
+                         'Ready to listen...'}
                       </p>
                     </div>
                   </div>
@@ -939,11 +752,31 @@ export function VideoInterviewRoom({
                 )}
                 
                 {/* Speaking Status Indicator */}
-                {isRecording && !isAISpeaking && !isProcessingResponse && (
+                {waitingForUserResponse && !isAISpeaking && !isProcessingResponse && (
                   <div className="mt-3 p-2 bg-green-50 border border-green-200 rounded-lg">
                     <div className="flex items-center gap-2 text-green-700">
                       <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
                       <span className="text-sm font-medium">Your turn to speak</span>
+                    </div>
+                  </div>
+                )}
+                
+                {/* User Speaking Indicator */}
+                {isUserSpeaking && (
+                  <div className="mt-3 p-2 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-center gap-2 text-blue-700">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+                      <span className="text-sm font-medium">Speaking... (stop when finished)</span>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Processing User Response */}
+                {turnInProgress && (
+                  <div className="mt-3 p-2 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <div className="flex items-center gap-2 text-yellow-700">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span className="text-sm font-medium">Processing your response...</span>
                     </div>
                   </div>
                 )}

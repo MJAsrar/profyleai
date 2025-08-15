@@ -63,6 +63,13 @@ export interface VideoInterviewState {
   
   // Audio chunk handling
   audioChunkHandler: ((chunk: Blob) => void) | null
+  
+  // Voice Activity Detection
+  isUserSpeaking: boolean
+  userSpeechStartTime: number
+  lastUserResponse: string
+  waitingForUserResponse: boolean
+  turnInProgress: boolean
 }
 
 export interface VideoInterviewActions {
@@ -113,6 +120,12 @@ export interface VideoInterviewActions {
   
   // Audio chunk handling
   setAudioChunkHandler: (handler: ((chunk: Blob) => void) | null) => void
+  
+  // Voice Activity Detection
+  onVoiceActivityStart: () => void
+  onVoiceActivityEnd: () => void
+  onTurnComplete: (audioData: Blob) => void
+  setWaitingForUser: (waiting: boolean) => void
   
   // Cleanup
   cleanup: () => void
@@ -168,7 +181,14 @@ const initialState: VideoInterviewState = {
   lastError: null,
   
   // Audio chunk handling
-  audioChunkHandler: null
+  audioChunkHandler: null,
+  
+  // Voice Activity Detection
+  isUserSpeaking: false,
+  userSpeechStartTime: 0,
+  lastUserResponse: '',
+  waitingForUserResponse: false,
+  turnInProgress: false
 }
 
 // ===== STORE IMPLEMENTATION =====
@@ -358,6 +378,15 @@ export const useVideoInterviewStore = create<VideoInterviewStore>()(
             },
             onAudioAnalytics: (analytics: AudioAnalytics) => {
               get().updateAudioAnalytics(analytics)
+            },
+            onVoiceActivityStart: () => {
+              get().onVoiceActivityStart()
+            },
+            onVoiceActivityEnd: () => {
+              get().onVoiceActivityEnd()
+            },
+            onTurnComplete: (audioData: Blob) => {
+              get().onTurnComplete(audioData)
             }
           }
 
@@ -551,6 +580,136 @@ export const useVideoInterviewStore = create<VideoInterviewStore>()(
         })
       },
 
+      generateAIResponse: async (userTranscript: string) => {
+        const state = get()
+        
+        if (!state.session || !state.currentQuestion) {
+          console.error('No active session or current question for AI response')
+          return
+        }
+
+        try {
+          set((draft) => {
+            draft.isProcessingResponse = true
+          })
+
+          // Call the respond API
+          const response = await fetch(`/api/video-interview/${state.session.sessionId}/respond`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              questionId: state.currentQuestion.id,
+              transcript: userTranscript
+            })
+          })
+
+          if (!response.ok) {
+            throw new Error(`AI response failed: ${response.status}`)
+          }
+
+          const result = await response.json()
+          
+          if (result.success && result.data) {
+            console.log('✅ AI response received:', result.data.response)
+            
+            // Add AI response to conversation history
+            get().addConversationTurn({
+              role: 'assistant',
+              content: result.data.response,
+              timestamp: new Date(),
+              questionId: state.currentQuestion.id
+            })
+
+            // Play AI speech if available
+            if (result.data.audioBase64) {
+              await get().playAIResponse(result.data.audioBase64, result.data.response)
+            } else {
+              // No audio, just wait a bit then set waiting for user
+              setTimeout(() => {
+                get().setWaitingForUser(true)
+              }, 1000)
+            }
+
+            // Check if we should move to next question
+            if (result.data.shouldTransition) {
+              setTimeout(() => {
+                get().moveToNextQuestion()
+                get().setWaitingForUser(true)
+              }, 2000)
+            }
+          }
+        } catch (error) {
+          console.error('❌ Failed to generate AI response:', error)
+          get().addError(error instanceof Error ? error.message : 'Failed to generate AI response')
+          // Set waiting for user so they can try again
+          get().setWaitingForUser(true)
+        } finally {
+          set((draft) => {
+            draft.isProcessingResponse = false
+          })
+        }
+      },
+
+      playAIResponse: async (audioBase64: string, text: string) => {
+        try {
+          set((draft) => {
+            draft.isAISpeaking = true
+          })
+
+          // Convert base64 to audio blob
+          const audioBytes = atob(audioBase64)
+          const audioArray = new Uint8Array(audioBytes.length)
+          for (let i = 0; i < audioBytes.length; i++) {
+            audioArray[i] = audioBytes.charCodeAt(i)
+          }
+          const audioBlob = new Blob([audioArray], { type: 'audio/mp3' })
+          const audioUrl = URL.createObjectURL(audioBlob)
+
+          // Create and play audio
+          const audio = new Audio(audioUrl)
+          
+          return new Promise<void>((resolve) => {
+            audio.onended = () => {
+              URL.revokeObjectURL(audioUrl)
+              set((draft) => {
+                draft.isAISpeaking = false
+                draft.waitingForUserResponse = true
+              })
+              console.log('🔊 AI finished speaking, waiting for user response')
+              resolve()
+            }
+            
+            audio.onerror = (error) => {
+              console.error('Audio playback error:', error)
+              URL.revokeObjectURL(audioUrl)
+              set((draft) => {
+                draft.isAISpeaking = false
+                draft.waitingForUserResponse = true
+              })
+              resolve()
+            }
+            
+            audio.play().catch((error) => {
+              console.error('Failed to play AI response:', error)
+              URL.revokeObjectURL(audioUrl)
+              set((draft) => {
+                draft.isAISpeaking = false
+                draft.waitingForUserResponse = true
+              })
+              resolve()
+            })
+          })
+        } catch (error) {
+          console.error('❌ Failed to play AI response:', error)
+          set((draft) => {
+            draft.isAISpeaking = false
+            draft.waitingForUserResponse = true
+          })
+        }
+      },
+
       // ===== INTERVIEW PROGRESSION =====
 
       moveToNextQuestion: () => {
@@ -658,6 +817,97 @@ export const useVideoInterviewStore = create<VideoInterviewStore>()(
       setAudioChunkHandler: (handler: ((chunk: Blob) => void) | null) => {
         set((draft) => {
           draft.audioChunkHandler = handler
+        })
+      },
+
+      // ===== VOICE ACTIVITY DETECTION =====
+
+      onVoiceActivityStart: () => {
+        console.log('🎤 User started speaking')
+        set((draft) => {
+          draft.isUserSpeaking = true
+          draft.userSpeechStartTime = Date.now()
+          draft.turnInProgress = true
+          draft.waitingForUserResponse = false
+        })
+      },
+
+      onVoiceActivityEnd: () => {
+        console.log('🎤 User stopped speaking')
+        set((draft) => {
+          draft.isUserSpeaking = false
+        })
+      },
+
+      onTurnComplete: async (audioData: Blob) => {
+        const state = get()
+        console.log('🎤 User turn complete, processing response...')
+        
+        if (!state.session || !state.isSessionActive) {
+          console.warn('No active session for turn completion')
+          return
+        }
+
+        try {
+          set((draft) => {
+            draft.turnInProgress = false
+            draft.isProcessingResponse = true
+          })
+
+          // Convert audio blob to form data for transcription
+          const formData = new FormData()
+          formData.append('audio', audioData, 'audio.wav')
+
+          // Send to transcription API
+          const response = await fetch(`/api/video-interview/${state.session.sessionId}/transcribe`, {
+            method: 'POST',
+            body: formData
+          })
+
+          if (!response.ok) {
+            throw new Error(`Transcription failed: ${response.status}`)
+          }
+
+          const result = await response.json()
+          
+          if (result.success && result.data.transcript && result.data.transcript.trim()) {
+            console.log('✅ User response transcribed:', result.data.transcript)
+            
+            // Update transcript
+            get().updateCurrentTranscript(result.data.transcript)
+            
+            // Add user turn to conversation history
+            get().addConversationTurn({
+              role: 'user',
+              content: result.data.transcript,
+              timestamp: new Date(),
+              questionId: state.currentQuestion?.id
+            })
+
+            // Generate AI response
+            await get().generateAIResponse(result.data.transcript)
+          } else {
+            console.warn('No valid transcript received')
+            set((draft) => {
+              draft.waitingForUserResponse = true
+            })
+          }
+        } catch (error) {
+          console.error('❌ Failed to process user turn:', error)
+          get().addError(error instanceof Error ? error.message : 'Failed to process response')
+          set((draft) => {
+            draft.waitingForUserResponse = true
+          })
+        } finally {
+          set((draft) => {
+            draft.isProcessingResponse = false
+          })
+        }
+      },
+
+      setWaitingForUser: (waiting: boolean) => {
+        set((draft) => {
+          draft.waitingForUserResponse = waiting
         })
       },
 

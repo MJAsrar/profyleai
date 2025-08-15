@@ -27,6 +27,9 @@ export interface AudioAnalytics {
   frequency: number
   isSpeaking: boolean
   silenceDuration: number
+  voiceActivityDetected: boolean
+  speechProbability: number
+  turnComplete: boolean
 }
 
 export interface VideoCallCallbacks {
@@ -36,6 +39,9 @@ export interface VideoCallCallbacks {
   onAudioChunk: (chunk: Blob) => void
   onError: (error: Error) => void
   onAudioAnalytics: (analytics: AudioAnalytics) => void
+  onVoiceActivityStart: () => void
+  onVoiceActivityEnd: () => void
+  onTurnComplete: (audioData: Blob) => void
 }
 
 // ===== DEFAULT CONFIGURATION =====
@@ -79,6 +85,16 @@ export class WebRTCService {
   private silenceTimer: number = 0
   private lastVolumeCheck: number = 0
   private stopAudioAnalysis?: () => void
+  
+  // Voice Activity Detection
+  private isUserSpeaking: boolean = false
+  private speechStartTime: number = 0
+  private speechEndTime: number = 0
+  private silenceDuration: number = 0
+  private speechBuffer: Blob[] = []
+  private vadThreshold: number = 0.02
+  private silenceThreshold: number = 1500 // ms of silence before considering turn complete
+  private minSpeechDuration: number = 500 // ms minimum speech to consider valid
 
   constructor(config: Partial<WebRTCConfig> = {}, callbacks: VideoCallCallbacks) {
     this.config = { ...DEFAULT_WEBRTC_CONFIG, ...config }
@@ -294,6 +310,13 @@ export class WebRTCService {
         if (event.data.size > 0) {
           console.log('🎤 Audio chunk generated:', event.data.size, 'bytes')
           this.connectionState.recordedChunks.push(event.data)
+          
+          // Add to speech buffer if user is speaking
+          if (this.isUserSpeaking) {
+            this.speechBuffer.push(event.data)
+          }
+          
+          // Still call the legacy callback for compatibility
           this.callbacks.onAudioChunk(event.data)
         } else {
           console.log('⚠️ Empty audio chunk received')
@@ -343,7 +366,7 @@ export class WebRTCService {
   }
 
   /**
-   * Start continuous audio analysis
+   * Start continuous audio analysis with voice activity detection
    */
   private startAudioAnalysis(): void {
     if (!this.analyser) return
@@ -353,7 +376,7 @@ export class WebRTCService {
     let isAnalyzing = true
     let lastUpdate = 0
     let animationFrameId: number | null = null
-    const UPDATE_INTERVAL = 200 // Reduce frequency to 200ms to prevent CPU overload
+    const UPDATE_INTERVAL = 100 // More frequent updates for better VAD
     
     const analyze = (timestamp: number) => {
       // Check if we should stop analyzing
@@ -364,7 +387,7 @@ export class WebRTCService {
         return
       }
 
-      // Throttle updates significantly
+      // Throttle updates
       if (timestamp - lastUpdate < UPDATE_INTERVAL) {
         animationFrameId = requestAnimationFrame(analyze)
         return
@@ -374,35 +397,94 @@ export class WebRTCService {
       try {
         this.analyser.getByteFrequencyData(dataArray)
         
-        // Simplified volume calculation
+        // Calculate RMS volume for better voice detection
         let sum = 0
-        // Sample every 8th element to reduce CPU usage
-        for (let i = 0; i < bufferLength; i += 8) {
+        for (let i = 0; i < bufferLength; i++) {
           const normalized = dataArray[i] / 255
           sum += normalized * normalized
         }
-        const volume = Math.sqrt(sum / (bufferLength / 8))
+        const volume = Math.sqrt(sum / bufferLength)
 
-        // Detect speaking with hysteresis to prevent flickering
-        const isSpeaking = volume > this.volumeThreshold
-        
-        // Calculate silence duration
+        // Voice Activity Detection with hysteresis
+        const currentlySpeaking = volume > this.vadThreshold
         const now = Date.now()
-        if (isSpeaking) {
+        
+        // Handle voice activity transitions
+        if (currentlySpeaking && !this.isUserSpeaking) {
+          // Speech started
+          this.isUserSpeaking = true
+          this.speechStartTime = now
+          this.silenceDuration = 0
+          this.speechBuffer = [] // Clear buffer for new speech
+          this.callbacks.onVoiceActivityStart()
+          console.log('🎤 Voice activity started')
+        } else if (!currentlySpeaking && this.isUserSpeaking) {
+          // Potential speech ended - start silence timer
+          if (this.speechEndTime === 0) {
+            this.speechEndTime = now
+          }
+          this.silenceDuration = now - this.speechEndTime
+          
+          // Check if silence duration exceeds threshold
+          if (this.silenceDuration > this.silenceThreshold) {
+            const speechDuration = this.speechEndTime - this.speechStartTime
+            
+            // Only process if speech was long enough
+            if (speechDuration > this.minSpeechDuration) {
+              this.isUserSpeaking = false
+              this.speechEndTime = 0
+              this.callbacks.onVoiceActivityEnd()
+              
+              // Combine speech buffer into single blob
+              if (this.speechBuffer.length > 0) {
+                const combinedBlob = new Blob(this.speechBuffer, { type: 'audio/webm' })
+                this.callbacks.onTurnComplete(combinedBlob)
+                console.log(`🎤 Turn complete: ${speechDuration}ms speech, ${this.speechBuffer.length} chunks`)
+                this.speechBuffer = []
+              }
+            } else {
+              // Too short, ignore
+              this.isUserSpeaking = false
+              this.speechEndTime = 0
+              this.speechBuffer = []
+              console.log('🎤 Speech too short, ignoring')
+            }
+          }
+        } else if (currentlySpeaking && this.isUserSpeaking) {
+          // Continue speaking - reset silence timer
+          this.speechEndTime = 0
+          this.silenceDuration = 0
+        }
+
+        // Calculate speech probability based on volume and frequency content
+        const speechProbability = Math.min(volume / this.vadThreshold, 1.0)
+        
+        // Basic frequency analysis for speech detection
+        let speechFrequencyEnergy = 0
+        const speechBandStart = Math.floor(300 * bufferLength / (this.audioContext!.sampleRate / 2))
+        const speechBandEnd = Math.floor(3000 * bufferLength / (this.audioContext!.sampleRate / 2))
+        
+        for (let i = speechBandStart; i < speechBandEnd && i < bufferLength; i++) {
+          speechFrequencyEnergy += dataArray[i] / 255
+        }
+        const avgSpeechEnergy = speechFrequencyEnergy / (speechBandEnd - speechBandStart)
+
+        // Update silence timer for display
+        if (currentlySpeaking) {
           this.silenceTimer = now
         }
-        const silenceDuration = now - this.silenceTimer
+        const displaySilenceDuration = now - this.silenceTimer
 
-        // Simplified frequency calculation
-        const frequency = 0 // Disable frequency calculation to save CPU
-
-        // Emit analytics less frequently
+        // Emit analytics
         if (now - this.lastVolumeCheck > UPDATE_INTERVAL) {
           const analytics: AudioAnalytics = {
             volume,
-            frequency,
-            isSpeaking,
-            silenceDuration
+            frequency: avgSpeechEnergy,
+            isSpeaking: currentlySpeaking,
+            silenceDuration: displaySilenceDuration,
+            voiceActivityDetected: this.isUserSpeaking,
+            speechProbability,
+            turnComplete: false // This will be handled by onTurnComplete callback
           }
           this.callbacks.onAudioAnalytics(analytics)
           this.lastVolumeCheck = now
@@ -428,6 +510,11 @@ export class WebRTCService {
         cancelAnimationFrame(animationFrameId)
         animationFrameId = null
       }
+      // Reset VAD state
+      this.isUserSpeaking = false
+      this.speechStartTime = 0
+      this.speechEndTime = 0
+      this.speechBuffer = []
     }
   }
 
@@ -572,7 +659,7 @@ export class WebRTCService {
    * Get connection statistics
    */
   async getConnectionStats(): Promise<RTCStatsReport | null> {
-    if (!this.connectionState.peer || this.connectionState.status !== 'connected') {
+    if (!this.connectionState.peerConnection || this.connectionState.status !== 'connected') {
       return null
     }
 
@@ -648,8 +735,8 @@ export class WebRTCService {
     }
 
     // Clear references
-    this.audioContext = null
-    this.analyser = null
+    this.audioContext = undefined
+    this.analyser = undefined
 
     this.callbacks.onConnectionStateChange('disconnected')
     console.log('✅ WebRTC cleanup completed')
@@ -672,9 +759,9 @@ export function checkWebRTCSupport(): {
 } {
   const features = {
     getUserMedia: !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia),
-    RTCPeerConnection: !!(window.RTCPeerConnection || window.webkitRTCPeerConnection),
+    RTCPeerConnection: !!(window.RTCPeerConnection || (window as any).webkitRTCPeerConnection),
     MediaRecorder: !!window.MediaRecorder,
-    AudioContext: !!(window.AudioContext || window.webkitAudioContext)
+    AudioContext: !!(window.AudioContext || (window as any).webkitAudioContext)
   }
 
   const isSupported = Object.values(features).every(Boolean)

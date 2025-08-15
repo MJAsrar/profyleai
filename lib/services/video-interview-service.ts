@@ -155,6 +155,11 @@ export class VideoInterviewService {
 
   constructor(config: VideoInterviewConfig) {
     this.config = config
+    console.log('🔧 Initializing VideoInterviewService with config:', {
+      hasApiKey: !!config.apiKey,
+      organization: config.organization,
+      models: config.models
+    })
     this.openai = new OpenAI({
       apiKey: config.apiKey,
       organization: config.organization
@@ -304,6 +309,7 @@ Respond as JSON with this format:
 }`
 
     try {
+      console.log('🤖 Calling OpenAI with prompt:', prompt.substring(0, 200) + '...')
       const response = await this.openai.chat.completions.create({
         model: this.config.models.conversation,
         messages: [
@@ -315,6 +321,8 @@ Respond as JSON with this format:
         response_format: { type: 'json_object' }
       })
 
+      console.log('✅ OpenAI response received:', response.choices[0].message.content?.substring(0, 200) + '...')
+      
       const aiResponse = JSON.parse(response.choices[0].message.content || '{}') as AIResponse
 
       // Add AI response to history
@@ -327,8 +335,11 @@ Respond as JSON with this format:
 
       return aiResponse
     } catch (error) {
-      console.error('AI response generation error:', error)
-      throw new Error('Failed to generate AI response')
+      console.error('❌ AI response generation error:', error)
+      if (error instanceof Error) {
+        console.error('Error details:', error.message, error.stack)
+      }
+      throw new Error('Failed to generate AI response: ' + (error instanceof Error ? error.message : 'Unknown error'))
     }
   }
 
@@ -337,6 +348,7 @@ Respond as JSON with this format:
    */
   async generateSpeech(text: string, voice: 'alloy' | 'echo' | 'fable' | 'onyx' | 'nova' | 'shimmer' = 'nova'): Promise<ArrayBuffer> {
     try {
+      console.log('🔊 Generating speech for text:', text.substring(0, 100) + '...')
       const response = await this.openai.audio.speech.create({
         model: this.config.models.tts,
         voice: voice,
@@ -345,10 +357,15 @@ Respond as JSON with this format:
         response_format: 'mp3'
       })
 
-      return response.arrayBuffer()
+      const audioBuffer = await response.arrayBuffer()
+      console.log('✅ Speech generated successfully, size:', audioBuffer.byteLength, 'bytes')
+      return audioBuffer
     } catch (error) {
-      console.error('TTS generation error:', error)
-      throw new Error('Failed to generate speech')
+      console.error('❌ TTS generation error:', error)
+      if (error instanceof Error) {
+        console.error('TTS error details:', error.message, error.stack)
+      }
+      throw new Error('Failed to generate speech: ' + (error instanceof Error ? error.message : 'Unknown error'))
     }
   }
 

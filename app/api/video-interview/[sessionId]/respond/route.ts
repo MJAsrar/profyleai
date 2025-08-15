@@ -67,7 +67,12 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     // Get current question
     const questions = videoInterview.questions as PracticeQuestion[]
-    const currentQuestion = questions.find(q => q.id === questionId)
+    let currentQuestion = questions.find(q => q.id === questionId)
+    
+    // Allow 'welcome' questionId for initial message
+    if (!currentQuestion && questionId === 'welcome') {
+      currentQuestion = questions[0] // Use first question for welcome
+    }
     
     if (!currentQuestion) {
       return NextResponse.json(
@@ -84,11 +89,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     let aiResponse
 
     // Check if this is the welcome message (first interaction)
-    if (transcript.includes('Hello! I\'m your AI interviewer') || transcript === 'START_INTERVIEW' || videoInterview.currentQuestionIndex === 0) {
+    if (transcript === 'START_INTERVIEW' || questionId === 'welcome') {
       console.log('🎯 Generating welcome message...')
       
       // Create interview session context first
-      await videoInterviewService.createSession(
+      await videoInterviewService.initializeSession(
         sessionId,
         videoInterview.userId,
         {
@@ -102,8 +107,18 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         videoInterview.aiPersonality as 'professional' | 'friendly' | 'challenging'
       )
       
-      // Start the interview (generates welcome message)
-      aiResponse = await videoInterviewService.startInterview(sessionId)
+      // For welcome message, create a consistent response
+      const jobTitle = videoInterview.jobTitle || 'this position'
+      const companyName = videoInterview.companyName || 'the company'
+      const firstQuestion = questions[0]?.question || 'Tell me about yourself and your experience.'
+      
+      aiResponse = {
+        text: `Hello! I'm your AI interviewer today. I'm excited to learn more about you and your experience for the ${jobTitle} position at ${companyName}. Let's begin with our first question: ${firstQuestion} Please take your time to respond when you're ready.`,
+        emotion: 'professional' as const,
+        followUpType: 'next_question' as const,
+        shouldTransition: false,
+        nextAction: 'continue' as const
+      }
     } else {
       // Generate regular AI response
       aiResponse = await videoInterviewService.generateInterviewResponse(
@@ -114,10 +129,15 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     // Generate speech audio
-    const audioBuffer = await videoInterviewService.generateSpeech(aiResponse.text)
-
-    // Convert audio buffer to base64 for JSON response
-    const audioBase64 = Buffer.from(audioBuffer).toString('base64')
+    let audioBase64: string | null = null
+    try {
+      const audioBuffer = await videoInterviewService.generateSpeech(aiResponse.text)
+      audioBase64 = Buffer.from(audioBuffer).toString('base64')
+      console.log('✅ Speech generated successfully')
+    } catch (speechError) {
+      console.error('❌ Failed to generate speech:', speechError)
+      // Continue without audio - the text response is still valid
+    }
 
     console.log('✅ AI response generated:', aiResponse.text)
 

@@ -611,20 +611,20 @@ export const useVideoInterviewStore = create<VideoInterviewStore>()(
 
           const result = await response.json()
           
-          if (result.success && result.data) {
-            console.log('✅ AI response received:', result.data.response)
+          if (result.success && result.data && result.data.aiResponse) {
+            console.log('✅ AI response received:', result.data.aiResponse.text)
             
             // Add AI response to conversation history
             get().addConversationTurn({
               role: 'assistant',
-              content: result.data.response,
+              content: result.data.aiResponse.text,
               timestamp: new Date(),
               questionId: state.currentQuestion.id
             })
 
             // Play AI speech if available
             if (result.data.audioBase64) {
-              await get().playAIResponse(result.data.audioBase64, result.data.response)
+              await get().playAIResponse(result.data.audioBase64, result.data.aiResponse.text)
             } else {
               // No audio, just wait a bit then set waiting for user
               setTimeout(() => {
@@ -633,7 +633,7 @@ export const useVideoInterviewStore = create<VideoInterviewStore>()(
             }
 
             // Check if we should move to next question
-            if (result.data.shouldTransition) {
+            if (result.data.aiResponse.shouldTransition) {
               setTimeout(() => {
                 get().moveToNextQuestion()
                 get().setWaitingForUser(true)

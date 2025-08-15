@@ -1,11 +1,12 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Card, CardContent } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Separator } from '@/components/ui/separator'
 import { 
   Camera, 
   CameraOff, 
@@ -17,7 +18,17 @@ import {
   Volume2,
   Loader2,
   AlertCircle,
-  Send
+  Send,
+  Settings,
+  Monitor,
+  User,
+  Clock,
+  Zap,
+  Waves,
+  CheckCircle2,
+  Circle,
+  Maximize,
+  Minimize
 } from 'lucide-react'
 import { useElevenLabsInterviewStore, elevenLabsInterviewSelectors } from '@/lib/stores/elevenlabs-interview-store'
 import { PracticeQuestion } from '@/lib/services/interview-service'
@@ -76,6 +87,10 @@ export function ElevenLabsInterviewRoom({
   const [localStream, setLocalStream] = useState<MediaStream | null>(null)
   const [textMessage, setTextMessage] = useState('')
   const [showTextInput, setShowTextInput] = useState(false)
+  const [isVideoEnabled, setIsVideoEnabled] = useState(true)
+  const [isMicEnabled, setIsMicEnabled] = useState(true)
+  const [isFullscreen, setIsFullscreen] = useState(false)
+  const [streamError, setStreamError] = useState<string | null>(null)
   const isMountedRef = useRef(true)
 
   // Initialize interview on component mount
@@ -88,19 +103,31 @@ export function ElevenLabsInterviewRoom({
         setIsInitializing(true)
 
         // Get user media for video display (audio handled by ElevenLabs)
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            width: { min: 320, ideal: 640, max: 1280 },
-            height: { min: 240, ideal: 480, max: 720 },
-            frameRate: { min: 15, ideal: 24, max: 30 }
-          },
-          audio: false // Audio handled by ElevenLabs service
-        })
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: {
+              width: { min: 320, ideal: 640, max: 1280 },
+              height: { min: 240, ideal: 480, max: 720 },
+              frameRate: { min: 15, ideal: 24, max: 30 }
+            },
+            audio: false // Audio handled by ElevenLabs service
+          })
 
-        setLocalStream(stream)
+          setLocalStream(stream)
+          setStreamError(null)
 
-        if (localVideoRef.current) {
-          localVideoRef.current.srcObject = stream
+          if (localVideoRef.current) {
+            localVideoRef.current.srcObject = stream
+            // Ensure video plays
+            localVideoRef.current.onloadedmetadata = () => {
+              localVideoRef.current?.play().catch(console.error)
+            }
+          }
+
+          console.log('✅ Video stream initialized successfully')
+        } catch (videoError) {
+          console.error('❌ Failed to get video stream:', videoError)
+          setStreamError('Failed to access camera. Please check permissions.')
         }
 
         // Initialize ElevenLabs interview
@@ -151,6 +178,27 @@ export function ElevenLabsInterviewRoom({
     }
   }
 
+  // Toggle video on/off
+  const toggleVideo = () => {
+    if (localStream) {
+      const videoTracks = localStream.getVideoTracks()
+      videoTracks.forEach(track => {
+        track.enabled = !isVideoEnabled
+      })
+      setIsVideoEnabled(!isVideoEnabled)
+    }
+  }
+
+  // Toggle microphone (for display only - audio handled by ElevenLabs)
+  const toggleMic = () => {
+    setIsMicEnabled(!isMicEnabled)
+  }
+
+  // Toggle fullscreen video
+  const toggleFullscreen = () => {
+    setIsFullscreen(!isFullscreen)
+  }
+
   // Calculate session duration
   const sessionDuration = sessionStartTime 
     ? Math.floor((Date.now() - sessionStartTime.getTime()) / 1000)
@@ -185,25 +233,36 @@ export function ElevenLabsInterviewRoom({
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      {/* Header Bar */}
+      <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">AI Interview</h1>
-              <p className="text-gray-600">{jobTitle} at {companyName}</p>
-            </div>
             <div className="flex items-center gap-4">
-              {/* Session Duration */}
-              <div className="text-sm text-gray-600">
-                Duration: {minutes}:{seconds.toString().padStart(2, '0')}
+              <div className="flex items-center gap-2">
+                <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
+                  <Monitor className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-lg font-bold text-gray-900">AI Interview</h1>
+                  <p className="text-sm text-gray-600">{jobTitle} at {companyName}</p>
+                </div>
               </div>
               
               {/* Connection Status */}
-              <div className="flex items-center gap-2">
-                <div className={`w-3 h-3 rounded-full ${statusDisplay.color}`} />
-                <span className="text-sm font-medium">{statusDisplay.text}</span>
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border">
+                <div className={`w-2 h-2 rounded-full ${statusDisplay.color} animate-pulse`} />
+                <span className="text-sm font-medium text-gray-700">{statusDisplay.text}</span>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-3">
+              {/* Session Timer */}
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-100">
+                <Clock className="w-4 h-4 text-gray-600" />
+                <span className="text-sm font-mono text-gray-700">
+                  {minutes}:{seconds.toString().padStart(2, '0')}
+                </span>
               </div>
               
               {/* End Interview Button */}
@@ -212,6 +271,7 @@ export function ElevenLabsInterviewRoom({
                 size="sm"
                 onClick={handleEndInterview}
                 disabled={connectionStatus === 'ended'}
+                className="shadow-sm"
               >
                 <PhoneOff className="w-4 h-4 mr-2" />
                 End Interview
@@ -219,13 +279,16 @@ export function ElevenLabsInterviewRoom({
             </div>
           </div>
         </div>
+      </div>
 
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto p-4 pt-6">
         {/* Error Display */}
-        {lastError && (
+        {(lastError || streamError) && (
           <Alert className="mb-4" variant="destructive">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-              {lastError}
+              {lastError || streamError}
               <Button 
                 variant="outline" 
                 size="sm" 
@@ -238,102 +301,170 @@ export function ElevenLabsInterviewRoom({
           </Alert>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 h-[calc(100vh-8rem)]">
           {/* Main Video Area */}
-          <div className="lg:col-span-2">
-            <Card className="h-full">
-              <CardContent className="p-6">
-                <div className="aspect-video bg-gray-900 rounded-lg relative overflow-hidden">
-                  {/* Local Video */}
-                  <video
-                    ref={localVideoRef}
-                    autoPlay
-                    muted
-                    playsInline
-                    className="w-full h-full object-cover"
-                  />
-                  
-                  {/* Local Video Overlay */}
-                  <div className="absolute bottom-4 left-4">
-                    <div className="bg-black/50 backdrop-blur-sm rounded-lg p-2">
-                      <p className="text-white text-sm font-medium">You</p>
-                    </div>
-                  </div>
-
-                  {/* AI Avatar/Status Overlay */}
-                  <div className="absolute top-4 right-4">
-                    <div className="bg-blue-600/90 backdrop-blur-sm rounded-lg p-3">
-                      <div className="flex items-center gap-2">
-                        {isAgentSpeaking ? (
-                          <Volume2 className="w-5 h-5 text-white animate-pulse" />
-                        ) : (
-                          <Mic className="w-5 h-5 text-white" />
-                        )}
-                        <div>
-                          <h3 className="text-white font-semibold">AI Interviewer</h3>
-                          <p className="text-blue-200 text-sm">
-                            {isAgentSpeaking ? 'Speaking...' : 
-                             connectionStatus === 'connected' ? 'Ready to listen' :
-                             'Connecting...'}
+          <div className="xl:col-span-3">
+            <Card className="h-full shadow-xl border-0 bg-white/90 backdrop-blur-sm">
+              <CardContent className="p-0 h-full">
+                <div className={`relative h-full rounded-xl overflow-hidden bg-gradient-to-br from-gray-900 to-gray-800 ${isFullscreen ? 'fixed inset-0 z-50' : ''}`}>
+                  {/* Video Stream */}
+                  <div className="relative h-full">
+                    {localStream && isVideoEnabled ? (
+                      <video
+                        ref={localVideoRef}
+                        autoPlay
+                        muted
+                        playsInline
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-gray-800">
+                        <div className="text-center text-white">
+                          <div className="w-20 h-20 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <User className="w-10 h-10" />
+                          </div>
+                          <p className="text-lg font-medium">Camera Off</p>
+                          <p className="text-sm text-gray-400">
+                            {streamError ? 'Camera access denied' : 'Video disabled'}
                           </p>
                         </div>
                       </div>
+                    )}
+                    
+                    {/* Video Controls Overlay */}
+                    <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2">
+                      <div className="flex items-center gap-3 px-4 py-3 bg-black/50 backdrop-blur-md rounded-2xl border border-white/10">
+                        {/* Video Toggle */}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={toggleVideo}
+                          className={`w-12 h-12 rounded-full ${isVideoEnabled ? 'bg-white/20 hover:bg-white/30' : 'bg-red-500 hover:bg-red-600'} text-white border-0`}
+                        >
+                          {isVideoEnabled ? <Camera className="w-5 h-5" /> : <CameraOff className="w-5 h-5" />}
+                        </Button>
+                        
+                        {/* Mic Toggle (Visual only) */}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={toggleMic}
+                          className={`w-12 h-12 rounded-full ${isMicEnabled ? 'bg-white/20 hover:bg-white/30' : 'bg-red-500 hover:bg-red-600'} text-white border-0`}
+                        >
+                          {isMicEnabled ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
+                        </Button>
+                        
+                        {/* Fullscreen Toggle */}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={toggleFullscreen}
+                          className="w-12 h-12 rounded-full bg-white/20 hover:bg-white/30 text-white border-0"
+                        >
+                          {isFullscreen ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
+                        </Button>
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Speaking Indicators */}
-                  {isUserSpeaking && (
-                    <div className="absolute bottom-4 right-4">
-                      <div className="bg-green-500/90 backdrop-blur-sm rounded-lg p-2">
-                        <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
-                          <span className="text-white text-sm font-medium">You're speaking</span>
+                    {/* AI Status Indicator */}
+                    <div className="absolute top-6 right-6">
+                      <div className={`px-4 py-3 rounded-2xl backdrop-blur-md border ${
+                        isAgentSpeaking 
+                          ? 'bg-blue-500/90 border-blue-400/50' 
+                          : connectionStatus === 'connected' 
+                            ? 'bg-green-500/90 border-green-400/50'
+                            : 'bg-yellow-500/90 border-yellow-400/50'
+                      }`}>
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center justify-center w-10 h-10 bg-white/20 rounded-full">
+                            {isAgentSpeaking ? (
+                              <Volume2 className="w-5 h-5 text-white animate-pulse" />
+                            ) : connectionStatus === 'connected' ? (
+                              <CheckCircle2 className="w-5 h-5 text-white" />
+                            ) : (
+                              <Circle className="w-5 h-5 text-white animate-spin" />
+                            )}
+                          </div>
+                          <div className="text-white">
+                            <h3 className="font-semibold text-sm">Sarah</h3>
+                            <p className="text-xs opacity-90">
+                              {isAgentSpeaking ? 'Speaking...' : 
+                               connectionStatus === 'connected' ? 'Listening' :
+                               'Connecting...'}
+                            </p>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  )}
+
+                    {/* User Speaking Indicator */}
+                    {isUserSpeaking && (
+                      <div className="absolute top-6 left-6">
+                        <div className="px-4 py-3 bg-green-500/90 backdrop-blur-md rounded-2xl border border-green-400/50">
+                          <div className="flex items-center gap-3">
+                            <div className="flex items-center justify-center w-8 h-8 bg-white/20 rounded-full">
+                              <Waves className="w-4 h-4 text-white animate-pulse" />
+                            </div>
+                            <div className="text-white">
+                              <p className="text-sm font-medium">You're speaking</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </CardContent>
             </Card>
           </div>
 
-          {/* Sidebar */}
-          <div className="space-y-4">
+          {/* Enhanced Sidebar */}
+          <div className="space-y-4 h-full overflow-y-auto">
             {/* Conversation History */}
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-semibold flex items-center gap-2">
-                    <MessageSquare className="w-4 h-4" />
+            <Card className="shadow-lg border-0 bg-white/90 backdrop-blur-sm">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <MessageSquare className="w-4 h-4 text-blue-600" />
                     Conversation
-                  </h3>
-                  <Badge variant="outline">
-                    {conversationHistory.length} messages
+                  </CardTitle>
+                  <Badge variant="secondary" className="bg-blue-100 text-blue-700">
+                    {conversationHistory.length}
                   </Badge>
                 </div>
-                
-                <div className="space-y-3 max-h-64 overflow-y-auto">
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="space-y-3 max-h-80 overflow-y-auto custom-scrollbar">
                   {conversationHistory.length === 0 ? (
-                    <p className="text-gray-500 text-sm text-center py-4">
-                      Conversation will appear here...
-                    </p>
+                    <div className="text-center py-8">
+                      <MessageSquare className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                      <p className="text-gray-500 text-sm">
+                        Conversation will appear here...
+                      </p>
+                    </div>
                   ) : (
                     conversationHistory.map((message, index) => (
                       <div 
                         key={index}
-                        className={`p-2 rounded-lg text-sm ${
+                        className={`p-3 rounded-xl text-sm transition-all ${
                           message.role === 'agent' 
-                            ? 'bg-blue-50 border-l-2 border-blue-500' 
-                            : 'bg-green-50 border-l-2 border-green-500'
+                            ? 'bg-gradient-to-r from-blue-50 to-blue-100 border-l-4 border-blue-500' 
+                            : 'bg-gradient-to-r from-green-50 to-green-100 border-l-4 border-green-500'
                         }`}
                       >
-                        <div className="font-medium text-xs mb-1">
-                          {message.role === 'agent' ? '🤖 AI' : '👤 You'}
-                          <span className="text-gray-500 ml-2">
-                            {message.timestamp.toLocaleTimeString()}
-                          </span>
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                              message.role === 'agent' ? 'bg-blue-500 text-white' : 'bg-green-500 text-white'
+                            }`}>
+                              {message.role === 'agent' ? 'AI' : 'You'}
+                            </div>
+                            <span className="text-xs text-gray-600 font-medium">
+                              {message.timestamp.toLocaleTimeString()}
+                            </span>
+                          </div>
                         </div>
-                        <p>{message.content}</p>
+                        <p className="text-gray-800 leading-relaxed">{message.content}</p>
                       </div>
                     ))
                   )}
@@ -341,27 +472,57 @@ export function ElevenLabsInterviewRoom({
               </CardContent>
             </Card>
 
+            {/* Quick Stats */}
+            <Card className="shadow-lg border-0 bg-white/90 backdrop-blur-sm">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <Zap className="w-4 h-4 text-purple-600" />
+                  Interview Stats
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="text-center p-3 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg">
+                    <div className="text-2xl font-bold text-blue-600">{questions.length}</div>
+                    <div className="text-xs text-blue-700">Questions</div>
+                  </div>
+                  <div className="text-center p-3 bg-gradient-to-br from-green-50 to-green-100 rounded-lg">
+                    <div className="text-2xl font-bold text-green-600">{conversationHistory.length}</div>
+                    <div className="text-xs text-green-700">Messages</div>
+                  </div>
+                </div>
+                <div className="mt-3 p-3 bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg text-center">
+                  <div className="text-lg font-bold text-purple-600 font-mono">
+                    {minutes}:{seconds.toString().padStart(2, '0')}
+                  </div>
+                  <div className="text-xs text-purple-700">Duration</div>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Text Input (Optional) */}
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-semibold">Text Input</h3>
+            <Card className="shadow-lg border-0 bg-white/90 backdrop-blur-sm">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base">Quick Message</CardTitle>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => setShowTextInput(!showTextInput)}
+                    className="h-7 text-xs"
                   >
                     {showTextInput ? 'Hide' : 'Show'}
                   </Button>
                 </div>
-                
-                {showTextInput && (
-                  <div className="space-y-2">
+              </CardHeader>
+              {showTextInput && (
+                <CardContent className="pt-0">
+                  <div className="space-y-3">
                     <textarea
                       value={textMessage}
                       onChange={(e) => setTextMessage(e.target.value)}
                       placeholder="Type a message (optional)..."
-                      className="w-full p-2 border rounded-lg resize-none"
+                      className="w-full p-3 border border-gray-200 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       rows={3}
                       disabled={connectionStatus !== 'connected'}
                     />
@@ -369,35 +530,14 @@ export function ElevenLabsInterviewRoom({
                       onClick={handleSendMessage}
                       disabled={!textMessage.trim() || connectionStatus !== 'connected'}
                       size="sm"
-                      className="w-full"
+                      className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
                     >
                       <Send className="w-4 h-4 mr-2" />
                       Send Message
                     </Button>
                   </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Interview Progress */}
-            <Card>
-              <CardContent className="p-4">
-                <h3 className="font-semibold mb-3">Interview Progress</h3>
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span>Questions Available:</span>
-                    <span>{questions.length}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span>Messages Exchanged:</span>
-                    <span>{conversationHistory.length}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span>Duration:</span>
-                    <span>{minutes}:{seconds.toString().padStart(2, '0')}</span>
-                  </div>
-                </div>
-              </CardContent>
+                </CardContent>
+              )}
             </Card>
           </div>
         </div>
@@ -405,6 +545,24 @@ export function ElevenLabsInterviewRoom({
         {/* Hidden Audio Element */}
         <audio ref={audioRef} style={{ display: 'none' }} />
       </div>
+      
+      {/* Custom Styles */}
+      <style jsx>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: #f1f5f9;
+          border-radius: 2px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #cbd5e1;
+          border-radius: 2px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: #94a3b8;
+        }
+      `}</style>
     </div>
   )
 }

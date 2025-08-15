@@ -191,24 +191,38 @@ export function EnhancedInterviewSetup({ onSetupComplete, isLoading = false }: E
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-5xl mx-auto space-y-6">
       {/* Progress Steps */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex gap-4">
-              <Badge variant={currentStep === 'job-details' ? 'default' : 'secondary'}>
-                1. Job Details
-              </Badge>
-              <Badge variant={currentStep === 'resume-selection' ? 'default' : 'secondary'}>
-                2. Resume Selection
-              </Badge>
-              <Badge variant={currentStep === 'questions' ? 'default' : 'secondary'}>
-                3. Review Questions
-              </Badge>
-              <Badge variant={currentStep === 'ready' ? 'default' : 'secondary'}>
-                4. Ready
-              </Badge>
+      <Card className="shadow-lg border-0 bg-white/90 backdrop-blur-sm">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-center">
+            <div className="flex items-center gap-2">
+              {[
+                { id: 'job-details', label: 'Job Details', number: 1 },
+                { id: 'resume-selection', label: 'Resume', number: 2 },
+                { id: 'questions', label: 'Questions', number: 3 },
+                { id: 'ready', label: 'Ready', number: 4 }
+              ].map((step, index) => (
+                <div key={step.id} className="flex items-center">
+                  <div className={`flex items-center gap-3 px-4 py-2 rounded-full transition-all ${
+                    currentStep === step.id 
+                      ? 'bg-blue-600 text-white shadow-lg' 
+                      : 'bg-gray-100 text-gray-600'
+                  }`}>
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                      currentStep === step.id ? 'bg-white/20' : 'bg-white'
+                    }`}>
+                      <span className={currentStep === step.id ? 'text-white' : 'text-gray-600'}>
+                        {step.number}
+                      </span>
+                    </div>
+                    <span className="text-sm font-medium">{step.label}</span>
+                  </div>
+                  {index < 3 && (
+                    <div className="w-8 h-0.5 bg-gray-300 mx-2" />
+                  )}
+                </div>
+              ))}
             </div>
           </div>
         </CardContent>
@@ -216,19 +230,24 @@ export function EnhancedInterviewSetup({ onSetupComplete, isLoading = false }: E
 
       {/* Error Display */}
       {error && (
-        <Alert variant="destructive">
+        <Alert variant="destructive" className="shadow-lg border-red-200">
           <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{error}</AlertDescription>
+          <AlertDescription className="font-medium">{error}</AlertDescription>
         </Alert>
       )}
 
       {/* Step 1: Job Details */}
       {currentStep === 'job-details' && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Briefcase className="h-5 w-5" />
-              Job Details
+        <Card className="shadow-xl border-0 bg-white/90 backdrop-blur-sm">
+          <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-t-lg">
+            <CardTitle className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
+                <Briefcase className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">Job Details</h2>
+                <p className="text-sm text-gray-600 font-normal">Tell us about the position you're interviewing for</p>
+              </div>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">

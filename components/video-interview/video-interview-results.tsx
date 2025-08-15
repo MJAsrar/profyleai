@@ -19,7 +19,7 @@ import {
   PlayCircle,
   Eye
 } from 'lucide-react'
-import { InterviewSummary } from '@/lib/services/video-interview-service'
+import { InterviewSummary } from '@/lib/types/interview-types'
 
 interface VideoInterviewResultsProps {
   sessionId: string

@@ -16,7 +16,7 @@ import {
   AlertCircle,
   Loader2
 } from 'lucide-react'
-import { checkWebRTCSupport, testMediaPermissions } from '@/lib/services/webrtc-service'
+import { checkWebRTCSupport, testMediaPermissions } from '@/lib/utils/media-utils'
 
 interface VideoInterviewSetupProps {
   onSetupComplete: (config: MediaDeviceConfig) => void

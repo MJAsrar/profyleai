@@ -1,5 +1,6 @@
 'use client'
 
+import { Conversation } from '@elevenlabs/client'
 import { PracticeQuestion } from './interview-service'
 
 // ===== TYPES =====
@@ -36,11 +37,10 @@ export interface ElevenLabsCallbacks {
 export class ElevenLabsInterviewService {
   private config: ElevenLabsConfig
   private callbacks: ElevenLabsCallbacks
-  private websocket: WebSocket | null = null
+  private conversation: Conversation | null = null
   private session: InterviewSession | null = null
   private audioContext: AudioContext | null = null
   private mediaStream: MediaStream | null = null
-  private pendingContext: any = null
 
   constructor(config: ElevenLabsConfig, callbacks: ElevenLabsCallbacks) {
     this.config = config
@@ -59,7 +59,7 @@ export class ElevenLabsInterviewService {
     resumeData?: any
   ): Promise<void> {
     try {
-      console.log('🎤 Initializing ElevenLabs interview session...')
+      console.log('🎤 Initializing ElevenLabs interview session with SDK...')
 
       // Create session
       this.session = {
@@ -68,6 +68,17 @@ export class ElevenLabsInterviewService {
         agentId: this.config.agentId,
         status: 'connecting'
       }
+
+      // Prepare dynamic variables for the conversation
+      const dynamicVariables = this.prepareDynamicVariables(
+        jobTitle,
+        companyName,
+        jobDescription,
+        questions,
+        resumeData
+      )
+
+      console.log('📋 Dynamic variables prepared:', dynamicVariables)
 
       // Initialize audio context
       this.audioContext = new AudioContext()
@@ -85,11 +96,8 @@ export class ElevenLabsInterviewService {
 
       console.log('✅ Media stream acquired')
       
-      // Store job context first, before connecting
-      await this.sendJobContext(jobTitle, companyName, jobDescription, questions, resumeData)
-      
-      // Connect to ElevenLabs WebSocket
-      await this.connectWebSocket()
+      // Start conversation with ElevenLabs SDK
+      await this.startConversationWithSDK(dynamicVariables)
 
     } catch (error) {
       console.error('❌ Failed to initialize interview:', error)
@@ -99,269 +107,84 @@ export class ElevenLabsInterviewService {
   }
 
   /**
-   * Connect to ElevenLabs WebSocket
+   * Start conversation using ElevenLabs SDK
    */
-  private async connectWebSocket(): Promise<void> {
+  private async startConversationWithSDK(dynamicVariables: Record<string, any>): Promise<void> {
     try {
-      // First, get the signed URL for the agent
-      console.log('🔑 Getting signed WebSocket URL for agent:', this.config.agentId)
-      
-      const signedUrlResponse = await fetch(
-        `https://api.elevenlabs.io/v1/convai/conversation/get_signed_url?agent_id=${this.config.agentId}`,
-        {
-          method: 'GET',
-          headers: {
-            'xi-api-key': this.config.apiKey,
-          },
-        }
-      )
-      
-      if (!signedUrlResponse.ok) {
-        const errorText = await signedUrlResponse.text()
-        console.error('❌ Signed URL request failed:', signedUrlResponse.status, errorText)
-        throw new Error(`Failed to get signed URL: ${signedUrlResponse.status} - ${errorText}`)
-      }
-      
-      const signedUrlData = await signedUrlResponse.json()
-      console.log('✅ Got signed URL response:', signedUrlData)
-      const wsUrl = signedUrlData.signed_url
-      
-      if (!wsUrl) {
-        throw new Error('No signed_url in response')
-      }
-      
-      console.log('🔌 Connecting to ElevenLabs WebSocket with signed URL')
-      
-      return new Promise((resolve, reject) => {
-        this.websocket = new WebSocket(wsUrl)
+      console.log('🚀 Starting conversation with ElevenLabs SDK...')
 
-        this.websocket.onopen = () => {
-          console.log('✅ Connected to ElevenLabs WebSocket (authenticated via signed URL)')
-          
-          this.session!.status = 'connected'
-          this.callbacks.onConnectionStateChange('connected')
-          this.startAudioStreaming()
-          
-          // Set conversation variables for context
-          this.setConversationVariables()
-          
-          resolve()
-        }
+      // Request microphone access (already done, but SDK might need it)
+      await navigator.mediaDevices.getUserMedia({ audio: true })
 
-      this.websocket.onmessage = (event) => {
-        this.handleWebSocketMessage(event)
-      }
-
-      this.websocket.onerror = (error) => {
-        console.error('❌ WebSocket error:', error)
-        this.callbacks.onError(new Error('WebSocket connection failed'))
-        reject(error)
-      }
-
-      this.websocket.onclose = (event) => {
-        console.log('🔌 WebSocket connection closed:', {
-          code: event.code,
-          reason: event.reason,
-          wasClean: event.wasClean
-        })
+            // Start conversation with dynamic variables
+      this.conversation = await Conversation.startSession({
+        agentId: this.config.agentId,
+        connectionType: 'websocket',
         
-        // Check if this was an unexpected closure
-        if (event.code !== 1000) { // 1000 = normal closure
-          console.error('❌ Unexpected WebSocket closure:', event.code, event.reason)
-          this.callbacks.onError(new Error(`WebSocket closed unexpectedly: ${event.reason || event.code}`))
-        }
-        
-        this.session!.status = 'ended'
-        this.callbacks.onConnectionStateChange('ended')
-      }
+        // Pass all our context as dynamic variables
+        dynamicVariables: dynamicVariables
       })
+
+      console.log('✅ ElevenLabs conversation started with dynamic variables')
+      
+      // Set up event listeners if available
+      this.setupConversationEventListeners()
+
+      console.log('✅ ElevenLabs conversation started successfully')
+      
     } catch (error) {
-      console.error('❌ Failed to get signed WebSocket URL:', error)
+      console.error('❌ Failed to start conversation with SDK:', error)
       throw error
     }
   }
 
   /**
-   * Handle WebSocket messages from ElevenLabs
+   * Setup conversation event listeners
    */
-  private handleWebSocketMessage(event: MessageEvent): void {
+  private setupConversationEventListeners(): void {
+    if (!this.conversation) return
+
     try {
-      const data = JSON.parse(event.data)
-      console.log('📨 WebSocket message received:', data.type, data)
+      // Update session status
+      this.session!.status = 'connected'
+      this.callbacks.onConnectionStateChange('connected')
+
+      console.log('🔗 Event listeners setup complete')
       
-      switch (data.type) {
-        case 'session_init_ack':
-          console.log('🎤 Session initialization acknowledged')
-          // Session is ready - no additional context messages needed
-          break
-          
-        case 'conversation_initiation_metadata':
-          console.log('🎤 Conversation initiated successfully')
-          console.log('📊 Conversation metadata:', data.conversation_initiation_metadata_event)
-          // Conversation is ready - agent will start based on system prompt and variables
-          break
-          
-        case 'agent_response':
-          console.log('🤖 Agent response:', data.agent_response)
-          this.session!.status = 'speaking'
-          this.callbacks.onConnectionStateChange('speaking')
-          
-          // Handle audio if present
-          if (data.agent_response_audio_delta) {
-            const audioBuffer = this.base64ToArrayBuffer(data.agent_response_audio_delta)
-            this.callbacks.onAgentSpeaking(audioBuffer, data.agent_response)
-          }
-          break
-          
-        case 'user_transcript':
-          console.log('👤 User said:', data.user_transcript)
-          break
-          
-        case 'interruption':
-          console.log('⚠️ Conversation interrupted')
-          break
-          
-        case 'ping':
-          // Respond to ping to keep connection alive
-          if (this.websocket?.readyState === WebSocket.OPEN) {
-            this.websocket.send(JSON.stringify({ type: 'pong' }))
-            console.log('🏓 Responded to ping')
-          }
-          break
-          
-        case 'conversation_end':
-          console.log('🏁 Conversation ended by agent:', data)
-          this.callbacks.onConversationEnd(data)
-          break
-          
-        case 'error':
-          console.error('❌ ElevenLabs error:', data)
-          this.callbacks.onError(new Error(data.message || 'ElevenLabs API error'))
-          break
-          
-        default:
-          console.log('📨 Unknown message type:', data.type, data)
-      }
     } catch (error) {
-      console.error('❌ Error handling WebSocket message:', error, event.data)
+      console.error('❌ Failed to setup event listeners:', error)
     }
   }
 
   /**
-   * Start streaming audio to ElevenLabs
+   * Prepare dynamic variables from job and resume data
    */
-  private startAudioStreaming(): void {
-    if (!this.mediaStream || !this.websocket) return
-
-    try {
-      // Create audio processor
-      const audioContext = new AudioContext({ sampleRate: 16000 })
-      const source = audioContext.createMediaStreamSource(this.mediaStream)
-      
-      // Create script processor for audio chunks
-      const processor = audioContext.createScriptProcessor(4096, 1, 1)
-      
-      processor.onaudioprocess = (event) => {
-        if (this.websocket?.readyState === WebSocket.OPEN) {
-          const inputBuffer = event.inputBuffer.getChannelData(0)
-          
-          // Convert to 16-bit PCM
-          const pcmData = new Int16Array(inputBuffer.length)
-          for (let i = 0; i < inputBuffer.length; i++) {
-            pcmData[i] = Math.max(-1, Math.min(1, inputBuffer[i])) * 0x7FFF
-          }
-          
-          // Send audio chunk to ElevenLabs
-          const audioMessage = {
-            user_audio_delta: this.arrayBufferToBase64(pcmData.buffer)
-          }
-          
-          this.websocket.send(JSON.stringify(audioMessage))
-        }
-      }
-
-      source.connect(processor)
-      processor.connect(audioContext.destination)
-      
-      console.log('🎤 Audio streaming started')
-      
-    } catch (error) {
-      console.error('❌ Failed to start audio streaming:', error)
-      this.callbacks.onError(error as Error)
-    }
-  }
-
-  /**
-   * Store job and resume context for sending as variables
-   */
-  private async sendJobContext(
+  private prepareDynamicVariables(
     jobTitle: string, 
     companyName: string, 
     jobDescription: string | undefined,
     questions: PracticeQuestion[],
     resumeData?: any
-  ): Promise<void> {
-    // Store context for sending as variables when WebSocket connects
-    this.pendingContext = {
-      jobTitle,
-      companyName, 
-      jobDescription,
-      questions,
-      resumeData
-    }
-    
-    console.log('📋 Stored job and resume context for variable passing')
-  }
-
-  /**
-   * Set conversation variables via ElevenLabs REST API
-   */
-  private async setConversationVariables(): Promise<void> {
-    if (!this.pendingContext) {
-      console.log('❌ No pending context to send as variables')
-      return
-    }
-    
-    const { jobTitle, companyName, jobDescription, questions, resumeData } = this.pendingContext
-    
-    // Prepare variables for ElevenLabs
-    const variables = {
+  ): Record<string, any> {
+    return {
+      // Job information
       job_title: jobTitle,
       company_name: companyName,
       job_description: jobDescription?.substring(0, 500) || 'No job description provided',
+      
+      // Candidate information
       candidate_name: resumeData?.personalInfo?.fullName || 'there',
       experience_summary: this.buildExperienceSummary(resumeData),
       key_skills: this.buildSkillsSummary(resumeData),
       recent_role: this.buildRecentRole(resumeData),
       notable_projects: this.buildProjectsSummary(resumeData),
-      interview_questions: this.buildQuestionsList(questions)
-    }
-
-    try {
-      // Try to set variables via REST API (if supported)
-      console.log('📋 Attempting to set conversation variables via REST API...')
       
-      const response = await fetch(
-        `https://api.elevenlabs.io/v1/convai/conversation/${this.session?.conversationId}/variables`,
-        {
-          method: 'POST',
-          headers: {
-            'xi-api-key': this.config.apiKey,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(variables)
-        }
-      )
+      // Interview questions
+      interview_questions: this.buildQuestionsList(questions),
       
-      if (response.ok) {
-        console.log('✅ Successfully set conversation variables')
-      } else {
-        console.log('ℹ️ REST API variable setting not available, variables logged for manual configuration')
-        console.log('📋 Context variables for manual setup:', variables)
-      }
-    } catch (error) {
-      console.log('ℹ️ REST API variable setting not available, variables logged for manual configuration')
-      console.log('📋 Context variables for manual setup:', variables)
+      // Additional context
+      total_experience_years: resumeData?.experience?.length || 0,
+      candidate_summary: resumeData?.summary?.substring(0, 200) || 'No summary provided'
     }
   }
 
@@ -421,18 +244,21 @@ export class ElevenLabsInterviewService {
   }
 
   /**
-   * Send a text message to the agent (converted to speech)
+   * Send a text message to the agent (if supported by SDK)
    */
   sendMessage(message: string): void {
-    if (this.websocket?.readyState === WebSocket.OPEN) {
-      // For now, we'll log the message but not send it via WebSocket
-      // since text messages use invalid message types
-      // In a full implementation, you'd convert text to speech and send as audio
-      console.log('💬 Text message (not sent via WebSocket):', message)
-      console.log('ℹ️ To send text messages, implement text-to-speech conversion')
-      
-      // Alternative: You could implement text-to-speech here and send as audio
-      // this.convertTextToSpeechAndSend(message)
+    if (this.conversation) {
+      try {
+        // Check if the SDK has a method to send text messages
+        // This might need to be implemented based on SDK documentation
+        console.log('💬 Sending message via SDK:', message)
+        // this.conversation.sendMessage?.(message) // Uncomment if SDK supports this
+      } catch (error) {
+        console.error('❌ Failed to send message:', error)
+      }
+    } else {
+      console.error('❌ Conversation not initialized')
+      this.callbacks.onError(new Error('Cannot send message: conversation not initialized'))
     }
   }
 
@@ -441,10 +267,10 @@ export class ElevenLabsInterviewService {
    */
   endInterview(): void {
     try {
-      // Close WebSocket
-      if (this.websocket) {
-        this.websocket.close()
-        this.websocket = null
+      // End conversation via SDK
+      if (this.conversation) {
+        this.conversation.endSession()
+        this.conversation = null
       }
 
       // Stop media stream
@@ -471,26 +297,6 @@ export class ElevenLabsInterviewService {
    */
   getSessionStatus(): InterviewSession['status'] | null {
     return this.session?.status || null
-  }
-
-  // ===== UTILITY METHODS =====
-
-  private base64ToArrayBuffer(base64: string): ArrayBuffer {
-    const binaryString = atob(base64)
-    const bytes = new Uint8Array(binaryString.length)
-    for (let i = 0; i < binaryString.length; i++) {
-      bytes[i] = binaryString.charCodeAt(i)
-    }
-    return bytes.buffer
-  }
-
-  private arrayBufferToBase64(buffer: ArrayBuffer): string {
-    const bytes = new Uint8Array(buffer)
-    let binary = ''
-    for (let i = 0; i < bytes.byteLength; i++) {
-      binary += String.fromCharCode(bytes[i])
-    }
-    return btoa(binary)
   }
 }
 

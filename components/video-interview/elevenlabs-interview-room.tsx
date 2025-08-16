@@ -310,10 +310,28 @@ export function ElevenLabsInterviewRoom({
     addUserSubtitle(transcript, timestamp)
   }, [addUserSubtitle])
 
-  // Setup subtitle callbacks
+  // Setup subtitle callbacks - use refs to avoid stale closures
+  const handleAgentTranscriptRef = useRef(handleAgentTranscript)
+  const handleUserTranscriptRef = useRef(handleUserTranscript)
+  
+  // Update refs when callbacks change
   useEffect(() => {
-    setTranscriptCallbacks(handleAgentTranscript, handleUserTranscript)
-  }, [setTranscriptCallbacks, handleAgentTranscript, handleUserTranscript])
+    handleAgentTranscriptRef.current = handleAgentTranscript
+    handleUserTranscriptRef.current = handleUserTranscript
+  }, [handleAgentTranscript, handleUserTranscript])
+
+  // Setup subtitle callbacks - only run once on mount and when sessionId changes
+  useEffect(() => {
+    const agentCallback = (transcript: string, timestamp: number, isComplete: boolean) => {
+      handleAgentTranscriptRef.current(transcript, timestamp, isComplete)
+    }
+    
+    const userCallback = (transcript: string, timestamp: number) => {
+      handleUserTranscriptRef.current(transcript, timestamp)
+    }
+    
+    setTranscriptCallbacks(agentCallback, userCallback)
+  }, [sessionId, setTranscriptCallbacks]) // Only depend on sessionId and setTranscriptCallbacks
 
   // Handle audio playback
   useEffect(() => {

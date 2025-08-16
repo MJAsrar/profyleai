@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -299,21 +299,21 @@ export function ElevenLabsInterviewRoom({
     }
   }, [localStream, isVideoEnabled])
 
+  // Memoize transcript callback functions to prevent infinite re-renders
+  const handleAgentTranscript = useCallback((transcript: string, timestamp: number, isComplete: boolean) => {
+    console.log('📝 Agent transcript received:', transcript, 'Complete:', isComplete)
+    addAgentSubtitle(transcript, timestamp, isComplete)
+  }, [addAgentSubtitle])
+
+  const handleUserTranscript = useCallback((transcript: string, timestamp: number) => {
+    console.log('📝 User transcript received:', transcript)
+    addUserSubtitle(transcript, timestamp)
+  }, [addUserSubtitle])
+
   // Setup subtitle callbacks
   useEffect(() => {
-    setTranscriptCallbacks(
-      // Agent transcript handler
-      (transcript: string, timestamp: number, isComplete: boolean) => {
-        console.log('📝 Agent transcript received:', transcript, 'Complete:', isComplete)
-        addAgentSubtitle(transcript, timestamp, isComplete)
-      },
-      // User transcript handler  
-      (transcript: string, timestamp: number) => {
-        console.log('📝 User transcript received:', transcript)
-        addUserSubtitle(transcript, timestamp)
-      }
-    )
-  }, [setTranscriptCallbacks, addAgentSubtitle, addUserSubtitle])
+    setTranscriptCallbacks(handleAgentTranscript, handleUserTranscript)
+  }, [setTranscriptCallbacks, handleAgentTranscript, handleUserTranscript])
 
   // Handle audio playback
   useEffect(() => {

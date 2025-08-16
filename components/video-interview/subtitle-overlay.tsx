@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 
 interface SubtitleData {
   text: string
@@ -146,7 +146,7 @@ export function useSubtitles() {
   const [subtitleHistory, setSubtitleHistory] = useState<SubtitleData[]>([])
   const [isEnabled, setIsEnabled] = useState(true)
 
-  const addAgentSubtitle = (text: string, timestamp: number, isComplete: boolean = true) => {
+  const addAgentSubtitle = useCallback((text: string, timestamp: number, isComplete: boolean = true) => {
     const subtitle: SubtitleData = {
       text,
       timestamp,
@@ -159,9 +159,9 @@ export function useSubtitles() {
     if (isComplete) {
       setSubtitleHistory(prev => [...prev, subtitle].slice(-50)) // Keep last 50 subtitles
     }
-  }
+  }, [])
 
-  const addUserSubtitle = (text: string, timestamp: number) => {
+  const addUserSubtitle = useCallback((text: string, timestamp: number) => {
     const subtitle: SubtitleData = {
       text,
       timestamp,
@@ -171,15 +171,15 @@ export function useSubtitles() {
     
     setCurrentSubtitle(subtitle)
     setSubtitleHistory(prev => [...prev, subtitle].slice(-50))
-  }
+  }, [])
 
-  const clearCurrentSubtitle = () => {
+  const clearCurrentSubtitle = useCallback(() => {
     setCurrentSubtitle(null)
-  }
+  }, [])
 
-  const toggleSubtitles = () => {
+  const toggleSubtitles = useCallback(() => {
     setIsEnabled(!isEnabled)
-  }
+  }, [isEnabled])
 
   return {
     currentSubtitle,

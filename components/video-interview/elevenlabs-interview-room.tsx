@@ -33,6 +33,7 @@ import {
 import { useElevenLabsInterviewStore, elevenLabsInterviewSelectors } from '@/lib/stores/elevenlabs-interview-store'
 import { PracticeQuestion } from '@/lib/services/interview-service'
 import { AiAvatar } from './ai-avatar'
+import { SubtitleOverlay, useSubtitles } from './subtitle-overlay'
 
 interface ElevenLabsInterviewRoomProps {
   sessionId: string
@@ -81,7 +82,8 @@ export function ElevenLabsInterviewRoom({
     endInterview,
     sendMessage,
     clearErrors,
-    cleanup
+    cleanup,
+    setTranscriptCallbacks
   } = useElevenLabsInterviewStore()
 
   const [isInitializing, setIsInitializing] = useState(true)
@@ -93,6 +95,16 @@ export function ElevenLabsInterviewRoom({
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [streamError, setStreamError] = useState<string | null>(null)
   const isMountedRef = useRef(true)
+  
+  // Subtitle management
+  const {
+    currentSubtitle,
+    subtitleHistory,
+    isEnabled: subtitlesEnabled,
+    addAgentSubtitle,
+    addUserSubtitle,
+    toggleSubtitles
+  } = useSubtitles()
 
   // Setup video stream with retry logic
   const setupVideoStream = async (stream: MediaStream): Promise<void> => {
@@ -286,6 +298,22 @@ export function ElevenLabsInterviewRoom({
       }
     }
   }, [localStream, isVideoEnabled])
+
+  // Setup subtitle callbacks
+  useEffect(() => {
+    setTranscriptCallbacks(
+      // Agent transcript handler
+      (transcript: string, timestamp: number, isComplete: boolean) => {
+        console.log('📝 Agent transcript received:', transcript, 'Complete:', isComplete)
+        addAgentSubtitle(transcript, timestamp, isComplete)
+      },
+      // User transcript handler  
+      (transcript: string, timestamp: number) => {
+        console.log('📝 User transcript received:', transcript)
+        addUserSubtitle(transcript, timestamp)
+      }
+    )
+  }, [setTranscriptCallbacks, addAgentSubtitle, addUserSubtitle])
 
   // Handle audio playback
   useEffect(() => {
@@ -511,6 +539,17 @@ export function ElevenLabsInterviewRoom({
                         >
                           {isFullscreen ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
                         </Button>
+                        
+                        {/* Subtitles Toggle */}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={toggleSubtitles}
+                          className={`w-12 h-12 rounded-full ${subtitlesEnabled ? 'bg-white/20 hover:bg-white/30' : 'bg-red-500 hover:bg-red-600'} text-white border-0`}
+                          title={subtitlesEnabled ? 'Hide Subtitles' : 'Show Subtitles'}
+                        >
+                          <MessageSquare className="w-5 h-5" />
+                        </Button>
                       </div>
                     </div>
 
@@ -539,6 +578,13 @@ export function ElevenLabsInterviewRoom({
                       </div>
                     )}
 
+                    {/* Subtitle Overlay */}
+                    <SubtitleOverlay
+                      currentSubtitle={currentSubtitle}
+                      isVisible={subtitlesEnabled}
+                      position="bottom"
+                    />
+
                     {/* Debug Info (only in development) */}
                     {process.env.NODE_ENV === 'development' && (
                       <div className="absolute bottom-6 left-6">
@@ -547,6 +593,8 @@ export function ElevenLabsInterviewRoom({
                           <div>Video Enabled: {isVideoEnabled ? '✅' : '❌'}</div>
                           <div>Video Ref: {localVideoRef.current ? '✅' : '❌'}</div>
                           <div>Stream Error: {streamError || 'None'}</div>
+                          <div>Subtitles: {subtitlesEnabled ? '✅' : '❌'}</div>
+                          <div>Current Subtitle: {currentSubtitle ? '✅' : '❌'}</div>
                         </div>
                       </div>
                     )}

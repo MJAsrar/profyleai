@@ -37,6 +37,10 @@ export interface ElevenLabsInterviewState {
   isUserSpeaking: boolean
   currentAudioUrl: string | null
   
+  // Transcript callbacks (for subtitle integration)
+  onAgentTranscript: ((transcript: string, timestamp: number, isComplete: boolean) => void) | null
+  onUserTranscript: ((transcript: string, timestamp: number) => void) | null
+  
   // Analytics
   sessionStartTime: Date | null
   sessionEndTime: Date | null
@@ -76,6 +80,12 @@ export interface ElevenLabsInterviewActions {
   addError: (error: string) => void
   clearErrors: () => void
   
+  // Subtitle integration
+  setTranscriptCallbacks: (
+    onAgentTranscript: (transcript: string, timestamp: number, isComplete: boolean) => void,
+    onUserTranscript: (transcript: string, timestamp: number) => void
+  ) => void
+  
   // Cleanup
   cleanup: () => void
 }
@@ -108,6 +118,10 @@ const initialState: ElevenLabsInterviewState = {
   isAgentSpeaking: false,
   isUserSpeaking: false,
   currentAudioUrl: null,
+  
+  // Transcript callbacks
+  onAgentTranscript: null,
+  onUserTranscript: null,
   
   // Analytics
   sessionStartTime: null,
@@ -154,6 +168,13 @@ export const useElevenLabsInterviewStore = create<ElevenLabsInterviewStore>()(
             
             onAgentSpeaking: (audio: ArrayBuffer, text: string) => {
               console.log('🤖 Agent speaking:', text)
+              
+              // Send transcript to subtitle system
+              const state = get()
+              if (state.onAgentTranscript && text) {
+                console.log('📝 Sending agent transcript to subtitles:', text)
+                state.onAgentTranscript(text, Date.now(), true)
+              }
               
               // Convert audio to playable URL
               const audioBlob = new Blob([audio], { type: 'audio/mpeg' })
@@ -203,6 +224,20 @@ export const useElevenLabsInterviewStore = create<ElevenLabsInterviewStore>()(
             onError: (error: Error) => {
               console.error('❌ ElevenLabs error:', error)
               get().addError(error.message)
+            },
+            
+            onAgentTranscript: (transcript: string, timestamp: number, isComplete: boolean) => {
+              const state = get()
+              if (state.onAgentTranscript) {
+                state.onAgentTranscript(transcript, timestamp, isComplete)
+              }
+            },
+            
+            onUserTranscript: (transcript: string, timestamp: number) => {
+              const state = get()
+              if (state.onUserTranscript) {
+                state.onUserTranscript(transcript, timestamp)
+              }
             }
           }
 
@@ -320,6 +355,18 @@ export const useElevenLabsInterviewStore = create<ElevenLabsInterviewStore>()(
         set((draft) => {
           draft.errors = []
           draft.lastError = null
+        })
+      },
+
+      // ===== SUBTITLE INTEGRATION =====
+
+      setTranscriptCallbacks: (
+        onAgentTranscript: (transcript: string, timestamp: number, isComplete: boolean) => void,
+        onUserTranscript: (transcript: string, timestamp: number) => void
+      ) => {
+        set((draft) => {
+          draft.onAgentTranscript = onAgentTranscript
+          draft.onUserTranscript = onUserTranscript
         })
       },
 

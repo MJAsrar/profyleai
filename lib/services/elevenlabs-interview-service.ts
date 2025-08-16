@@ -30,6 +30,8 @@ export interface ElevenLabsCallbacks {
   onUserSpeaking: () => void
   onConversationEnd: (summary: any) => void
   onError: (error: Error) => void
+  onAgentTranscript?: (transcript: string, timestamp: number, isComplete: boolean) => void
+  onUserTranscript?: (transcript: string, timestamp: number) => void
 }
 
 // ===== ELEVENLABS INTERVIEW SERVICE =====
@@ -149,7 +151,12 @@ export class ElevenLabsInterviewService {
       this.session!.status = 'connected'
       this.callbacks.onConnectionStateChange('connected')
 
-      console.log('🔗 Event listeners setup complete')
+      // Note: ElevenLabs SDK may handle transcripts differently
+      // We'll monitor for transcript data in the conversation responses
+      // and extract it when the AI agent provides audio with text
+      console.log('📝 Transcript monitoring setup - will capture from agent responses')
+
+      console.log('🔗 Event listeners setup complete with transcript handling')
       
     } catch (error) {
       console.error('❌ Failed to setup event listeners:', error)

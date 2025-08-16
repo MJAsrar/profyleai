@@ -94,6 +94,105 @@ export function ElevenLabsInterviewRoom({
   const [streamError, setStreamError] = useState<string | null>(null)
   const isMountedRef = useRef(true)
 
+  // Setup video stream with retry logic
+  const setupVideoStream = async (stream: MediaStream): Promise<void> => {
+    const maxRetries = 10
+    let retryCount = 0
+    
+    const attemptVideoSetup = async (): Promise<boolean> => {
+      if (!localVideoRef.current) {
+        console.log(`📺 Video ref not ready, attempt ${retryCount + 1}/${maxRetries}`)
+        return false
+      }
+      
+      if (!stream) {
+        console.log('📺 Stream not available')
+        return false
+      }
+      
+      try {
+        console.log('📺 Setting video srcObject...')
+        localVideoRef.current.srcObject = stream
+        
+        // Ensure video properties are set
+        localVideoRef.current.muted = true
+        localVideoRef.current.playsInline = true
+        localVideoRef.current.autoplay = true
+        
+        // Set up metadata loaded handler
+        return new Promise<boolean>((resolve) => {
+          const video = localVideoRef.current
+          if (!video) {
+            resolve(false)
+            return
+          }
+          
+          const handleLoadedMetadata = async () => {
+            try {
+              console.log('📺 Video metadata loaded, attempting to play...')
+              await video.play()
+              console.log('✅ Video is now playing')
+              resolve(true)
+            } catch (playError) {
+              console.error('❌ Video play failed:', playError)
+              resolve(false)
+            }
+          }
+          
+          const handleCanPlay = async () => {
+            try {
+              console.log('📺 Video can play, attempting to play...')
+              await video.play()
+              console.log('✅ Video is now playing')
+              resolve(true)
+            } catch (playError) {
+              console.error('❌ Video play failed:', playError)
+              resolve(false)
+            }
+          }
+          
+          // Try multiple event handlers
+          video.onloadedmetadata = handleLoadedMetadata
+          video.oncanplay = handleCanPlay
+          
+          // Fallback timeout
+          setTimeout(() => {
+            if (video.readyState >= 2) {
+              video.play().then(() => {
+                console.log('✅ Video force-play successful')
+                resolve(true)
+              }).catch(() => {
+                console.log('❌ Video force-play failed')
+                resolve(false)
+              })
+            } else {
+              resolve(false)
+            }
+          }, 1000)
+        })
+      } catch (error) {
+        console.error('❌ Error setting up video:', error)
+        return false
+      }
+    }
+    
+    // Retry loop
+    while (retryCount < maxRetries) {
+      const success = await attemptVideoSetup()
+      if (success) {
+        console.log('✅ Video stream setup completed successfully')
+        return
+      }
+      
+      retryCount++
+      if (retryCount < maxRetries) {
+        await new Promise(resolve => setTimeout(resolve, 200)) // Wait 200ms between retries
+      }
+    }
+    
+    console.error('❌ Failed to setup video after maximum retries')
+  }
+
   // Initialize interview on component mount
   useEffect(() => {
     const initialize = async () => {
@@ -121,44 +220,8 @@ export function ElevenLabsInterviewRoom({
           setLocalStream(stream)
           setStreamError(null)
 
-          // Wait for component to be ready
-          await new Promise(resolve => setTimeout(resolve, 100))
-
-          if (localVideoRef.current && stream) {
-            console.log('📺 Setting video srcObject...')
-            localVideoRef.current.srcObject = stream
-            
-            // Ensure video plays and is visible
-            localVideoRef.current.onloadedmetadata = async () => {
-              try {
-                console.log('📺 Video metadata loaded, attempting to play...')
-                if (localVideoRef.current) {
-                  localVideoRef.current.muted = true // Ensure muted for autoplay
-                  localVideoRef.current.playsInline = true
-                  await localVideoRef.current.play()
-                  console.log('✅ Video is now playing')
-                }
-              } catch (playError) {
-                console.error('❌ Video play failed:', playError)
-              }
-            }
-
-            // Force play attempt
-            setTimeout(async () => {
-              if (localVideoRef.current && localVideoRef.current.readyState >= 2) {
-                try {
-                  await localVideoRef.current.play()
-                  console.log('✅ Video force-play successful')
-                } catch (err) {
-                  console.error('❌ Video force-play failed:', err)
-                }
-              }
-            }, 500)
-          } else {
-            console.error('❌ Video ref not available or stream is null')
-          }
-
-          console.log('✅ Video stream setup completed')
+          // Wait for component to be ready and retry video setup
+          await setupVideoStream(stream)
         } catch (videoError) {
           console.error('❌ Failed to get video stream:', videoError)
           setStreamError(`Failed to access camera: ${videoError.message}`)
@@ -190,33 +253,16 @@ export function ElevenLabsInterviewRoom({
     }
   }, [sessionId, jobTitle, companyName, jobDescription, resumeData, questions])
 
-  // Handle video stream assignment
+  // Handle video stream re-assignment when toggling video on/off
   useEffect(() => {
     if (localStream && localVideoRef.current && isVideoEnabled) {
-      console.log('🔄 Updating video srcObject in useEffect')
-      localVideoRef.current.srcObject = localStream
-      
-      // Ensure video plays
-      const playVideo = async () => {
-        if (localVideoRef.current) {
-          try {
-            localVideoRef.current.muted = true
-            localVideoRef.current.playsInline = true
-            await localVideoRef.current.play()
-            console.log('✅ Video playing from useEffect')
-          } catch (error) {
-            console.error('❌ Video play error in useEffect:', error)
-          }
-        }
-      }
-      
-      if (localVideoRef.current.readyState >= 2) {
-        playVideo()
-      } else {
-        localVideoRef.current.onloadeddata = playVideo
+      // Only reassign if video was toggled back on
+      if (!localVideoRef.current.srcObject) {
+        console.log('🔄 Re-assigning video stream after toggle')
+        setupVideoStream(localStream)
       }
     }
-  }, [localStream, isVideoEnabled])
+  }, [isVideoEnabled, localStream])
 
   // Handle audio playback
   useEffect(() => {

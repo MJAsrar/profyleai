@@ -100,8 +100,19 @@ export function ElevenLabsInterviewRoom({
     let retryCount = 0
     
     const attemptVideoSetup = async (): Promise<boolean> => {
-      if (!localVideoRef.current) {
-        console.log(`📺 Video ref not ready, attempt ${retryCount + 1}/${maxRetries}`)
+      // Try React ref first
+      let videoElement = localVideoRef.current
+      
+      // Fallback to DOM query if ref not available
+      if (!videoElement) {
+        videoElement = document.querySelector('video') as HTMLVideoElement
+        if (videoElement) {
+          console.log(`📺 Found video element via DOM query on attempt ${retryCount + 1}`)
+        }
+      }
+      
+      if (!videoElement) {
+        console.log(`📺 Video element not ready, attempt ${retryCount + 1}/${maxRetries}`)
         return false
       }
       
@@ -112,16 +123,16 @@ export function ElevenLabsInterviewRoom({
       
       try {
         console.log('📺 Setting video srcObject...')
-        localVideoRef.current.srcObject = stream
+        videoElement.srcObject = stream
         
         // Ensure video properties are set
-        localVideoRef.current.muted = true
-        localVideoRef.current.playsInline = true
-        localVideoRef.current.autoplay = true
+        videoElement.muted = true
+        videoElement.playsInline = true
+        videoElement.autoplay = true
         
         // Set up metadata loaded handler
         return new Promise<boolean>((resolve) => {
-          const video = localVideoRef.current
+          const video = videoElement
           if (!video) {
             resolve(false)
             return
@@ -220,8 +231,7 @@ export function ElevenLabsInterviewRoom({
           setLocalStream(stream)
           setStreamError(null)
 
-          // Wait for component to be ready and retry video setup
-          await setupVideoStream(stream)
+          console.log('✅ Video stream setup completed - will assign to video element when ready')
         } catch (videoError) {
           console.error('❌ Failed to get video stream:', videoError)
           setStreamError(`Failed to access camera: ${videoError.message}`)
@@ -253,16 +263,29 @@ export function ElevenLabsInterviewRoom({
     }
   }, [sessionId, jobTitle, companyName, jobDescription, resumeData, questions])
 
-  // Handle video stream re-assignment when toggling video on/off
+  // Handle video stream assignment when both stream and ref are available
   useEffect(() => {
-    if (localStream && localVideoRef.current && isVideoEnabled) {
-      // Only reassign if video was toggled back on
-      if (!localVideoRef.current.srcObject) {
-        console.log('🔄 Re-assigning video stream after toggle')
+    if (localStream && isVideoEnabled) {
+      console.log('🔄 Stream and video enabled, attempting video setup...')
+      
+      // Try immediate assignment first
+      if (localVideoRef.current) {
+        console.log('📺 Video ref available immediately, setting up...')
         setupVideoStream(localStream)
+      } else {
+        // If ref not ready, try with increasing delays
+        const attempts = [100, 300, 500, 1000, 2000]
+        attempts.forEach((delay, index) => {
+          setTimeout(() => {
+            if (localVideoRef.current && !localVideoRef.current.srcObject) {
+              console.log(`📺 Video ref available after ${delay}ms delay, setting up...`)
+              setupVideoStream(localStream)
+            }
+          }, delay)
+        })
       }
     }
-  }, [isVideoEnabled, localStream])
+  }, [localStream, isVideoEnabled])
 
   // Handle audio playback
   useEffect(() => {

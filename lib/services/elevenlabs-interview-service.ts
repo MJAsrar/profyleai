@@ -118,20 +118,38 @@ export class ElevenLabsInterviewService {
       // Request microphone access (already done, but SDK might need it)
       await navigator.mediaDevices.getUserMedia({ audio: true })
 
-      // Start conversation with dynamic variables
+      // Start conversation with dynamic variables and real-time message handler
       this.conversation = await Conversation.startSession({
         agentId: this.config.agentId,
         connectionType: 'websocket',
         
         // Pass all our context as dynamic variables
-        dynamicVariables: dynamicVariables
+        dynamicVariables: dynamicVariables,
+        
+        // Real-time message handler - captures all transcription
+        onMessage: (message: any) => {
+          this.handleRealtimeMessage(message)
+        },
+        
+        onConnect: () => {
+          console.log('🔗 ElevenLabs interview connection established')
+          this.session!.status = 'connected'
+          this.callbacks.onConnectionStateChange('connected')
+        },
+        
+        onDisconnect: () => {
+          console.log('🔌 ElevenLabs interview connection ended')
+          this.session!.status = 'ended'
+          this.callbacks.onConnectionStateChange('ended')
+        },
+        
+        onError: (error: any) => {
+          console.error('❌ ElevenLabs connection error:', error)
+          this.callbacks.onError(error)
+        }
       })
 
-      console.log('✅ ElevenLabs conversation started with dynamic variables')
-      
-      // Set up transcript events
-      this.setupTranscriptEvents()
-
+      console.log('✅ ElevenLabs conversation started with real-time message handling')
       console.log('✅ ElevenLabs conversation started successfully')
       
     } catch (error) {
@@ -141,60 +159,47 @@ export class ElevenLabsInterviewService {
   }
 
   /**
-   * Setup ElevenLabs SDK transcript events for real-time streaming
+   * Handle real-time messages from ElevenLabs SDK
    */
-  private setupTranscriptEvents(): void {
-    if (!this.conversation) return
-
+  private handleRealtimeMessage(message: any): void {
     try {
-      console.log('📡 Setting up ElevenLabs transcript events...')
+      console.log('📡 Real-time message received:', message)
 
-      // Update session status
-      this.session!.status = 'connected'
-      this.callbacks.onConnectionStateChange('connected')
-
-      const conversation = this.conversation as any
-
-      // 🔴 User speech → transcript
-      conversation.on("user_transcript", (event: any) => {
-        console.log("👤 User transcript (streaming):", event.text)
-        if (event?.text && this.callbacks.onUserTranscript) {
-          this.callbacks.onUserTranscript(event.text, Date.now())
+      // Handle user transcript (interviewee speaking)
+      if (message.type === 'user_transcript') {
+        console.log("👤 User said:", message.message)
+        if (message.message && this.callbacks.onUserTranscript) {
+          this.callbacks.onUserTranscript(message.message, Date.now())
         }
-      })
-
-      // 🟢 Agent speech → transcript (real-time streaming)
-      conversation.on("transcript", (event: any) => {
-        console.log("🤖 Agent transcript (streaming):", event.text, "isFinal:", event.isFinal)
-        if (event?.text && this.callbacks.onAgentTranscript) {
+      }
+      
+      // Handle agent response (interviewer/AI speaking)
+      else if (message.type === 'agent_response') {
+        console.log("🤖 Agent said:", message.message)
+        if (message.message && this.callbacks.onAgentTranscript) {
+          this.callbacks.onAgentTranscript(message.message, Date.now(), true)
+        }
+      }
+      
+      // Handle partial/streaming transcripts
+      else if (message.type === 'transcript') {
+        console.log("📝 Streaming transcript:", message.message, "isFinal:", message.isFinal)
+        if (message.message && this.callbacks.onAgentTranscript) {
           this.callbacks.onAgentTranscript(
-            event.text,
+            message.message,
             Date.now(),
-            event.isFinal ?? false
+            message.isFinal ?? false
           )
         }
-      })
-
-      // Agent response events (optional)
-      conversation.on("agent_response", (event: any) => {
-        console.log("🤖 Agent response:", event)
-        if (event?.text && this.callbacks.onAgentTranscript) {
-          this.callbacks.onAgentTranscript(event.text, Date.now(), true)
-        }
-      })
-
-      // Error handling
-      conversation.on("error", (err: any) => {
-        console.error("❌ Conversation error:", err)
-        this.callbacks.onError(err)
-      })
-
-      console.log('✅ ElevenLabs transcript events setup complete')
+      }
       
+      // Handle other message types for debugging
+      else {
+        console.log('❓ Unknown message type:', message.type, message)
+      }
+
     } catch (error) {
-      console.error('❌ Failed to setup transcript events:', error)
-      console.log('💡 Falling back to alternative methods...')
-      this.setupAlternativeTranscriptCapture()
+      console.error('❌ Error handling real-time message:', error)
     }
   }
 

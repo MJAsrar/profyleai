@@ -785,7 +785,6 @@ export function ElevenLabsInterviewRoom({
             </CardContent>
           </Card>
         </div>
-      </div>
 
         {/* Hidden Audio Element */}
         <audio ref={audioRef} style={{ display: 'none' }} />

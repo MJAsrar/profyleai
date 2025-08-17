@@ -178,7 +178,7 @@ export function useSubtitles() {
   const startWordByWordStreaming = useCallback((fullText: string, timestamp: number) => {
     const words = fullText.split(' ')
     const WORDS_PER_CHUNK = 5
-    const CHUNK_DISPLAY_TIME = 800 // 1200ms per chunk
+    const CHUNK_DISPLAY_TIME = 500 // 1200ms per chunk
     let chunkIndex = 0
     
     // Calculate total chunks needed

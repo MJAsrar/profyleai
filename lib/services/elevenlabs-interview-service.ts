@@ -124,8 +124,28 @@ export class ElevenLabsInterviewService {
         connectionType: 'websocket',
         
         // Pass all our context as dynamic variables
-        dynamicVariables: dynamicVariables
-      })
+        dynamicVariables: dynamicVariables,
+        
+        // Try to add callback options if supported
+        callbacks: {
+          onMessage: (message: any) => {
+            console.log('📥 ElevenLabs onMessage:', message)
+            this.handleConversationMessage(message)
+          },
+          onTranscript: (transcript: any) => {
+            console.log('📝 ElevenLabs onTranscript:', transcript)
+            this.handleTranscriptEvent(transcript)
+          },
+          onAudio: (audio: any) => {
+            console.log('🔊 ElevenLabs onAudio:', audio)
+            this.handleAudioEvent(audio)
+          },
+          onResponse: (response: any) => {
+            console.log('📤 ElevenLabs onResponse:', response)
+            this.handleResponseEvent(response)
+          }
+        }
+      } as any)
 
       console.log('✅ ElevenLabs conversation started with dynamic variables')
       
@@ -230,6 +250,15 @@ export class ElevenLabsInterviewService {
       } else {
         console.warn('⚠️ Conversation object does not support .on() method')
         console.log('🔍 Available methods:', Object.getOwnPropertyNames(this.conversation))
+        console.log('🔍 Conversation constructor:', this.conversation.constructor.name)
+        console.log('🔍 Conversation prototype:', Object.getOwnPropertyNames(Object.getPrototypeOf(this.conversation)))
+        
+        // Try to find any callback-related methods
+        const conversation = this.conversation as any
+        const callbackMethods = Object.getOwnPropertyNames(conversation).filter(name => 
+          name.includes('callback') || name.includes('handler') || name.includes('listener')
+        )
+        console.log('🔍 Callback-related methods:', callbackMethods)
         
         // Fallback to alternative methods
         this.setupAlternativeTranscriptCapture()
@@ -320,6 +349,131 @@ export class ElevenLabsInterviewService {
       }
     } catch (error) {
       console.error('❌ Error parsing SDK event:', error)
+    }
+  }
+
+  /**
+   * Handle conversation messages from ElevenLabs SDK
+   */
+  private handleConversationMessage(message: any): void {
+    try {
+      console.log('📥 Processing conversation message:', message)
+      
+      // Check for transcript data in the message
+      if (message.text || message.content || message.transcript) {
+        const text = message.text || message.content || message.transcript
+        console.log('📝 Found transcript in message:', text)
+        
+        if (this.callbacks.onAgentTranscript) {
+          this.callbacks.onAgentTranscript(text, Date.now(), true)
+        }
+      }
+      
+      // Check for audio data
+      if (message.audio) {
+        console.log('🔊 Found audio in message')
+        this.handleAudioWithTranscript(message.audio, message.text || message.content || '')
+      }
+    } catch (error) {
+      console.error('❌ Error handling conversation message:', error)
+    }
+  }
+
+  /**
+   * Handle transcript events from ElevenLabs SDK
+   */
+  private handleTranscriptEvent(transcript: any): void {
+    try {
+      console.log('📝 Processing transcript event:', transcript)
+      
+      const text = transcript.text || transcript.content || transcript.transcript || transcript
+      if (typeof text === 'string' && text.trim()) {
+        console.log('📝 Extracted transcript text:', text)
+        
+        const isAgent = transcript.speaker === 'agent' || transcript.role === 'agent' || !transcript.speaker
+        if (isAgent && this.callbacks.onAgentTranscript) {
+          const isComplete = transcript.isFinal !== false && transcript.is_final !== false
+          this.callbacks.onAgentTranscript(text, Date.now(), isComplete)
+        } else if (!isAgent && this.callbacks.onUserTranscript) {
+          this.callbacks.onUserTranscript(text, Date.now())
+        }
+      }
+    } catch (error) {
+      console.error('❌ Error handling transcript event:', error)
+    }
+  }
+
+  /**
+   * Handle audio events from ElevenLabs SDK
+   */
+  private handleAudioEvent(audio: any): void {
+    try {
+      console.log('🔊 Processing audio event:', audio)
+      
+      // If audio comes with text, use the onAgentSpeaking callback
+      if (audio.text || audio.transcript) {
+        const text = audio.text || audio.transcript
+        console.log('📝 Audio has transcript:', text)
+        this.handleAudioWithTranscript(audio.data || audio, text)
+      }
+    } catch (error) {
+      console.error('❌ Error handling audio event:', error)
+    }
+  }
+
+  /**
+   * Handle response events from ElevenLabs SDK
+   */
+  private handleResponseEvent(response: any): void {
+    try {
+      console.log('📤 Processing response event:', response)
+      
+      // Check for transcript in response
+      if (response.text || response.content || response.transcript) {
+        const text = response.text || response.content || response.transcript
+        console.log('📝 Found transcript in response:', text)
+        
+        if (this.callbacks.onAgentTranscript) {
+          this.callbacks.onAgentTranscript(text, Date.now(), true)
+        }
+      }
+    } catch (error) {
+      console.error('❌ Error handling response event:', error)
+    }
+  }
+
+  /**
+   * Handle audio with transcript using the onAgentSpeaking callback
+   */
+  private handleAudioWithTranscript(audio: any, text: string): void {
+    try {
+      if (this.callbacks.onAgentSpeaking && text) {
+        // Convert audio to ArrayBuffer if needed
+        let audioBuffer: ArrayBuffer
+        
+        if (audio instanceof ArrayBuffer) {
+          audioBuffer = audio
+        } else if (audio instanceof Uint8Array) {
+          audioBuffer = new ArrayBuffer(audio.length)
+          new Uint8Array(audioBuffer).set(audio)
+        } else if (typeof audio === 'string') {
+          // Assume base64 encoded audio
+          const binaryString = atob(audio)
+          const bytes = new Uint8Array(binaryString.length)
+          for (let i = 0; i < binaryString.length; i++) {
+            bytes[i] = binaryString.charCodeAt(i)
+          }
+          audioBuffer = bytes.buffer
+        } else {
+          console.warn('⚠️ Unknown audio format:', typeof audio)
+          return
+        }
+        
+        console.log('🤖 Calling onAgentSpeaking with audio and text:', text.substring(0, 50) + '...')
+        this.callbacks.onAgentSpeaking(audioBuffer, text)
+      }
+    } catch (error) {
+      console.error('❌ Error handling audio with transcript:', error)
     }
   }
 

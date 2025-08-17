@@ -141,7 +141,7 @@ export class ElevenLabsInterviewService {
   }
 
   /**
-   * Setup conversation event listeners
+   * Setup conversation event listeners and WebSocket transcript parsing
    */
   private setupConversationEventListeners(): void {
     if (!this.conversation) return
@@ -151,15 +151,182 @@ export class ElevenLabsInterviewService {
       this.session!.status = 'connected'
       this.callbacks.onConnectionStateChange('connected')
 
-      // Note: ElevenLabs SDK may handle transcripts differently
-      // We'll monitor for transcript data in the conversation responses
-      // and extract it when the AI agent provides audio with text
-      console.log('📝 Transcript monitoring setup - will capture from agent responses')
+      // Access the underlying WebSocket for direct transcript parsing
+      this.setupWebSocketTranscriptParsing()
 
       console.log('🔗 Event listeners setup complete with transcript handling')
       
     } catch (error) {
       console.error('❌ Failed to setup event listeners:', error)
+    }
+  }
+
+  /**
+   * Access the WebSocket directly to parse transcript events
+   */
+  private setupWebSocketTranscriptParsing(): void {
+    try {
+      // Try different ways to access the WebSocket from the ElevenLabs SDK
+      let websocket: WebSocket | null = null
+      
+      // Method 1: Check if conversation has direct WebSocket access
+      if ((this.conversation as any).websocket) {
+        websocket = (this.conversation as any).websocket
+        console.log('📡 Found WebSocket via conversation.websocket')
+      }
+      // Method 2: Check for _ws or ws property
+      else if ((this.conversation as any)._ws) {
+        websocket = (this.conversation as any)._ws
+        console.log('📡 Found WebSocket via conversation._ws')
+      }
+      else if ((this.conversation as any).ws) {
+        websocket = (this.conversation as any).ws
+        console.log('📡 Found WebSocket via conversation.ws')
+      }
+      // Method 3: Check for connection property
+      else if ((this.conversation as any).connection?.websocket) {
+        websocket = (this.conversation as any).connection.websocket
+        console.log('📡 Found WebSocket via conversation.connection.websocket')
+      }
+
+      if (!websocket) {
+        console.warn('⚠️ Could not access WebSocket directly from ElevenLabs SDK')
+        console.log('🔍 Available conversation properties:', Object.keys(this.conversation as any))
+        
+        // Try to find WebSocket in nested objects
+        const conversation = this.conversation as any
+        for (const key of Object.keys(conversation)) {
+          const value = conversation[key]
+          if (value && typeof value === 'object') {
+            console.log(`🔍 Checking ${key}:`, Object.keys(value))
+            if (value.websocket || value._ws || value.ws) {
+              websocket = value.websocket || value._ws || value.ws
+              console.log(`📡 Found WebSocket via conversation.${key}`)
+              break
+            }
+          }
+        }
+        
+        if (!websocket) {
+          console.error('❌ Unable to access WebSocket for transcript parsing')
+          console.log('💡 Transcript functionality will rely on SDK callbacks only')
+          return
+        }
+      }
+
+      console.log('✅ Successfully accessed WebSocket for transcript parsing')
+
+      // Store original onmessage handler to preserve SDK functionality
+      const originalOnMessage = websocket.onmessage
+
+      // Set up our custom message handler
+      websocket.onmessage = (event: MessageEvent) => {
+        try {
+          // Call original handler first to preserve SDK functionality
+          if (originalOnMessage) {
+            originalOnMessage.call(websocket, event)
+          }
+
+          // Parse the message for transcript events
+          this.parseWebSocketMessage(event.data)
+          
+        } catch (error) {
+          console.error('❌ Error in WebSocket message handler:', error)
+        }
+      }
+
+      console.log('📝 WebSocket transcript parsing setup complete')
+
+    } catch (error) {
+      console.error('❌ Failed to setup WebSocket transcript parsing:', error)
+    }
+  }
+
+  /**
+   * Parse WebSocket messages for transcript events
+   */
+  private parseWebSocketMessage(data: string): void {
+    try {
+      const message = JSON.parse(data)
+      
+      // Log all messages for debugging (can be removed later)
+      console.log('📡 WebSocket message:', message)
+
+      // Handle agent response (final transcript)
+      if (message.type === 'agent_response') {
+        const text = message.text || message.content || message.transcript
+        if (text) {
+          console.log('🤖 Agent final transcript:', text)
+          
+          if (this.callbacks.onAgentTranscript) {
+            this.callbacks.onAgentTranscript(text, Date.now(), true)
+          }
+        }
+      }
+      
+      // Handle tentative agent response (partial/streaming transcript)
+      else if (message.type === 'internal_tentative_agent_response') {
+        const text = message.text || message.content || message.transcript
+        if (text) {
+          console.log('🤖 Agent partial transcript:', text)
+          
+          if (this.callbacks.onAgentTranscript) {
+            const isComplete = message.is_final === true || message.isFinal === true || message.complete === true
+            this.callbacks.onAgentTranscript(text, Date.now(), isComplete)
+          }
+        }
+      }
+      
+      // Handle user transcript
+      else if (message.type === 'user_transcript') {
+        const text = message.text || message.content || message.transcript
+        if (text) {
+          console.log('👤 User transcript:', text)
+          
+          if (this.callbacks.onUserTranscript) {
+            this.callbacks.onUserTranscript(text, Date.now())
+          }
+        }
+      }
+
+      // Handle other possible transcript event types
+      else if (message.type === 'transcript' || message.type === 'transcription') {
+        const text = message.text || message.content || message.transcript
+        const speaker = message.speaker || message.role || 'agent'
+        
+        if (text) {
+          console.log(`📝 Generic transcript (${speaker}):`, text)
+          
+          if (speaker === 'agent' || speaker === 'assistant' || speaker === 'ai') {
+            if (this.callbacks.onAgentTranscript) {
+              const isComplete = message.is_final !== false && message.isFinal !== false
+              this.callbacks.onAgentTranscript(text, Date.now(), isComplete)
+            }
+          } else if (speaker === 'user' || speaker === 'human') {
+            if (this.callbacks.onUserTranscript) {
+              this.callbacks.onUserTranscript(text, Date.now())
+            }
+          }
+        }
+      }
+
+      // Handle audio events (for debugging)
+      else if (message.type === 'audio' || message.type === 'audio_event') {
+        console.log('🔊 Audio event received (no transcript)')
+      }
+
+      // Log unknown message types for debugging
+      else if (message.type && !['ping', 'pong', 'heartbeat', 'connection'].includes(message.type)) {
+        console.log('❓ Unknown message type:', message.type, 'Keys:', Object.keys(message))
+      }
+
+    } catch (error) {
+      // Not JSON or parsing error - ignore silently as some messages might be binary
+      if (error instanceof SyntaxError) {
+        // This is normal for binary audio data
+        return
+      }
+      console.error('❌ Error parsing WebSocket message:', error)
     }
   }
 

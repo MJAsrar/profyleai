@@ -147,6 +147,8 @@ export function useSubtitles() {
   const [isEnabled, setIsEnabled] = useState(true)
 
   const addAgentSubtitle = useCallback((text: string, timestamp: number, isComplete: boolean = true) => {
+    console.log('📝 Adding agent subtitle:', text, 'Complete:', isComplete)
+    
     const subtitle: SubtitleData = {
       text,
       timestamp,

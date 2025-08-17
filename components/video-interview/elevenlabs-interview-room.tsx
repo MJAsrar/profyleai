@@ -613,6 +613,9 @@ export function ElevenLabsInterviewRoom({
                           <div>Stream Error: {streamError || 'None'}</div>
                           <div>Subtitles: {subtitlesEnabled ? '✅' : '❌'}</div>
                           <div>Current Subtitle: {currentSubtitle ? '✅' : '❌'}</div>
+                          <div>Agent Speaking: {isAgentSpeaking ? '✅' : '❌'}</div>
+                          <div>Connection: {connectionStatus}</div>
+                          <div>Subtitle Text: {currentSubtitle?.text ? `"${currentSubtitle.text.slice(0, 30)}..."` : 'None'}</div>
                         </div>
                       </div>
                     )}

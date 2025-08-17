@@ -177,8 +177,9 @@ export class ElevenLabsInterviewService {
       else if (message.source === 'ai' || message.source === 'agent') {
         console.log("🤖 Agent said:", message.message)
         if (message.message && this.callbacks.onAgentTranscript) {
-          // Determine if this is a complete response
-          const isComplete = message.isFinal !== false && message.complete !== false
+          // For real-time streaming effect, treat all agent messages as streaming (incomplete)
+          // This will trigger word-by-word display based on 178 WPM
+          const isComplete = false // Always stream word-by-word for natural effect
           this.callbacks.onAgentTranscript(message.message, Date.now(), isComplete)
         }
       }

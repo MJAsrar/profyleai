@@ -140,28 +140,111 @@ export function SubtitleOverlay({
   )
 }
 
-// Hook for managing subtitle state
+// Hook for managing subtitle state with word-by-word streaming
 export function useSubtitles() {
   const [currentSubtitle, setCurrentSubtitle] = useState<SubtitleData | null>(null)
   const [subtitleHistory, setSubtitleHistory] = useState<SubtitleData[]>([])
   const [isEnabled, setIsEnabled] = useState(true)
+  const [streamingIntervalId, setStreamingIntervalId] = useState<NodeJS.Timeout | null>(null)
+
+  // Calculate timing based on 178 WPM speech rate
+  // 178 words per minute = ~337ms per word
+  const WORDS_PER_MINUTE = 178
+  const MS_PER_WORD = (60 * 1000) / WORDS_PER_MINUTE // ~337ms per word
 
   const addAgentSubtitle = useCallback((text: string, timestamp: number, isComplete: boolean = true) => {
     console.log('📝 Adding agent subtitle:', text, 'Complete:', isComplete)
     
-    const subtitle: SubtitleData = {
-      text,
-      timestamp,
-      isComplete,
-      speaker: 'agent'
+    // Clear any existing streaming interval
+    if (streamingIntervalId) {
+      clearInterval(streamingIntervalId)
+      setStreamingIntervalId(null)
     }
-    
-    setCurrentSubtitle(subtitle)
-    
+
     if (isComplete) {
+      // Show complete text immediately for final responses
+      const subtitle: SubtitleData = {
+        text,
+        timestamp,
+        isComplete: true,
+        speaker: 'agent'
+      }
+      
+      setCurrentSubtitle(subtitle)
       setSubtitleHistory(prev => [...prev, subtitle].slice(-50)) // Keep last 50 subtitles
+    } else {
+      // Start word-by-word streaming for partial responses
+      startWordByWordStreaming(text, timestamp)
     }
-  }, [])
+  }, [streamingIntervalId])
+
+  const startWordByWordStreaming = useCallback((fullText: string, timestamp: number) => {
+    const words = fullText.split(' ')
+    let currentIndex = 0
+    
+    // Show first word immediately
+    if (words.length > 0) {
+      const initialSubtitle: SubtitleData = {
+        text: words[0],
+        timestamp,
+        isComplete: false,
+        speaker: 'agent'
+      }
+      setCurrentSubtitle(initialSubtitle)
+      currentIndex = 1
+    }
+
+    // Stream remaining words
+    if (words.length > 1) {
+      const intervalId = setInterval(() => {
+        if (currentIndex >= words.length) {
+          clearInterval(intervalId)
+          setStreamingIntervalId(null)
+          return
+        }
+
+        // Calculate how many words to show (4-5 words per line)
+        const wordsToShow = Math.min(currentIndex + 1, words.length)
+        const displayText = words.slice(0, wordsToShow).join(' ')
+        
+        const streamingSubtitle: SubtitleData = {
+          text: displayText,
+          timestamp,
+          isComplete: false,
+          speaker: 'agent'
+        }
+        
+        setCurrentSubtitle(streamingSubtitle)
+        currentIndex++
+        
+        // If we've shown all words, mark as complete
+        if (currentIndex >= words.length) {
+          clearInterval(intervalId)
+          setStreamingIntervalId(null)
+          
+          // Update to complete status
+          const completeSubtitle: SubtitleData = {
+            text: fullText,
+            timestamp,
+            isComplete: true,
+            speaker: 'agent'
+          }
+          setCurrentSubtitle(completeSubtitle)
+        }
+      }, MS_PER_WORD)
+      
+      setStreamingIntervalId(intervalId)
+    }
+  }, [MS_PER_WORD])
+
+  // Cleanup interval on unmount
+  useEffect(() => {
+    return () => {
+      if (streamingIntervalId) {
+        clearInterval(streamingIntervalId)
+      }
+    }
+  }, [streamingIntervalId])
 
   const addUserSubtitle = useCallback((text: string, timestamp: number) => {
     const subtitle: SubtitleData = {

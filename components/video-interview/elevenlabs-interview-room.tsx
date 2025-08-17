@@ -83,7 +83,8 @@ export function ElevenLabsInterviewRoom({
     sendMessage,
     clearErrors,
     cleanup,
-    setTranscriptCallbacks
+    setTranscriptCallbacks,
+    addToConversationHistory
   } = useElevenLabsInterviewStore()
 
   const [isInitializing, setIsInitializing] = useState(true)
@@ -105,6 +106,9 @@ export function ElevenLabsInterviewRoom({
     addUserSubtitle,
     toggleSubtitles
   } = useSubtitles()
+  
+  // Track agent messages for conversation history
+  const [lastAgentMessage, setLastAgentMessage] = useState<string | null>(null)
 
   // Setup video stream with retry logic
   const setupVideoStream = async (stream: MediaStream): Promise<void> => {
@@ -303,12 +307,25 @@ export function ElevenLabsInterviewRoom({
   const handleAgentTranscript = useCallback((transcript: string, timestamp: number, isComplete: boolean) => {
     console.log('📝 Agent transcript received:', transcript, 'Complete:', isComplete)
     addAgentSubtitle(transcript, timestamp, isComplete)
-  }, [addAgentSubtitle])
+    
+    // Track the full message for conversation history
+    if (transcript.trim() && transcript !== lastAgentMessage) {
+      setLastAgentMessage(transcript.trim())
+      console.log('✅ Adding agent message to conversation:', transcript.trim())
+      addToConversationHistory('agent', transcript.trim())
+    }
+  }, [addAgentSubtitle, addToConversationHistory, lastAgentMessage])
 
   const handleUserTranscript = useCallback((transcript: string, timestamp: number) => {
     console.log('📝 User transcript received:', transcript)
     addUserSubtitle(transcript, timestamp)
-  }, [addUserSubtitle])
+    
+    // Add to conversation history (user transcripts are usually complete)
+    if (transcript.trim()) {
+      console.log('✅ Adding user message to conversation:', transcript.trim())
+      addToConversationHistory('user', transcript.trim())
+    }
+  }, [addUserSubtitle, addToConversationHistory])
 
   // Setup subtitle callbacks - use refs to avoid stale closures
   const handleAgentTranscriptRef = useRef(handleAgentTranscript)

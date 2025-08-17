@@ -166,7 +166,7 @@ export class ElevenLabsInterviewService {
       console.log('📡 Real-time message received:', message)
 
       // Handle user transcript (interviewee speaking)
-      if (message.type === 'user_transcript') {
+      if (message.source === 'user') {
         console.log("👤 User said:", message.message)
         if (message.message && this.callbacks.onUserTranscript) {
           this.callbacks.onUserTranscript(message.message, Date.now())
@@ -174,28 +174,36 @@ export class ElevenLabsInterviewService {
       }
       
       // Handle agent response (interviewer/AI speaking)
-      else if (message.type === 'agent_response') {
+      else if (message.source === 'ai' || message.source === 'agent') {
         console.log("🤖 Agent said:", message.message)
+        if (message.message && this.callbacks.onAgentTranscript) {
+          // Determine if this is a complete response
+          const isComplete = message.isFinal !== false && message.complete !== false
+          this.callbacks.onAgentTranscript(message.message, Date.now(), isComplete)
+        }
+      }
+      
+      // Handle legacy format with type field (fallback)
+      else if (message.type === 'user_transcript') {
+        console.log("👤 User transcript (legacy):", message.message)
+        if (message.message && this.callbacks.onUserTranscript) {
+          this.callbacks.onUserTranscript(message.message, Date.now())
+        }
+      }
+      else if (message.type === 'agent_response') {
+        console.log("🤖 Agent response (legacy):", message.message)
         if (message.message && this.callbacks.onAgentTranscript) {
           this.callbacks.onAgentTranscript(message.message, Date.now(), true)
         }
       }
       
-      // Handle partial/streaming transcripts
-      else if (message.type === 'transcript') {
-        console.log("📝 Streaming transcript:", message.message, "isFinal:", message.isFinal)
-        if (message.message && this.callbacks.onAgentTranscript) {
-          this.callbacks.onAgentTranscript(
-            message.message,
-            Date.now(),
-            message.isFinal ?? false
-          )
-        }
-      }
-      
       // Handle other message types for debugging
       else {
-        console.log('❓ Unknown message type:', message.type, message)
+        console.log('❓ Unknown message format:', {
+          type: message.type,
+          source: message.source,
+          message: message.message?.substring(0, 100) + '...'
+        })
       }
 
     } catch (error) {

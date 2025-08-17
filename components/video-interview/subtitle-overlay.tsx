@@ -183,7 +183,7 @@ export function useSubtitles() {
     
     // Calculate total chunks needed
     const totalChunks = Math.ceil(words.length / WORDS_PER_CHUNK)
-    
+    //hello
     // Show first chunk immediately
     if (words.length > 0) {
       const firstChunk = words.slice(0, WORDS_PER_CHUNK).join(' ')

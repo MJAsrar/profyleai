@@ -147,10 +147,7 @@ export function useSubtitles() {
   const [isEnabled, setIsEnabled] = useState(true)
   const [streamingIntervalId, setStreamingIntervalId] = useState<NodeJS.Timeout | null>(null)
 
-  // Calculate timing based on 178 WPM speech rate
-  // 178 words per minute = ~337ms per word
-  const WORDS_PER_MINUTE = 178
-  const MS_PER_WORD = (60 * 1000) / WORDS_PER_MINUTE // ~337ms per word
+  // Chunk-based display: 5 words per chunk, 1200ms per chunk
 
   const addAgentSubtitle = useCallback((text: string, timestamp: number, isComplete: boolean = true) => {
     console.log('📝 Adding agent subtitle:', text, 'Complete:', isComplete)
@@ -180,49 +177,34 @@ export function useSubtitles() {
 
   const startWordByWordStreaming = useCallback((fullText: string, timestamp: number) => {
     const words = fullText.split(' ')
-    let currentIndex = 0
+    const WORDS_PER_CHUNK = 5
+    const CHUNK_DISPLAY_TIME = 1200 // 1200ms per chunk
+    let chunkIndex = 0
     
-    // Show first word immediately
+    // Calculate total chunks needed
+    const totalChunks = Math.ceil(words.length / WORDS_PER_CHUNK)
+    
+    // Show first chunk immediately
     if (words.length > 0) {
+      const firstChunk = words.slice(0, WORDS_PER_CHUNK).join(' ')
       const initialSubtitle: SubtitleData = {
-        text: words[0],
+        text: firstChunk,
         timestamp,
         isComplete: false,
         speaker: 'agent'
       }
       setCurrentSubtitle(initialSubtitle)
-      currentIndex = 1
+      chunkIndex = 1
     }
 
-    // Stream remaining words
-    if (words.length > 1) {
+    // Show remaining chunks every 1200ms
+    if (totalChunks > 1) {
       const intervalId = setInterval(() => {
-        if (currentIndex >= words.length) {
-          clearInterval(intervalId)
-          setStreamingIntervalId(null)
-          return
-        }
-
-        // Calculate how many words to show (4-5 words per line)
-        const wordsToShow = Math.min(currentIndex + 1, words.length)
-        const displayText = words.slice(0, wordsToShow).join(' ')
-        
-        const streamingSubtitle: SubtitleData = {
-          text: displayText,
-          timestamp,
-          isComplete: false,
-          speaker: 'agent'
-        }
-        
-        setCurrentSubtitle(streamingSubtitle)
-        currentIndex++
-        
-        // If we've shown all words, mark as complete
-        if (currentIndex >= words.length) {
+        if (chunkIndex >= totalChunks) {
           clearInterval(intervalId)
           setStreamingIntervalId(null)
           
-          // Update to complete status
+          // Show complete text as final state
           const completeSubtitle: SubtitleData = {
             text: fullText,
             timestamp,
@@ -230,12 +212,29 @@ export function useSubtitles() {
             speaker: 'agent'
           }
           setCurrentSubtitle(completeSubtitle)
+          return
         }
-      }, MS_PER_WORD)
+
+        // Get next chunk of 5 words
+        const startIndex = chunkIndex * WORDS_PER_CHUNK
+        const endIndex = Math.min(startIndex + WORDS_PER_CHUNK, words.length)
+        const chunkText = words.slice(startIndex, endIndex).join(' ')
+        
+        const chunkSubtitle: SubtitleData = {
+          text: chunkText,
+          timestamp,
+          isComplete: false,
+          speaker: 'agent'
+        }
+        
+        console.log(`📝 Showing chunk ${chunkIndex + 1}/${totalChunks}:`, chunkText)
+        setCurrentSubtitle(chunkSubtitle)
+        chunkIndex++
+      }, CHUNK_DISPLAY_TIME)
       
       setStreamingIntervalId(intervalId)
     }
-  }, [MS_PER_WORD])
+  }, [])
 
   // Cleanup interval on unmount
   useEffect(() => {

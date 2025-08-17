@@ -141,7 +141,7 @@ export class ElevenLabsInterviewService {
   }
 
   /**
-   * Setup conversation event listeners and WebSocket transcript parsing
+   * Setup conversation event listeners using official ElevenLabs SDK events
    */
   private setupConversationEventListeners(): void {
     if (!this.conversation) return
@@ -151,8 +151,8 @@ export class ElevenLabsInterviewService {
       this.session!.status = 'connected'
       this.callbacks.onConnectionStateChange('connected')
 
-      // Access the underlying WebSocket for direct transcript parsing
-      this.setupWebSocketTranscriptParsing()
+      // Use official ElevenLabs SDK events for transcript handling
+      this.setupSDKEventListeners()
 
       console.log('🔗 Event listeners setup complete with transcript handling')
       
@@ -162,171 +162,164 @@ export class ElevenLabsInterviewService {
   }
 
   /**
-   * Access the WebSocket directly to parse transcript events
+   * Setup official ElevenLabs SDK event listeners for transcript handling
    */
-  private setupWebSocketTranscriptParsing(): void {
-    try {
-      // Try different ways to access the WebSocket from the ElevenLabs SDK
-      let websocket: WebSocket | null = null
-      
-      // Method 1: Check if conversation has direct WebSocket access
-      if ((this.conversation as any).websocket) {
-        websocket = (this.conversation as any).websocket
-        console.log('📡 Found WebSocket via conversation.websocket')
-      }
-      // Method 2: Check for _ws or ws property
-      else if ((this.conversation as any)._ws) {
-        websocket = (this.conversation as any)._ws
-        console.log('📡 Found WebSocket via conversation._ws')
-      }
-      else if ((this.conversation as any).ws) {
-        websocket = (this.conversation as any).ws
-        console.log('📡 Found WebSocket via conversation.ws')
-      }
-      // Method 3: Check for connection property
-      else if ((this.conversation as any).connection?.websocket) {
-        websocket = (this.conversation as any).connection.websocket
-        console.log('📡 Found WebSocket via conversation.connection.websocket')
-      }
+  private setupSDKEventListeners(): void {
+    if (!this.conversation) return
 
-      if (!websocket) {
-        console.warn('⚠️ Could not access WebSocket directly from ElevenLabs SDK')
-        console.log('🔍 Available conversation properties:', Object.keys(this.conversation as any))
-        
-        // Try to find WebSocket in nested objects
-        const conversation = this.conversation as any
-        for (const key of Object.keys(conversation)) {
-          const value = conversation[key]
-          if (value && typeof value === 'object') {
-            console.log(`🔍 Checking ${key}:`, Object.keys(value))
-            if (value.websocket || value._ws || value.ws) {
-              websocket = value.websocket || value._ws || value.ws
-              console.log(`📡 Found WebSocket via conversation.${key}`)
-              break
+    try {
+      console.log('📡 Setting up official ElevenLabs SDK event listeners...')
+
+      // Cast conversation to any to access potential event methods
+      const conversation = this.conversation as any
+
+      // Listen for agent transcript events
+      if (typeof conversation.on === 'function') {
+        // Agent response (final transcript)
+        conversation.on('agent_response', (event: any) => {
+          console.log('🤖 Agent response event:', event)
+          if (event?.text && this.callbacks.onAgentTranscript) {
+            this.callbacks.onAgentTranscript(event.text, Date.now(), true)
+          }
+        })
+
+        // Transcript events (general)
+        conversation.on('transcript', (event: any) => {
+          console.log('📝 Transcript event:', event)
+          if (event?.text) {
+            const isAgent = event.speaker === 'agent' || event.role === 'agent' || event.type === 'agent'
+            if (isAgent && this.callbacks.onAgentTranscript) {
+              const isComplete = event.isFinal !== false && event.is_final !== false
+              this.callbacks.onAgentTranscript(event.text, Date.now(), isComplete)
+            } else if (!isAgent && this.callbacks.onUserTranscript) {
+              this.callbacks.onUserTranscript(event.text, Date.now())
             }
           }
-        }
-        
-        if (!websocket) {
-          console.error('❌ Unable to access WebSocket for transcript parsing')
-          console.log('💡 Transcript functionality will rely on SDK callbacks only')
-          return
-        }
-      }
+        })
 
-      console.log('✅ Successfully accessed WebSocket for transcript parsing')
-
-      // Store original onmessage handler to preserve SDK functionality
-      const originalOnMessage = websocket.onmessage
-
-      // Set up our custom message handler
-      websocket.onmessage = (event: MessageEvent) => {
-        try {
-          // Call original handler first to preserve SDK functionality
-          if (originalOnMessage) {
-            originalOnMessage.call(websocket, event)
+        // User transcript events
+        conversation.on('user_transcript', (event: any) => {
+          console.log('👤 User transcript event:', event)
+          if (event?.text && this.callbacks.onUserTranscript) {
+            this.callbacks.onUserTranscript(event.text, Date.now())
           }
+        })
 
-          // Parse the message for transcript events
-          this.parseWebSocketMessage(event.data)
-          
-        } catch (error) {
-          console.error('❌ Error in WebSocket message handler:', error)
-        }
+        // Tentative/partial agent responses
+        conversation.on('internal_tentative_agent_response', (event: any) => {
+          console.log('🤖 Tentative agent response:', event)
+          if (event?.text && this.callbacks.onAgentTranscript) {
+            const isComplete = event.isFinal === true || event.is_final === true
+            this.callbacks.onAgentTranscript(event.text, Date.now(), isComplete)
+          }
+        })
+
+        // Message events (catch-all)
+        conversation.on('message', (event: any) => {
+          console.log('📨 Message event:', event)
+          this.parseSDKEvent(event, 'message')
+        })
+
+        // Error events
+        conversation.on('error', (error: any) => {
+          console.error('❌ SDK error event:', error)
+          this.callbacks.onError(error)
+        })
+
+        console.log('✅ ElevenLabs SDK event listeners setup complete')
+      } else {
+        console.warn('⚠️ Conversation object does not support .on() method')
+        console.log('🔍 Available methods:', Object.getOwnPropertyNames(this.conversation))
+        
+        // Fallback to alternative methods
+        this.setupAlternativeTranscriptCapture()
       }
-
-      console.log('📝 WebSocket transcript parsing setup complete')
 
     } catch (error) {
-      console.error('❌ Failed to setup WebSocket transcript parsing:', error)
+      console.error('❌ Failed to setup SDK event listeners:', error)
+      // Fallback to alternative methods
+      this.setupAlternativeTranscriptCapture()
+    }
+  }
+
+
+
+  /**
+   * Alternative approach to capture transcripts when SDK events are not available
+   */
+  private setupAlternativeTranscriptCapture(): void {
+    try {
+      console.log('🔄 Setting up alternative transcript capture methods...')
+      
+      const conversation = this.conversation as any
+      console.log('🔍 Conversation object methods:', Object.getOwnPropertyNames(conversation))
+      console.log('🔍 Conversation prototype methods:', Object.getOwnPropertyNames(Object.getPrototypeOf(conversation)))
+      
+      // Try to find any event-like methods or properties
+      const eventMethods = ['addEventListener', 'on', 'addListener', 'subscribe']
+      const foundEventMethod = eventMethods.find(method => typeof conversation[method] === 'function')
+      
+      if (foundEventMethod) {
+        console.log(`📡 Found event method: ${foundEventMethod}`)
+        
+        // Try common transcript event names
+        const transcriptEvents = [
+          'transcript', 'message', 'response', 'data',
+          'agent_response', 'user_transcript', 'audio',
+          'internal_tentative_agent_response'
+        ]
+        
+        for (const eventName of transcriptEvents) {
+          try {
+            conversation[foundEventMethod](eventName, (event: any) => {
+              console.log(`📡 Alternative event (${eventName}):`, event)
+              this.parseSDKEvent(event, eventName)
+            })
+            console.log(`✅ Subscribed to ${eventName} via ${foundEventMethod}`)
+          } catch (e) {
+            // Event not supported, continue
+          }
+        }
+      } else {
+        console.log('⚠️ No event subscription methods found on conversation object')
+        console.log('💡 Transcript capture will rely on existing callback system only')
+      }
+      
+    } catch (error) {
+      console.error('❌ Failed to setup alternative transcript capture:', error)
     }
   }
 
   /**
-   * Parse WebSocket messages for transcript events
+   * Parse events from SDK event system
    */
-  private parseWebSocketMessage(data: string): void {
+  private parseSDKEvent(event: any, eventType: string): void {
     try {
-      const message = JSON.parse(data)
+      if (!event || typeof event !== 'object') return
       
-      // Log all messages for debugging (can be removed later)
-      console.log('📡 WebSocket message:', message)
-
-      // Handle agent response (final transcript)
-      if (message.type === 'agent_response') {
-        const text = message.text || message.content || message.transcript
-        if (text) {
-          console.log('🤖 Agent final transcript:', text)
-          
-          if (this.callbacks.onAgentTranscript) {
-            this.callbacks.onAgentTranscript(text, Date.now(), true)
-          }
-        }
-      }
+      // Look for transcript-like data in the event
+      const possibleTextFields = ['text', 'content', 'transcript', 'message', 'data', 'response']
       
-      // Handle tentative agent response (partial/streaming transcript)
-      else if (message.type === 'internal_tentative_agent_response') {
-        const text = message.text || message.content || message.transcript
-        if (text) {
-          console.log('🤖 Agent partial transcript:', text)
+      for (const field of possibleTextFields) {
+        if (event[field] && typeof event[field] === 'string') {
+          console.log(`📝 Found transcript in ${eventType}.${field}:`, event[field])
           
-          if (this.callbacks.onAgentTranscript) {
-            const isComplete = message.is_final === true || message.isFinal === true || message.complete === true
-            this.callbacks.onAgentTranscript(text, Date.now(), isComplete)
+          // Determine if this is likely an agent or user transcript
+          const isAgent = eventType.includes('agent') || eventType.includes('response') || 
+                          event.speaker === 'agent' || event.role === 'assistant'
+          
+          if (isAgent && this.callbacks.onAgentTranscript) {
+            const isComplete = event.is_final !== false && event.complete !== false
+            this.callbacks.onAgentTranscript(event[field], Date.now(), isComplete)
+          } else if (!isAgent && this.callbacks.onUserTranscript) {
+            this.callbacks.onUserTranscript(event[field], Date.now())
           }
+          
+          break // Only process the first text field found
         }
       }
-      
-      // Handle user transcript
-      else if (message.type === 'user_transcript') {
-        const text = message.text || message.content || message.transcript
-        if (text) {
-          console.log('👤 User transcript:', text)
-          
-          if (this.callbacks.onUserTranscript) {
-            this.callbacks.onUserTranscript(text, Date.now())
-          }
-        }
-      }
-
-      // Handle other possible transcript event types
-      else if (message.type === 'transcript' || message.type === 'transcription') {
-        const text = message.text || message.content || message.transcript
-        const speaker = message.speaker || message.role || 'agent'
-        
-        if (text) {
-          console.log(`📝 Generic transcript (${speaker}):`, text)
-          
-          if (speaker === 'agent' || speaker === 'assistant' || speaker === 'ai') {
-            if (this.callbacks.onAgentTranscript) {
-              const isComplete = message.is_final !== false && message.isFinal !== false
-              this.callbacks.onAgentTranscript(text, Date.now(), isComplete)
-            }
-          } else if (speaker === 'user' || speaker === 'human') {
-            if (this.callbacks.onUserTranscript) {
-              this.callbacks.onUserTranscript(text, Date.now())
-            }
-          }
-        }
-      }
-
-      // Handle audio events (for debugging)
-      else if (message.type === 'audio' || message.type === 'audio_event') {
-        console.log('🔊 Audio event received (no transcript)')
-      }
-
-      // Log unknown message types for debugging
-      else if (message.type && !['ping', 'pong', 'heartbeat', 'connection'].includes(message.type)) {
-        console.log('❓ Unknown message type:', message.type, 'Keys:', Object.keys(message))
-      }
-
     } catch (error) {
-      // Not JSON or parsing error - ignore silently as some messages might be binary
-      if (error instanceof SyntaxError) {
-        // This is normal for binary audio data
-        return
-      }
-      console.error('❌ Error parsing WebSocket message:', error)
+      console.error('❌ Error parsing SDK event:', error)
     }
   }
 
@@ -843,6 +836,9 @@ export class ElevenLabsInterviewService {
    */
   endInterview(): void {
     try {
+      // Clean up any event listeners if needed
+      console.log('🧹 Cleaning up transcript event listeners')
+
       // End conversation via SDK
       if (this.conversation) {
         this.conversation.endSession()

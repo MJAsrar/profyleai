@@ -118,39 +118,19 @@ export class ElevenLabsInterviewService {
       // Request microphone access (already done, but SDK might need it)
       await navigator.mediaDevices.getUserMedia({ audio: true })
 
-            // Start conversation with dynamic variables
+      // Start conversation with dynamic variables
       this.conversation = await Conversation.startSession({
         agentId: this.config.agentId,
         connectionType: 'websocket',
         
         // Pass all our context as dynamic variables
-        dynamicVariables: dynamicVariables,
-        
-        // Try to add callback options if supported
-        callbacks: {
-          onMessage: (message: any) => {
-            console.log('📥 ElevenLabs onMessage:', message)
-            this.handleConversationMessage(message)
-          },
-          onTranscript: (transcript: any) => {
-            console.log('📝 ElevenLabs onTranscript:', transcript)
-            this.handleTranscriptEvent(transcript)
-          },
-          onAudio: (audio: any) => {
-            console.log('🔊 ElevenLabs onAudio:', audio)
-            this.handleAudioEvent(audio)
-          },
-          onResponse: (response: any) => {
-            console.log('📤 ElevenLabs onResponse:', response)
-            this.handleResponseEvent(response)
-          }
-        }
-      } as any)
+        dynamicVariables: dynamicVariables
+      })
 
       console.log('✅ ElevenLabs conversation started with dynamic variables')
       
-      // Set up event listeners if available
-      this.setupConversationEventListeners()
+      // Set up transcript events
+      this.setupTranscriptEvents()
 
       console.log('✅ ElevenLabs conversation started successfully')
       
@@ -161,112 +141,59 @@ export class ElevenLabsInterviewService {
   }
 
   /**
-   * Setup conversation event listeners using official ElevenLabs SDK events
+   * Setup ElevenLabs SDK transcript events for real-time streaming
    */
-  private setupConversationEventListeners(): void {
+  private setupTranscriptEvents(): void {
     if (!this.conversation) return
 
     try {
+      console.log('📡 Setting up ElevenLabs transcript events...')
+
       // Update session status
       this.session!.status = 'connected'
       this.callbacks.onConnectionStateChange('connected')
 
-      // Use official ElevenLabs SDK events for transcript handling
-      this.setupSDKEventListeners()
-
-      console.log('🔗 Event listeners setup complete with transcript handling')
-      
-    } catch (error) {
-      console.error('❌ Failed to setup event listeners:', error)
-    }
-  }
-
-  /**
-   * Setup official ElevenLabs SDK event listeners for transcript handling
-   */
-  private setupSDKEventListeners(): void {
-    if (!this.conversation) return
-
-    try {
-      console.log('📡 Setting up official ElevenLabs SDK event listeners...')
-
-      // Cast conversation to any to access potential event methods
       const conversation = this.conversation as any
 
-      // Listen for agent transcript events
-      if (typeof conversation.on === 'function') {
-        // Agent response (final transcript)
-        conversation.on('agent_response', (event: any) => {
-          console.log('🤖 Agent response event:', event)
-          if (event?.text && this.callbacks.onAgentTranscript) {
-            this.callbacks.onAgentTranscript(event.text, Date.now(), true)
-          }
-        })
+      // 🔴 User speech → transcript
+      conversation.on("user_transcript", (event: any) => {
+        console.log("👤 User transcript (streaming):", event.text)
+        if (event?.text && this.callbacks.onUserTranscript) {
+          this.callbacks.onUserTranscript(event.text, Date.now())
+        }
+      })
 
-        // Transcript events (general)
-        conversation.on('transcript', (event: any) => {
-          console.log('📝 Transcript event:', event)
-          if (event?.text) {
-            const isAgent = event.speaker === 'agent' || event.role === 'agent' || event.type === 'agent'
-            if (isAgent && this.callbacks.onAgentTranscript) {
-              const isComplete = event.isFinal !== false && event.is_final !== false
-              this.callbacks.onAgentTranscript(event.text, Date.now(), isComplete)
-            } else if (!isAgent && this.callbacks.onUserTranscript) {
-              this.callbacks.onUserTranscript(event.text, Date.now())
-            }
-          }
-        })
+      // 🟢 Agent speech → transcript (real-time streaming)
+      conversation.on("transcript", (event: any) => {
+        console.log("🤖 Agent transcript (streaming):", event.text, "isFinal:", event.isFinal)
+        if (event?.text && this.callbacks.onAgentTranscript) {
+          this.callbacks.onAgentTranscript(
+            event.text,
+            Date.now(),
+            event.isFinal ?? false
+          )
+        }
+      })
 
-        // User transcript events
-        conversation.on('user_transcript', (event: any) => {
-          console.log('👤 User transcript event:', event)
-          if (event?.text && this.callbacks.onUserTranscript) {
-            this.callbacks.onUserTranscript(event.text, Date.now())
-          }
-        })
+      // Agent response events (optional)
+      conversation.on("agent_response", (event: any) => {
+        console.log("🤖 Agent response:", event)
+        if (event?.text && this.callbacks.onAgentTranscript) {
+          this.callbacks.onAgentTranscript(event.text, Date.now(), true)
+        }
+      })
 
-        // Tentative/partial agent responses
-        conversation.on('internal_tentative_agent_response', (event: any) => {
-          console.log('🤖 Tentative agent response:', event)
-          if (event?.text && this.callbacks.onAgentTranscript) {
-            const isComplete = event.isFinal === true || event.is_final === true
-            this.callbacks.onAgentTranscript(event.text, Date.now(), isComplete)
-          }
-        })
+      // Error handling
+      conversation.on("error", (err: any) => {
+        console.error("❌ Conversation error:", err)
+        this.callbacks.onError(err)
+      })
 
-        // Message events (catch-all)
-        conversation.on('message', (event: any) => {
-          console.log('📨 Message event:', event)
-          this.parseSDKEvent(event, 'message')
-        })
-
-        // Error events
-        conversation.on('error', (error: any) => {
-          console.error('❌ SDK error event:', error)
-          this.callbacks.onError(error)
-        })
-
-        console.log('✅ ElevenLabs SDK event listeners setup complete')
-      } else {
-        console.warn('⚠️ Conversation object does not support .on() method')
-        console.log('🔍 Available methods:', Object.getOwnPropertyNames(this.conversation))
-        console.log('🔍 Conversation constructor:', this.conversation.constructor.name)
-        console.log('🔍 Conversation prototype:', Object.getOwnPropertyNames(Object.getPrototypeOf(this.conversation)))
-        
-        // Try to find any callback-related methods
-        const conversation = this.conversation as any
-        const callbackMethods = Object.getOwnPropertyNames(conversation).filter(name => 
-          name.includes('callback') || name.includes('handler') || name.includes('listener')
-        )
-        console.log('🔍 Callback-related methods:', callbackMethods)
-        
-        // Fallback to alternative methods
-        this.setupAlternativeTranscriptCapture()
-      }
-
+      console.log('✅ ElevenLabs transcript events setup complete')
+      
     } catch (error) {
-      console.error('❌ Failed to setup SDK event listeners:', error)
-      // Fallback to alternative methods
+      console.error('❌ Failed to setup transcript events:', error)
+      console.log('💡 Falling back to alternative methods...')
       this.setupAlternativeTranscriptCapture()
     }
   }
@@ -302,7 +229,10 @@ export class ElevenLabsInterviewService {
           try {
             conversation[foundEventMethod](eventName, (event: any) => {
               console.log(`📡 Alternative event (${eventName}):`, event)
-              this.parseSDKEvent(event, eventName)
+              // Process event for transcript data
+              if (event?.text && this.callbacks.onAgentTranscript) {
+                this.callbacks.onAgentTranscript(event.text, Date.now(), event.isFinal ?? true)
+              }
             })
             console.log(`✅ Subscribed to ${eventName} via ${foundEventMethod}`)
           } catch (e) {
@@ -319,163 +249,7 @@ export class ElevenLabsInterviewService {
     }
   }
 
-  /**
-   * Parse events from SDK event system
-   */
-  private parseSDKEvent(event: any, eventType: string): void {
-    try {
-      if (!event || typeof event !== 'object') return
-      
-      // Look for transcript-like data in the event
-      const possibleTextFields = ['text', 'content', 'transcript', 'message', 'data', 'response']
-      
-      for (const field of possibleTextFields) {
-        if (event[field] && typeof event[field] === 'string') {
-          console.log(`📝 Found transcript in ${eventType}.${field}:`, event[field])
-          
-          // Determine if this is likely an agent or user transcript
-          const isAgent = eventType.includes('agent') || eventType.includes('response') || 
-                          event.speaker === 'agent' || event.role === 'assistant'
-          
-          if (isAgent && this.callbacks.onAgentTranscript) {
-            const isComplete = event.is_final !== false && event.complete !== false
-            this.callbacks.onAgentTranscript(event[field], Date.now(), isComplete)
-          } else if (!isAgent && this.callbacks.onUserTranscript) {
-            this.callbacks.onUserTranscript(event[field], Date.now())
-          }
-          
-          break // Only process the first text field found
-        }
-      }
-    } catch (error) {
-      console.error('❌ Error parsing SDK event:', error)
-    }
-  }
 
-  /**
-   * Handle conversation messages from ElevenLabs SDK
-   */
-  private handleConversationMessage(message: any): void {
-    try {
-      console.log('📥 Processing conversation message:', message)
-      
-      // Check for transcript data in the message
-      if (message.text || message.content || message.transcript) {
-        const text = message.text || message.content || message.transcript
-        console.log('📝 Found transcript in message:', text)
-        
-        if (this.callbacks.onAgentTranscript) {
-          this.callbacks.onAgentTranscript(text, Date.now(), true)
-        }
-      }
-      
-      // Check for audio data
-      if (message.audio) {
-        console.log('🔊 Found audio in message')
-        this.handleAudioWithTranscript(message.audio, message.text || message.content || '')
-      }
-    } catch (error) {
-      console.error('❌ Error handling conversation message:', error)
-    }
-  }
-
-  /**
-   * Handle transcript events from ElevenLabs SDK
-   */
-  private handleTranscriptEvent(transcript: any): void {
-    try {
-      console.log('📝 Processing transcript event:', transcript)
-      
-      const text = transcript.text || transcript.content || transcript.transcript || transcript
-      if (typeof text === 'string' && text.trim()) {
-        console.log('📝 Extracted transcript text:', text)
-        
-        const isAgent = transcript.speaker === 'agent' || transcript.role === 'agent' || !transcript.speaker
-        if (isAgent && this.callbacks.onAgentTranscript) {
-          const isComplete = transcript.isFinal !== false && transcript.is_final !== false
-          this.callbacks.onAgentTranscript(text, Date.now(), isComplete)
-        } else if (!isAgent && this.callbacks.onUserTranscript) {
-          this.callbacks.onUserTranscript(text, Date.now())
-        }
-      }
-    } catch (error) {
-      console.error('❌ Error handling transcript event:', error)
-    }
-  }
-
-  /**
-   * Handle audio events from ElevenLabs SDK
-   */
-  private handleAudioEvent(audio: any): void {
-    try {
-      console.log('🔊 Processing audio event:', audio)
-      
-      // If audio comes with text, use the onAgentSpeaking callback
-      if (audio.text || audio.transcript) {
-        const text = audio.text || audio.transcript
-        console.log('📝 Audio has transcript:', text)
-        this.handleAudioWithTranscript(audio.data || audio, text)
-      }
-    } catch (error) {
-      console.error('❌ Error handling audio event:', error)
-    }
-  }
-
-  /**
-   * Handle response events from ElevenLabs SDK
-   */
-  private handleResponseEvent(response: any): void {
-    try {
-      console.log('📤 Processing response event:', response)
-      
-      // Check for transcript in response
-      if (response.text || response.content || response.transcript) {
-        const text = response.text || response.content || response.transcript
-        console.log('📝 Found transcript in response:', text)
-        
-        if (this.callbacks.onAgentTranscript) {
-          this.callbacks.onAgentTranscript(text, Date.now(), true)
-        }
-      }
-    } catch (error) {
-      console.error('❌ Error handling response event:', error)
-    }
-  }
-
-  /**
-   * Handle audio with transcript using the onAgentSpeaking callback
-   */
-  private handleAudioWithTranscript(audio: any, text: string): void {
-    try {
-      if (this.callbacks.onAgentSpeaking && text) {
-        // Convert audio to ArrayBuffer if needed
-        let audioBuffer: ArrayBuffer
-        
-        if (audio instanceof ArrayBuffer) {
-          audioBuffer = audio
-        } else if (audio instanceof Uint8Array) {
-          audioBuffer = new ArrayBuffer(audio.length)
-          new Uint8Array(audioBuffer).set(audio)
-        } else if (typeof audio === 'string') {
-          // Assume base64 encoded audio
-          const binaryString = atob(audio)
-          const bytes = new Uint8Array(binaryString.length)
-          for (let i = 0; i < binaryString.length; i++) {
-            bytes[i] = binaryString.charCodeAt(i)
-          }
-          audioBuffer = bytes.buffer
-        } else {
-          console.warn('⚠️ Unknown audio format:', typeof audio)
-          return
-        }
-        
-        console.log('🤖 Calling onAgentSpeaking with audio and text:', text.substring(0, 50) + '...')
-        this.callbacks.onAgentSpeaking(audioBuffer, text)
-      }
-    } catch (error) {
-      console.error('❌ Error handling audio with transcript:', error)
-    }
-  }
 
   /**
    * Prepare comprehensive dynamic variables from job and resume data

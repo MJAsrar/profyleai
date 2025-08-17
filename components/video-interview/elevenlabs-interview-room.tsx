@@ -376,9 +376,19 @@ export function ElevenLabsInterviewRoom({
     setIsFullscreen(!isFullscreen)
   }
 
-  // Calculate session duration
+  // Calculate session duration with real-time updates
+  const [currentTime, setCurrentTime] = useState(Date.now())
+  
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(Date.now())
+    }, 1000)
+    
+    return () => clearInterval(timer)
+  }, [])
+  
   const sessionDuration = sessionStartTime 
-    ? Math.floor((Date.now() - sessionStartTime.getTime()) / 1000)
+    ? Math.floor((currentTime - sessionStartTime.getTime()) / 1000)
     : 0
 
   const minutes = Math.floor(sessionDuration / 60)
@@ -478,15 +488,33 @@ export function ElevenLabsInterviewRoom({
           </Alert>
         )}
 
-        <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 h-[calc(100vh-8rem)]">
-          {/* Main Video Area */}
-          <div className="xl:col-span-3">
-            <Card className="h-full shadow-xl border-0 bg-white/90 backdrop-blur-sm">
-              <CardContent className="p-0 h-full">
-                <div className={`relative h-full rounded-xl overflow-hidden bg-gradient-to-br from-gray-900 to-gray-800 ${isFullscreen ? 'fixed inset-0 z-50' : ''}`}>
-                  {/* Video Stream */}
-                  <div className="relative h-full">
-                    {/* Always show video element, but conditionally style it */}
+        {/* Video Call Layout */}
+        <div className="h-[60vh] mb-4">
+          <Card className="h-full shadow-xl border-0 bg-white/90 backdrop-blur-sm">
+            <CardContent className="p-0 h-full">
+              <div className={`relative h-full rounded-xl overflow-hidden bg-gradient-to-br from-gray-900 to-gray-800 ${isFullscreen ? 'fixed inset-0 z-50' : ''}`}>
+                <div className="grid grid-cols-2 h-full">
+                  {/* User Video Side */}
+                  <div className="relative bg-gray-900 border-r-2 border-gray-600/50">
+                    <div className="absolute top-4 left-4 z-10">
+                      <div className="px-3 py-2 bg-black/70 backdrop-blur-sm rounded-lg border border-white/10">
+                        <span className="text-white text-sm font-medium">You</span>
+                      </div>
+                    </div>
+                    
+                    {/* User Speaking Indicator */}
+                    {isUserSpeaking && (
+                      <div className="absolute top-4 right-4 z-10">
+                        <div className="px-3 py-2 bg-green-500/90 backdrop-blur-md rounded-lg border border-green-400/50">
+                          <div className="flex items-center gap-2">
+                            <Waves className="w-4 h-4 text-white animate-pulse" />
+                            <span className="text-white text-sm font-medium">Speaking</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* User Video */}
                     <video
                       ref={localVideoRef}
                       autoPlay
@@ -524,230 +552,240 @@ export function ElevenLabsInterviewRoom({
                         </div>
                       </div>
                     )}
+                  </div>
+                  
+                  {/* AI Avatar Side */}
+                  <div className="relative bg-gradient-to-br from-blue-900 to-indigo-900 flex items-center justify-center overflow-hidden">
+                    {/* Subtle background pattern */}
+                    <div className="absolute inset-0 opacity-10">
+                      <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,white_0%,transparent_50%)]"></div>
+                      <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,white_0%,transparent_50%)]"></div>
+                    </div>
                     
-                    {/* Video Controls Overlay */}
-                    <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2">
-                      <div className="flex items-center gap-3 px-4 py-3 bg-black/50 backdrop-blur-md rounded-2xl border border-white/10">
-                        {/* Video Toggle */}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={toggleVideo}
-                          className={`w-12 h-12 rounded-full ${isVideoEnabled ? 'bg-white/20 hover:bg-white/30' : 'bg-red-500 hover:bg-red-600'} text-white border-0`}
-                        >
-                          {isVideoEnabled ? <Camera className="w-5 h-5" /> : <CameraOff className="w-5 h-5" />}
-                        </Button>
-                        
-                        {/* Mic Toggle (Visual only) */}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={toggleMic}
-                          className={`w-12 h-12 rounded-full ${isMicEnabled ? 'bg-white/20 hover:bg-white/30' : 'bg-red-500 hover:bg-red-600'} text-white border-0`}
-                        >
-                          {isMicEnabled ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
-                        </Button>
-                        
-                        {/* Fullscreen Toggle */}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={toggleFullscreen}
-                          className="w-12 h-12 rounded-full bg-white/20 hover:bg-white/30 text-white border-0"
-                        >
-                          {isFullscreen ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
-                        </Button>
-                        
-                        {/* Subtitles Toggle */}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={toggleSubtitles}
-                          className={`w-12 h-12 rounded-full ${subtitlesEnabled ? 'bg-white/20 hover:bg-white/30' : 'bg-red-500 hover:bg-red-600'} text-white border-0`}
-                          title={subtitlesEnabled ? 'Hide Subtitles' : 'Show Subtitles'}
-                        >
-                          <MessageSquare className="w-5 h-5" />
-                        </Button>
+                    <div className="absolute top-4 left-4 z-10">
+                      <div className="px-3 py-2 bg-black/70 backdrop-blur-sm rounded-lg border border-white/10">
+                        <span className="text-white text-sm font-medium">Sarah (AI)</span>
                       </div>
                     </div>
-
-                    {/* AI Avatar */}
-                    <div className="absolute top-6 right-6">
+                    
+                    {/* AI Speaking Indicator */}
+                    {isAgentSpeaking && (
+                      <div className="absolute top-4 right-4 z-10">
+                        <div className="px-3 py-2 bg-blue-500/90 backdrop-blur-md rounded-lg border border-blue-400/50">
+                          <div className="flex items-center gap-2">
+                            <Waves className="w-4 h-4 text-white animate-pulse" />
+                            <span className="text-white text-sm font-medium">Speaking</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Large AI Avatar */}
+                    <div className="scale-[1.8] z-10">
                       <AiAvatar 
                         isActive={connectionStatus === 'connected' || connectionStatus === 'speaking'}
                         isSpeaking={isAgentSpeaking}
                         name="Sarah"
                       />
                     </div>
-
-                    {/* User Speaking Indicator */}
-                    {isUserSpeaking && (
-                      <div className="absolute top-6 left-6">
-                        <div className="px-4 py-3 bg-green-500/90 backdrop-blur-md rounded-2xl border border-green-400/50">
-                          <div className="flex items-center gap-3">
-                            <div className="flex items-center justify-center w-8 h-8 bg-white/20 rounded-full">
-                              <Waves className="w-4 h-4 text-white animate-pulse" />
-                            </div>
-                            <div className="text-white">
-                              <p className="text-sm font-medium">You're speaking</p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Subtitle Overlay */}
-                    <SubtitleOverlay
-                      currentSubtitle={currentSubtitle}
-                      isVisible={subtitlesEnabled}
-                      position="bottom"
-                    />
-
-                    {/* Debug Info (only in development) */}
-                    {process.env.NODE_ENV === 'development' && (
-                      <div className="absolute bottom-6 left-6">
-                        <div className="px-3 py-2 bg-black/70 backdrop-blur-sm rounded-lg text-white text-xs">
-                          <div>Stream: {localStream ? '✅' : '❌'}</div>
-                          <div>Video Enabled: {isVideoEnabled ? '✅' : '❌'}</div>
-                          <div>Video Ref: {localVideoRef.current ? '✅' : '❌'}</div>
-                          <div>Stream Error: {streamError || 'None'}</div>
-                          <div>Subtitles: {subtitlesEnabled ? '✅' : '❌'}</div>
-                          <div>Current Subtitle: {currentSubtitle ? '✅' : '❌'}</div>
-                          <div>Agent Speaking: {isAgentSpeaking ? '✅' : '❌'}</div>
-                          <div>Connection: {connectionStatus}</div>
-                          <div>Subtitle Text: {currentSubtitle?.text ? `"${currentSubtitle.text.slice(0, 30)}..."` : 'None'}</div>
-                        </div>
-                      </div>
-                    )}
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
+                
+                {/* Video Controls Overlay */}
+                <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2">
+                  <div className="flex items-center gap-3 px-4 py-3 bg-black/50 backdrop-blur-md rounded-2xl border border-white/10">
+                    {/* Video Toggle */}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={toggleVideo}
+                      className={`w-12 h-12 rounded-full ${isVideoEnabled ? 'bg-white/20 hover:bg-white/30' : 'bg-red-500 hover:bg-red-600'} text-white border-0`}
+                    >
+                      {isVideoEnabled ? <Camera className="w-5 h-5" /> : <CameraOff className="w-5 h-5" />}
+                    </Button>
+                    
+                    {/* Mic Toggle (Visual only) */}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={toggleMic}
+                      className={`w-12 h-12 rounded-full ${isMicEnabled ? 'bg-white/20 hover:bg-white/30' : 'bg-red-500 hover:bg-red-600'} text-white border-0`}
+                    >
+                      {isMicEnabled ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
+                    </Button>
+                    
+                    {/* Fullscreen Toggle */}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={toggleFullscreen}
+                      className="w-12 h-12 rounded-full bg-white/20 hover:bg-white/30 text-white border-0"
+                    >
+                      {isFullscreen ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
+                    </Button>
+                  </div>
+                </div>
 
-          {/* Enhanced Sidebar */}
-          <div className="space-y-4 h-full overflow-y-auto">
-            {/* Conversation History */}
-            <Card className="shadow-lg border-0 bg-white/90 backdrop-blur-sm">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center gap-2 text-base">
-                    <MessageSquare className="w-4 h-4 text-blue-600" />
-                    Conversation
+                {/* Debug Info (only in development) */}
+                {process.env.NODE_ENV === 'development' && (
+                  <div className="absolute bottom-6 left-6">
+                    <div className="px-3 py-2 bg-black/70 backdrop-blur-sm rounded-lg text-white text-xs">
+                      <div>Stream: {localStream ? '✅' : '❌'}</div>
+                      <div>Video Enabled: {isVideoEnabled ? '✅' : '❌'}</div>
+                      <div>Video Ref: {localVideoRef.current ? '✅' : '❌'}</div>
+                      <div>Stream Error: {streamError || 'None'}</div>
+                      <div>Agent Speaking: {isAgentSpeaking ? '✅' : '❌'}</div>
+                      <div>Connection: {connectionStatus}</div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Full Width Conversation Panel */}
+        <div className="h-[35vh]">
+          <Card className="h-full shadow-xl border-0 bg-white/90 backdrop-blur-sm">
+            <CardHeader className="pb-3 border-b">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <MessageSquare className="w-5 h-5 text-blue-600" />
+                    Interview Conversation
                   </CardTitle>
                   <Badge variant="secondary" className="bg-blue-100 text-blue-700">
-                    {conversationHistory.length}
+                    {conversationHistory.length} messages
                   </Badge>
                 </div>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <div className="space-y-3 max-h-80 overflow-y-auto custom-scrollbar">
+                <div className="flex items-center gap-4">
+                  {/* Stats */}
+                  <div className="flex items-center gap-4 text-sm text-gray-600">
+                    <div className="flex items-center gap-1">
+                      <Clock className="w-4 h-4" />
+                      <span className="font-mono font-medium">
+                        {minutes}:{seconds.toString().padStart(2, '0')}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Zap className="w-4 h-4" />
+                      <span>{questions.length} questions</span>
+                    </div>
+                  </div>
+                  
+                  {/* Text Input Toggle */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowTextInput(!showTextInput)}
+                    className="flex items-center gap-2"
+                  >
+                    <Send className="w-4 h-4" />
+                    {showTextInput ? 'Hide Input' : 'Type Message'}
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="p-0 h-[calc(100%-4rem)]">
+              <div className="grid grid-cols-1 h-full">
+                {/* Conversation Messages */}
+                <div className="overflow-y-auto p-4 space-y-4 custom-scrollbar">
                   {conversationHistory.length === 0 ? (
-                    <div className="text-center py-8">
-                      <MessageSquare className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                      <p className="text-gray-500 text-sm">
-                        Conversation will appear here...
+                    <div className="text-center py-12">
+                      <MessageSquare className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                      <p className="text-gray-500 text-lg font-medium">
+                        Interview conversation will appear here
+                      </p>
+                      <p className="text-gray-400 text-sm mt-2">
+                        Start speaking to begin your AI interview session
                       </p>
                     </div>
                   ) : (
                     conversationHistory.map((message, index) => (
                       <div 
                         key={index}
-                        className={`p-3 rounded-xl text-sm transition-all ${
-                          message.role === 'agent' 
-                            ? 'bg-gradient-to-r from-blue-50 to-blue-100 border-l-4 border-blue-500' 
-                            : 'bg-gradient-to-r from-green-50 to-green-100 border-l-4 border-green-500'
+                        className={`flex gap-4 ${
+                          message.role === 'agent' ? 'justify-start' : 'justify-end'
                         }`}
                       >
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center gap-2">
-                            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                              message.role === 'agent' ? 'bg-blue-500 text-white' : 'bg-green-500 text-white'
-                            }`}>
-                              {message.role === 'agent' ? 'AI' : 'You'}
+                        {/* Avatar */}
+                        {message.role === 'agent' && (
+                          <div className="flex-shrink-0">
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center">
+                              <span className="text-white text-sm font-bold">AI</span>
                             </div>
-                            <span className="text-xs text-gray-600 font-medium">
-                              {message.timestamp.toLocaleTimeString()}
-                            </span>
+                          </div>
+                        )}
+                        
+                        {/* Message Content */}
+                        <div className={`max-w-2xl ${
+                          message.role === 'agent' ? 'mr-auto' : 'ml-auto'
+                        }`}>
+                          <div className={`p-4 rounded-2xl ${
+                            message.role === 'agent' 
+                              ? 'bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200' 
+                              : 'bg-gradient-to-r from-green-50 to-green-100 border border-green-200'
+                          }`}>
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className={`text-sm font-semibold ${
+                                message.role === 'agent' ? 'text-blue-700' : 'text-green-700'
+                              }`}>
+                                {message.role === 'agent' ? 'Sarah (AI Interviewer)' : 'You'}
+                              </span>
+                              <span className="text-xs text-gray-500">
+                                {message.timestamp.toLocaleTimeString()}
+                              </span>
+                            </div>
+                            <p className="text-gray-800 leading-relaxed">{message.content}</p>
                           </div>
                         </div>
-                        <p className="text-gray-800 leading-relaxed">{message.content}</p>
+                        
+                        {/* User Avatar */}
+                        {message.role === 'user' && (
+                          <div className="flex-shrink-0">
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-r from-green-500 to-emerald-600 flex items-center justify-center">
+                              <User className="w-5 h-5 text-white" />
+                            </div>
+                          </div>
+                        )}
                       </div>
                     ))
                   )}
                 </div>
-              </CardContent>
-            </Card>
-
-            {/* Quick Stats */}
-            <Card className="shadow-lg border-0 bg-white/90 backdrop-blur-sm">
-              <CardHeader className="pb-3">
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <Zap className="w-4 h-4 text-purple-600" />
-                  Interview Stats
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="text-center p-3 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg">
-                    <div className="text-2xl font-bold text-blue-600">{questions.length}</div>
-                    <div className="text-xs text-blue-700">Questions</div>
+                
+                {/* Text Input (Optional) */}
+                {showTextInput && (
+                  <div className="border-t p-4 bg-gray-50">
+                    <div className="flex gap-3">
+                      <textarea
+                        value={textMessage}
+                        onChange={(e) => setTextMessage(e.target.value)}
+                        placeholder="Type a message to the AI interviewer..."
+                        className="flex-1 p-3 border border-gray-200 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        rows={2}
+                        disabled={connectionStatus !== 'connected'}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault()
+                            handleSendMessage()
+                          }
+                        }}
+                      />
+                      <Button
+                        onClick={handleSendMessage}
+                        disabled={!textMessage.trim() || connectionStatus !== 'connected'}
+                        className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 px-6"
+                      >
+                        <Send className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
-                  <div className="text-center p-3 bg-gradient-to-br from-green-50 to-green-100 rounded-lg">
-                    <div className="text-2xl font-bold text-green-600">{conversationHistory.length}</div>
-                    <div className="text-xs text-green-700">Messages</div>
-                  </div>
-                </div>
-                <div className="mt-3 p-3 bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg text-center">
-                  <div className="text-lg font-bold text-purple-600 font-mono">
-                    {minutes}:{seconds.toString().padStart(2, '0')}
-                  </div>
-                  <div className="text-xs text-purple-700">Duration</div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Text Input (Optional) */}
-            <Card className="shadow-lg border-0 bg-white/90 backdrop-blur-sm">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-base">Quick Message</CardTitle>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowTextInput(!showTextInput)}
-                    className="h-7 text-xs"
-                  >
-                    {showTextInput ? 'Hide' : 'Show'}
-                  </Button>
-                </div>
-              </CardHeader>
-              {showTextInput && (
-                <CardContent className="pt-0">
-                  <div className="space-y-3">
-                    <textarea
-                      value={textMessage}
-                      onChange={(e) => setTextMessage(e.target.value)}
-                      placeholder="Type a message (optional)..."
-                      className="w-full p-3 border border-gray-200 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      rows={3}
-                      disabled={connectionStatus !== 'connected'}
-                    />
-                    <Button
-                      onClick={handleSendMessage}
-                      disabled={!textMessage.trim() || connectionStatus !== 'connected'}
-                      size="sm"
-                      className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
-                    >
-                      <Send className="w-4 h-4 mr-2" />
-                      Send Message
-                    </Button>
-                  </div>
-                </CardContent>
-              )}
-            </Card>
-          </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
         </div>
+      </div>
 
         {/* Hidden Audio Element */}
         <audio ref={audioRef} style={{ display: 'none' }} />

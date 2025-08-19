@@ -1,39 +1,31 @@
-'use client'
+"use client"
 
-import { useState, useEffect, useRef, useCallback } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Progress } from '@/components/ui/progress'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Separator } from '@/components/ui/separator'
-import { 
-  Camera, 
-  CameraOff, 
-  Mic, 
-  MicOff, 
-  Phone,
+import { useState, useEffect, useRef, useCallback } from "react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import {
+  Camera,
+  CameraOff,
+  Mic,
+  MicOff,
   PhoneOff,
   MessageSquare,
-  Volume2,
   Loader2,
   AlertCircle,
   Send,
-  Settings,
   Monitor,
   User,
   Clock,
   Zap,
-  Waves,
-  CheckCircle2,
-  Circle,
   Maximize,
-  Minimize
-} from 'lucide-react'
-import { useElevenLabsInterviewStore, elevenLabsInterviewSelectors } from '@/lib/stores/elevenlabs-interview-store'
-import { PracticeQuestion } from '@/lib/services/interview-service'
-import { AiAvatar } from './ai-avatar'
-import { SubtitleOverlay, useSubtitles } from './subtitle-overlay'
+  Minimize,
+} from "lucide-react"
+import { useElevenLabsInterviewStore } from "@/lib/stores/elevenlabs-interview-store"
+import type { PracticeQuestion } from "@/lib/services/interview-service"
+import { AiAvatar } from "./ai-avatar"
+import { useSubtitles } from "./subtitle-overlay"
 
 interface ElevenLabsInterviewRoomProps {
   sessionId: string
@@ -46,37 +38,37 @@ interface ElevenLabsInterviewRoomProps {
   onInterviewEnd: () => void
 }
 
-export function ElevenLabsInterviewRoom({ 
-  sessionId, 
+export function ElevenLabsInterviewRoom({
+  sessionId,
   jobTitle,
   companyName,
   jobDescription,
   resumeData,
   questions,
-  onInterviewComplete, 
-  onInterviewEnd 
+  onInterviewComplete,
+  onInterviewEnd,
 }: ElevenLabsInterviewRoomProps) {
   const localVideoRef = useRef<HTMLVideoElement>(null)
   const audioRef = useRef<HTMLAudioElement>(null)
-  
+
   const {
     // Connection state
     connectionStatus,
-    
+
     // Conversation state
     conversationHistory,
     isAgentSpeaking,
     isUserSpeaking,
     currentAudioUrl,
-    
+
     // Analytics
     sessionStartTime,
     totalDuration,
-    
+
     // Error handling
     lastError,
     errors,
-    
+
     // Actions
     initializeInterview,
     endInterview,
@@ -84,19 +76,19 @@ export function ElevenLabsInterviewRoom({
     clearErrors,
     cleanup,
     setTranscriptCallbacks,
-    addToConversationHistory
+    addToConversationHistory,
   } = useElevenLabsInterviewStore()
 
   const [isInitializing, setIsInitializing] = useState(true)
   const [localStream, setLocalStream] = useState<MediaStream | null>(null)
-  const [textMessage, setTextMessage] = useState('')
+  const [textMessage, setTextMessage] = useState("")
   const [showTextInput, setShowTextInput] = useState(false)
   const [isVideoEnabled, setIsVideoEnabled] = useState(true)
   const [isMicEnabled, setIsMicEnabled] = useState(true)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [streamError, setStreamError] = useState<string | null>(null)
   const isMountedRef = useRef(true)
-  
+
   // Subtitle management
   const {
     currentSubtitle,
@@ -104,9 +96,9 @@ export function ElevenLabsInterviewRoom({
     isEnabled: subtitlesEnabled,
     addAgentSubtitle,
     addUserSubtitle,
-    toggleSubtitles
+    toggleSubtitles,
   } = useSubtitles()
-  
+
   // Track agent messages for conversation history
   const [lastAgentMessage, setLastAgentMessage] = useState<string | null>(null)
 
@@ -114,38 +106,38 @@ export function ElevenLabsInterviewRoom({
   const setupVideoStream = async (stream: MediaStream): Promise<void> => {
     const maxRetries = 10
     let retryCount = 0
-    
+
     const attemptVideoSetup = async (): Promise<boolean> => {
       // Try React ref first
       let videoElement = localVideoRef.current
-      
+
       // Fallback to DOM query if ref not available
       if (!videoElement) {
-        videoElement = document.querySelector('video') as HTMLVideoElement
+        videoElement = document.querySelector("video") as HTMLVideoElement
         if (videoElement) {
           console.log(`📺 Found video element via DOM query on attempt ${retryCount + 1}`)
         }
       }
-      
+
       if (!videoElement) {
         console.log(`📺 Video element not ready, attempt ${retryCount + 1}/${maxRetries}`)
         return false
       }
-      
+
       if (!stream) {
-        console.log('📺 Stream not available')
+        console.log("📺 Stream not available")
         return false
       }
-      
+
       try {
-        console.log('📺 Setting video srcObject...')
+        console.log("📺 Setting video srcObject...")
         videoElement.srcObject = stream
-        
+
         // Ensure video properties are set
         videoElement.muted = true
         videoElement.playsInline = true
         videoElement.autoplay = true
-        
+
         // Set up metadata loaded handler
         return new Promise<boolean>((resolve) => {
           const video = videoElement
@@ -153,113 +145,117 @@ export function ElevenLabsInterviewRoom({
             resolve(false)
             return
           }
-          
+
           const handleLoadedMetadata = async () => {
             try {
-              console.log('📺 Video metadata loaded, attempting to play...')
+              console.log("📺 Video metadata loaded, attempting to play...")
               await video.play()
-              console.log('✅ Video is now playing')
+              console.log("✅ Video is now playing")
               resolve(true)
             } catch (playError) {
-              console.error('❌ Video play failed:', playError)
+              console.error("❌ Video play failed:", playError)
               resolve(false)
             }
           }
-          
+
           const handleCanPlay = async () => {
             try {
-              console.log('📺 Video can play, attempting to play...')
+              console.log("📺 Video can play, attempting to play...")
               await video.play()
-              console.log('✅ Video is now playing')
+              console.log("✅ Video is now playing")
               resolve(true)
             } catch (playError) {
-              console.error('❌ Video play failed:', playError)
+              console.error("❌ Video play failed:", playError)
               resolve(false)
             }
           }
-          
+
           // Try multiple event handlers
           video.onloadedmetadata = handleLoadedMetadata
           video.oncanplay = handleCanPlay
-          
+
           // Fallback timeout
           setTimeout(() => {
             if (video.readyState >= 2) {
-              video.play().then(() => {
-                console.log('✅ Video force-play successful')
-                resolve(true)
-              }).catch(() => {
-                console.log('❌ Video force-play failed')
-                resolve(false)
-              })
+              video
+                .play()
+                .then(() => {
+                  console.log("✅ Video force-play successful")
+                  resolve(true)
+                })
+                .catch(() => {
+                  console.log("❌ Video force-play failed")
+                  resolve(false)
+                })
             } else {
               resolve(false)
             }
           }, 1000)
         })
       } catch (error) {
-        console.error('❌ Error setting up video:', error)
+        console.error("❌ Error setting up video:", error)
         return false
       }
     }
-    
+
     // Retry loop
     while (retryCount < maxRetries) {
       const success = await attemptVideoSetup()
       if (success) {
-        console.log('✅ Video stream setup completed successfully')
+        console.log("✅ Video stream setup completed successfully")
         return
       }
-      
+
       retryCount++
       if (retryCount < maxRetries) {
-        await new Promise(resolve => setTimeout(resolve, 200)) // Wait 200ms between retries
+        await new Promise((resolve) => setTimeout(resolve, 200)) // Wait 200ms between retries
       }
     }
-    
-    console.error('❌ Failed to setup video after maximum retries')
+
+    console.error("❌ Failed to setup video after maximum retries")
   }
 
   // Initialize interview on component mount
   useEffect(() => {
     const initialize = async () => {
       if (!isMountedRef.current) return
-      
+
       try {
-        console.log('🎥 Initializing ElevenLabs interview room...')
+        console.log("🎥 Initializing ElevenLabs interview room...")
         setIsInitializing(true)
 
         // Get user media for video display (audio handled by ElevenLabs)
         try {
-          console.log('🎥 Requesting user media...')
+          console.log("🎥 Requesting user media...")
           const stream = await navigator.mediaDevices.getUserMedia({
             video: {
               width: { min: 320, ideal: 640, max: 1280 },
               height: { min: 240, ideal: 480, max: 720 },
-              frameRate: { min: 15, ideal: 24, max: 30 }
+              frameRate: { min: 15, ideal: 24, max: 30 },
             },
-            audio: false // Audio handled by ElevenLabs service
+            audio: false, // Audio handled by ElevenLabs service
           })
 
-          console.log('📹 Got media stream:', stream)
-          console.log('📹 Video tracks:', stream.getVideoTracks())
-          
+          console.log("📹 Got media stream:", stream)
+          console.log("📹 Video tracks:", stream.getVideoTracks())
+
           setLocalStream(stream)
           setStreamError(null)
 
-          console.log('✅ Video stream setup completed - will assign to video element when ready')
+          console.log("✅ Video stream setup completed - will assign to video element when ready")
         } catch (videoError) {
-          console.error('❌ Failed to get video stream:', videoError)
-          setStreamError(`Failed to access camera: ${videoError instanceof Error ? videoError.message : String(videoError)}`)
-        }//
+          console.error("❌ Failed to get video stream:", videoError)
+          setStreamError(
+            `Failed to access camera: ${videoError instanceof Error ? videoError.message : String(videoError)}`,
+          )
+        } //
 
         // Initialize ElevenLabs interview
         await initializeInterview(sessionId, jobTitle, companyName, jobDescription, resumeData, questions)
 
-        console.log('✅ ElevenLabs interview room initialized')
-        
+        console.log("✅ ElevenLabs interview room initialized")
       } catch (error) {
-        console.error('❌ Failed to initialize interview room:', error)
+        console.error("❌ Failed to initialize interview room:", error)
       } finally {
         setIsInitializing(false)
       }
@@ -270,11 +266,11 @@ export function ElevenLabsInterviewRoom({
     // Cleanup on unmount
     return () => {
       isMountedRef.current = false
-      
+
       if (localStream) {
-        localStream.getTracks().forEach(track => track.stop())
+        localStream.getTracks().forEach((track) => track.stop())
       }
-      
+
       cleanup()
     }
   }, [sessionId, jobTitle, companyName, jobDescription, resumeData, questions])
@@ -282,11 +278,11 @@ export function ElevenLabsInterviewRoom({
   // Handle video stream assignment when both stream and ref are available
   useEffect(() => {
     if (localStream && isVideoEnabled) {
-      console.log('🔄 Stream and video enabled, attempting video setup...')
-      
+      console.log("🔄 Stream and video enabled, attempting video setup...")
+
       // Try immediate assignment first
       if (localVideoRef.current) {
-        console.log('📺 Video ref available immediately, setting up...')
+        console.log("📺 Video ref available immediately, setting up...")
         setupVideoStream(localStream)
       } else {
         // If ref not ready, try with increasing delays
@@ -304,33 +300,39 @@ export function ElevenLabsInterviewRoom({
   }, [localStream, isVideoEnabled])
 
   // Memoize transcript callback functions to prevent infinite re-renders
-  const handleAgentTranscript = useCallback((transcript: string, timestamp: number, isComplete: boolean) => {
-    console.log('📝 Agent transcript received:', transcript, 'Complete:', isComplete)
-    addAgentSubtitle(transcript, timestamp, isComplete)
-    
-    // Track the full message for conversation history
-    if (transcript.trim() && transcript !== lastAgentMessage) {
-      setLastAgentMessage(transcript.trim())
-      console.log('✅ Adding agent message to conversation:', transcript.trim())
-      addToConversationHistory('agent', transcript.trim())
-    }
-  }, [addAgentSubtitle, addToConversationHistory, lastAgentMessage])
+  const handleAgentTranscript = useCallback(
+    (transcript: string, timestamp: number, isComplete: boolean) => {
+      console.log("📝 Agent transcript received:", transcript, "Complete:", isComplete)
+      addAgentSubtitle(transcript, timestamp, isComplete)
 
-  const handleUserTranscript = useCallback((transcript: string, timestamp: number) => {
-    console.log('📝 User transcript received:', transcript)
-    addUserSubtitle(transcript, timestamp)
-    
-    // Add to conversation history (user transcripts are usually complete)
-    if (transcript.trim()) {
-      console.log('✅ Adding user message to conversation:', transcript.trim())
-      addToConversationHistory('user', transcript.trim())
-    }
-  }, [addUserSubtitle, addToConversationHistory])
+      // Track the full message for conversation history
+      if (transcript.trim() && transcript !== lastAgentMessage) {
+        setLastAgentMessage(transcript.trim())
+        console.log("✅ Adding agent message to conversation:", transcript.trim())
+        addToConversationHistory("agent", transcript.trim())
+      }
+    },
+    [addAgentSubtitle, addToConversationHistory, lastAgentMessage],
+  )
+
+  const handleUserTranscript = useCallback(
+    (transcript: string, timestamp: number) => {
+      console.log("📝 User transcript received:", transcript)
+      addUserSubtitle(transcript, timestamp)
+
+      // Add to conversation history (user transcripts are usually complete)
+      if (transcript.trim()) {
+        console.log("✅ Adding user message to conversation:", transcript.trim())
+        addToConversationHistory("user", transcript.trim())
+      }
+    },
+    [addUserSubtitle, addToConversationHistory],
+  )
 
   // Setup subtitle callbacks - use refs to avoid stale closures
   const handleAgentTranscriptRef = useRef(handleAgentTranscript)
   const handleUserTranscriptRef = useRef(handleUserTranscript)
-  
+
   // Update refs when callbacks change
   useEffect(() => {
     handleAgentTranscriptRef.current = handleAgentTranscript
@@ -342,11 +344,11 @@ export function ElevenLabsInterviewRoom({
     const agentCallback = (transcript: string, timestamp: number, isComplete: boolean) => {
       handleAgentTranscriptRef.current(transcript, timestamp, isComplete)
     }
-    
+
     const userCallback = (transcript: string, timestamp: number) => {
       handleUserTranscriptRef.current(transcript, timestamp)
     }
-    
+
     setTranscriptCallbacks(agentCallback, userCallback)
   }, [sessionId, setTranscriptCallbacks]) // Only depend on sessionId and setTranscriptCallbacks
 
@@ -368,7 +370,7 @@ export function ElevenLabsInterviewRoom({
   const handleSendMessage = () => {
     if (textMessage.trim()) {
       sendMessage(textMessage.trim())
-      setTextMessage('')
+      setTextMessage("")
     }
   }
 
@@ -376,7 +378,7 @@ export function ElevenLabsInterviewRoom({
   const toggleVideo = () => {
     if (localStream) {
       const videoTracks = localStream.getVideoTracks()
-      videoTracks.forEach(track => {
+      videoTracks.forEach((track) => {
         track.enabled = !isVideoEnabled
       })
       setIsVideoEnabled(!isVideoEnabled)
@@ -395,18 +397,16 @@ export function ElevenLabsInterviewRoom({
 
   // Calculate session duration with real-time updates
   const [currentTime, setCurrentTime] = useState(Date.now())
-  
+
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(Date.now())
     }, 1000)
-    
+
     return () => clearInterval(timer)
   }, [])
-  
-  const sessionDuration = sessionStartTime 
-    ? Math.floor((currentTime - sessionStartTime.getTime()) / 1000)
-    : 0
+
+  const sessionDuration = sessionStartTime ? Math.floor((currentTime - sessionStartTime.getTime()) / 1000) : 0
 
   const minutes = Math.floor(sessionDuration / 60)
   const seconds = sessionDuration % 60
@@ -414,12 +414,18 @@ export function ElevenLabsInterviewRoom({
   // Get connection status display
   const getConnectionStatusDisplay = () => {
     switch (connectionStatus) {
-      case 'connecting': return { text: 'Connecting...', color: 'bg-yellow-500' }
-      case 'connected': return { text: 'Connected', color: 'bg-green-500' }
-      case 'speaking': return { text: 'AI Speaking...', color: 'bg-blue-500' }
-      case 'listening': return { text: 'Listening...', color: 'bg-purple-500' }
-      case 'ended': return { text: 'Interview Ended', color: 'bg-gray-500' }
-      default: return { text: 'Disconnected', color: 'bg-red-500' }
+      case "connecting":
+        return { text: "Connecting...", color: "bg-amber-500", pulse: true }
+      case "connected":
+        return { text: "Connected", color: "bg-emerald-500", pulse: false }
+      case "speaking":
+        return { text: "AI Speaking...", color: "bg-blue-500", pulse: true }
+      case "listening":
+        return { text: "Listening...", color: "bg-purple-500", pulse: true }
+      case "ended":
+        return { text: "Interview Ended", color: "bg-gray-500", pulse: false }
+      default:
+        return { text: "Disconnected", color: "bg-red-500", pulse: false }
     }
   }
 
@@ -427,59 +433,64 @@ export function ElevenLabsInterviewRoom({
 
   if (isInitializing) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
-          <p className="text-lg">Initializing interview room...</p>
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-950">
+        <div className="text-center p-8">
+          <div className="relative mb-6">
+            <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto shadow-lg">
+              <Loader2 className="w-8 h-8 animate-spin text-white" />
+            </div>
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl animate-pulse opacity-20"></div>
+          </div>
+          <h2 className="text-xl font-semibold text-foreground mb-2">Preparing Your Interview</h2>
+          <p className="text-muted-foreground">Setting up the AI interviewer and video connection...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header Bar */}
-      <div className="bg-card/80 backdrop-blur-sm border-b border-border sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-3 md:px-4 py-2 md:py-3">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-            <div className="flex items-center gap-3 md:gap-4">
-              <div className="flex items-center gap-2">
-                <div className="w-10 h-10 bg-gradient-to-r from-primary to-primary/80 rounded-lg flex items-center justify-center">
-                  <Monitor className="w-5 h-5 text-primary-foreground" />
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+      <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200/50 dark:border-slate-800/50 sticky top-0 z-40 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 lg:px-6 py-4">
+          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                  <Monitor className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-base md:text-lg font-bold text-foreground">AI Interview</h1>
-                  <p className="text-xs md:text-sm text-muted-foreground truncate max-w-[200px] sm:max-w-none">{jobTitle} at {companyName}</p>
+                  <h1 className="text-lg lg:text-xl font-bold text-foreground">AI Interview Session</h1>
+                  <p className="text-sm text-muted-foreground truncate max-w-[300px]">
+                    {jobTitle} • {companyName}
+                  </p>
                 </div>
               </div>
-              
-              {/* Connection Status */}
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-card border border-border/50">
-                <div className={`w-2 h-2 rounded-full ${statusDisplay.color} animate-pulse`} />
+
+              <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                <div
+                  className={`w-2.5 h-2.5 rounded-full ${statusDisplay.color} ${statusDisplay.pulse ? "animate-pulse" : ""}`}
+                />
                 <span className="text-sm font-medium text-foreground">{statusDisplay.text}</span>
               </div>
             </div>
-            
-            <div className="flex items-center gap-3">
-              {/* Session Timer */}
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted border border-border/50">
-                <Clock className="w-4 h-4 text-muted-foreground" />
-                <span className="text-sm font-mono text-foreground">
-                  {minutes}:{seconds.toString().padStart(2, '0')}
+
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                <Clock className="w-4 h-4 text-slate-600 dark:text-slate-400" />
+                <span className="text-sm font-mono font-semibold text-foreground">
+                  {minutes}:{seconds.toString().padStart(2, "0")}
                 </span>
               </div>
-              
-              {/* End Interview Button */}
-              <Button 
-                variant="destructive" 
+
+              <Button
+                variant="destructive"
                 size="sm"
                 onClick={handleEndInterview}
-                disabled={connectionStatus === 'ended'}
-                className="shadow-sm text-xs md:text-sm px-2 md:px-3"
+                disabled={connectionStatus === "ended"}
+                className="shadow-md hover:shadow-lg transition-all duration-200 px-4 py-2"
               >
-                <PhoneOff className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
-                <span className="hidden sm:inline">End Interview</span>
-                <span className="sm:hidden">End</span>
+                <PhoneOff className="w-4 h-4 mr-2" />
+                End Interview
               </Button>
             </div>
           </div>
@@ -487,17 +498,19 @@ export function ElevenLabsInterviewRoom({
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-3 md:px-4 py-4 md:py-6">
-        {/* Error Display */}
+      <div className="max-w-7xl mx-auto px-4 lg:px-6 py-6">
         {(lastError || streamError) && (
-          <Alert className="mb-4 shadow-medium border-destructive/50 bg-destructive/5" variant="destructive">
+          <Alert
+            className="mb-6 border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/50 shadow-md"
+            variant="destructive"
+          >
             <AlertCircle className="h-4 w-4" />
-            <AlertDescription className="text-foreground">
-              {lastError || streamError}
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="ml-2 border-border/50 hover:bg-muted/50"
+            <AlertDescription className="text-foreground flex items-center justify-between">
+              <span>{lastError || streamError}</span>
+              <Button
+                variant="outline"
+                size="sm"
+                className="ml-4 border-red-300 dark:border-red-700 hover:bg-red-100 dark:hover:bg-red-900/50 bg-transparent"
                 onClick={clearErrors}
               >
                 Dismiss
@@ -506,32 +519,42 @@ export function ElevenLabsInterviewRoom({
           </Alert>
         )}
 
-        {/* Video Call Layout */}
-        <div className="h-[55vh] sm:h-[60vh] md:h-[50vh] lg:h-[55vh] mb-4 md:mb-6">
-          <Card className="h-full card-elevated shadow-strong border-border/50">
+        <div className="h-[60vh] lg:h-[65vh] mb-6">
+          <Card className="h-full shadow-xl border-slate-200/50 dark:border-slate-800/50 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm">
             <CardContent className="p-0 h-full">
-              <div className={`relative h-full rounded-xl overflow-hidden bg-gradient-to-br from-gray-900 to-gray-800 dark:from-gray-950 dark:to-gray-900 ${isFullscreen ? 'fixed inset-0 z-50' : ''}`}>
-                <div className="grid grid-cols-1 md:grid-cols-2 h-full">
-                  {/* User Video Side */}
-                  <div className="relative bg-gray-900 dark:bg-gray-950 md:border-r-2 border-b-2 md:border-b-0 border-gray-600/50 dark:border-gray-500/50">
-                    <div className="absolute top-2 left-2 md:top-4 md:left-4 z-10">
-                      <div className="px-2 py-1 md:px-3 md:py-2 bg-black/70 backdrop-blur-sm rounded-lg border border-white/10">
-                        <span className="text-white text-xs md:text-sm font-medium">You</span>
+              <div
+                className={`relative h-full rounded-xl overflow-hidden bg-gradient-to-br from-slate-900 to-slate-800 dark:from-slate-950 dark:to-slate-900 ${isFullscreen ? "fixed inset-0 z-50 rounded-none" : ""}`}
+              >
+                <div className="grid grid-cols-1 lg:grid-cols-2 h-full">
+                  <div className="relative bg-slate-900 dark:bg-slate-950 lg:border-r-2 border-b-2 lg:border-b-0 border-slate-600/30">
+                    {/* User label with improved styling */}
+                    <div className="absolute top-4 left-4 z-10">
+                      <div className="px-3 py-2 bg-black/60 backdrop-blur-md rounded-lg border border-white/20 shadow-lg">
+                        <span className="text-white text-sm font-semibold">You</span>
                       </div>
                     </div>
-                    
-                    {/* User Speaking Indicator */}
+
                     {isUserSpeaking && (
-                      <div className="absolute top-2 right-2 md:top-4 md:right-4 z-10">
-                        <div className="px-2 py-1 md:px-3 md:py-2 bg-green-500/90 backdrop-blur-md rounded-lg border border-green-400/50">
-                          <div className="flex items-center gap-1 md:gap-2">
-                            <Waves className="w-3 h-3 md:w-4 md:h-4 text-white animate-pulse" />
-                            <span className="text-white text-xs md:text-sm font-medium hidden sm:inline">Speaking</span>
+                      <div className="absolute top-4 right-4 z-10">
+                        <div className="px-3 py-2 bg-emerald-500/90 backdrop-blur-md rounded-lg border border-emerald-400/50 shadow-lg">
+                          <div className="flex items-center gap-2">
+                            <div className="flex gap-1">
+                              <div className="w-1 h-4 bg-white rounded-full animate-pulse"></div>
+                              <div
+                                className="w-1 h-4 bg-white rounded-full animate-pulse"
+                                style={{ animationDelay: "0.1s" }}
+                              ></div>
+                              <div
+                                className="w-1 h-4 bg-white rounded-full animate-pulse"
+                                style={{ animationDelay: "0.2s" }}
+                              ></div>
+                            </div>
+                            <span className="text-white text-sm font-medium hidden sm:inline">Speaking</span>
                           </div>
                         </div>
                       </div>
                     )}
-                    
+
                     {/* User Video */}
                     <video
                       ref={localVideoRef}
@@ -539,70 +562,78 @@ export function ElevenLabsInterviewRoom({
                       muted
                       playsInline
                       controls={false}
-                      className={`w-full h-full object-cover object-center transition-opacity duration-300 ${
-                        localStream && isVideoEnabled ? 'opacity-100' : 'opacity-0'
+                      className={`w-full h-full object-cover object-center transition-all duration-500 ${
+                        localStream && isVideoEnabled ? "opacity-100 scale-100" : "opacity-0 scale-105"
                       }`}
                       style={{
-                        transform: 'scaleX(-1)', // Mirror the video like a selfie camera
-                        backgroundColor: '#1f2937'
+                        transform: "scaleX(-1)", // Mirror the video like a selfie camera
+                        backgroundColor: "#1f2937",
                       }}
                       onCanPlay={() => {
-                        console.log('📺 Video can play event fired')
+                        console.log("📺 Video can play event fired")
                         if (localVideoRef.current) {
                           localVideoRef.current.play().catch(console.error)
                         }
                       }}
-                      onPlaying={() => console.log('📺 Video is playing')}
-                      onError={(e) => console.error('📺 Video error:', e)}
+                      onPlaying={() => console.log("📺 Video is playing")}
+                      onError={(e) => console.error("📺 Video error:", e)}
                     />
-                    
-                    {/* Fallback when video is off or unavailable */}
+
                     {(!localStream || !isVideoEnabled) && (
-                      <div className="absolute inset-0 w-full h-full flex items-center justify-center bg-gray-800">
+                      <div className="absolute inset-0 w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-800 to-slate-900">
                         <div className="text-center text-white">
-                          <div className="w-16 h-16 md:w-20 md:h-20 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-3 md:mb-4">
-                            <User className="w-8 h-8 md:w-10 md:h-10" />
+                          <div className="w-20 h-20 bg-gradient-to-r from-slate-600 to-slate-700 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                            <User className="w-10 h-10" />
                           </div>
-                          <p className="text-base md:text-lg font-medium">Camera Off</p>
-                          <p className="text-xs md:text-sm text-gray-400">
-                            {streamError ? 'Camera access denied' : 'Video disabled'}
+                          <p className="text-lg font-semibold mb-2">Camera Off</p>
+                          <p className="text-sm text-slate-300">
+                            {streamError ? "Camera access denied" : "Video disabled"}
                           </p>
                         </div>
                       </div>
                     )}
                   </div>
-                  
-                  {/* AI Avatar Side */}
-                  <div className="relative bg-gradient-to-br from-blue-900 to-indigo-900 dark:from-blue-950 dark:to-indigo-950 flex items-center justify-center overflow-hidden">
-                    {/* Subtle background pattern */}
-                    <div className="absolute inset-0 opacity-10">
-                      <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,white_0%,transparent_50%)]"></div>
-                      <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,white_0%,transparent_50%)]"></div>
+
+                  <div className="relative bg-gradient-to-br from-blue-900 via-indigo-900 to-purple-900 dark:from-blue-950 dark:via-indigo-950 dark:to-purple-950 flex items-center justify-center overflow-hidden">
+                    {/* Enhanced background pattern */}
+                    <div className="absolute inset-0 opacity-20">
+                      <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.1)_0%,transparent_50%)]"></div>
+                      <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(255,255,255,0.1)_0%,transparent_50%)]"></div>
+                      <div className="absolute inset-0 bg-[conic-gradient(from_0deg_at_50%_50%,transparent_0deg,rgba(255,255,255,0.05)_60deg,transparent_120deg)]"></div>
                     </div>
-                    
-                    <div className="absolute top-2 left-2 md:top-4 md:left-4 z-10">
-                      <div className="px-2 py-1 md:px-3 md:py-2 bg-black/70 backdrop-blur-sm rounded-lg border border-white/10">
-                        <span className="text-white text-xs md:text-sm font-medium">Sarah (AI)</span>
+
+                    {/* AI label with improved styling */}
+                    <div className="absolute top-4 left-4 z-10">
+                      <div className="px-3 py-2 bg-black/60 backdrop-blur-md rounded-lg border border-white/20 shadow-lg">
+                        <span className="text-white text-sm font-semibold">Sarah (AI)</span>
                       </div>
                     </div>
-                    
-                    {/* AI Speaking Indicator */}
+
                     {isAgentSpeaking && (
-                      <div className="absolute top-2 right-2 md:top-4 md:right-4 z-10">
-                        <div className="px-2 py-1 md:px-3 md:py-2 bg-blue-500/90 backdrop-blur-md rounded-lg border border-blue-400/50">
-                          <div className="flex items-center gap-1 md:gap-2">
-                            <Waves className="w-3 h-3 md:w-4 md:h-4 text-white animate-pulse" />
-                            <span className="text-white text-xs md:text-sm font-medium hidden sm:inline">Speaking</span>
+                      <div className="absolute top-4 right-4 z-10">
+                        <div className="px-3 py-2 bg-blue-500/90 backdrop-blur-md rounded-lg border border-blue-400/50 shadow-lg">
+                          <div className="flex items-center gap-2">
+                            <div className="flex gap-1">
+                              <div className="w-1 h-4 bg-white rounded-full animate-pulse"></div>
+                              <div
+                                className="w-1 h-4 bg-white rounded-full animate-pulse"
+                                style={{ animationDelay: "0.1s" }}
+                              ></div>
+                              <div
+                                className="w-1 h-4 bg-white rounded-full animate-pulse"
+                                style={{ animationDelay: "0.2s" }}
+                              ></div>
+                            </div>
+                            <span className="text-white text-sm font-medium hidden sm:inline">Speaking</span>
                           </div>
                         </div>
                       </div>
                     )}
-                    
-                    {/* Large AI Avatar */}
-                    <div className="flex items-center justify-center h-full">
-                      <div className="scale-[2.5] sm:scale-[3] md:scale-[3.5] lg:scale-[4] z-10">
-                        <AiAvatar 
-                          isActive={connectionStatus === 'connected' || connectionStatus === 'speaking'}
+
+                    <div className="flex items-center justify-center h-full relative z-10">
+                      <div className="scale-[3] sm:scale-[3.5] lg:scale-[4] xl:scale-[4.5] transform transition-transform duration-300">
+                        <AiAvatar
+                          isActive={connectionStatus === "connected" || connectionStatus === "speaking"}
                           isSpeaking={isAgentSpeaking}
                           name="Sarah"
                         />
@@ -610,36 +641,43 @@ export function ElevenLabsInterviewRoom({
                     </div>
                   </div>
                 </div>
-                
-                {/* Video Controls Overlay */}
-                <div className="absolute bottom-4 md:bottom-6 left-1/2 transform -translate-x-1/2">
-                  <div className="flex items-center gap-2 md:gap-3 px-3 md:px-4 py-2 md:py-3 bg-black/50 backdrop-blur-md rounded-2xl border border-white/10">
+
+                <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2">
+                  <div className="flex items-center gap-3 px-6 py-3 bg-black/70 backdrop-blur-xl rounded-2xl border border-white/20 shadow-2xl">
                     {/* Video Toggle */}
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={toggleVideo}
-                      className={`w-10 h-10 md:w-12 md:h-12 rounded-full ${isVideoEnabled ? 'bg-white/20 hover:bg-white/30' : 'bg-red-500 hover:bg-red-600'} text-white border-0`}
+                      className={`w-12 h-12 rounded-full transition-all duration-200 ${
+                        isVideoEnabled
+                          ? "bg-white/20 hover:bg-white/30 text-white"
+                          : "bg-red-500 hover:bg-red-600 text-white shadow-lg"
+                      } border-0`}
                     >
                       {isVideoEnabled ? <Camera className="w-5 h-5" /> : <CameraOff className="w-5 h-5" />}
                     </Button>
-                    
+
                     {/* Mic Toggle (Visual only) */}
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={toggleMic}
-                      className={`w-10 h-10 md:w-12 md:h-12 rounded-full ${isMicEnabled ? 'bg-white/20 hover:bg-white/30' : 'bg-red-500 hover:bg-red-600'} text-white border-0`}
+                      className={`w-12 h-12 rounded-full transition-all duration-200 ${
+                        isMicEnabled
+                          ? "bg-white/20 hover:bg-white/30 text-white"
+                          : "bg-red-500 hover:bg-red-600 text-white shadow-lg"
+                      } border-0`}
                     >
                       {isMicEnabled ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
                     </Button>
-                    
+
                     {/* Fullscreen Toggle */}
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={toggleFullscreen}
-                      className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/20 hover:bg-white/30 text-white border-0"
+                      className="w-12 h-12 rounded-full bg-white/20 hover:bg-white/30 text-white border-0 transition-all duration-200"
                     >
                       {isFullscreen ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
                     </Button>
@@ -647,14 +685,14 @@ export function ElevenLabsInterviewRoom({
                 </div>
 
                 {/* Debug Info (only in development) */}
-                {process.env.NODE_ENV === 'development' && (
+                {process.env.NODE_ENV === "development" && (
                   <div className="absolute bottom-6 left-6">
                     <div className="px-3 py-2 bg-black/70 backdrop-blur-sm rounded-lg text-white text-xs">
-                      <div>Stream: {localStream ? '✅' : '❌'}</div>
-                      <div>Video Enabled: {isVideoEnabled ? '✅' : '❌'}</div>
-                      <div>Video Ref: {localVideoRef.current ? '✅' : '❌'}</div>
-                      <div>Stream Error: {streamError || 'None'}</div>
-                      <div>Agent Speaking: {isAgentSpeaking ? '✅' : '❌'}</div>
+                      <div>Stream: {localStream ? "✅" : "❌"}</div>
+                      <div>Video Enabled: {isVideoEnabled ? "✅" : "❌"}</div>
+                      <div>Video Ref: {localVideoRef.current ? "✅" : "❌"}</div>
+                      <div>Stream Error: {streamError || "None"}</div>
+                      <div>Agent Speaking: {isAgentSpeaking ? "✅" : "❌"}</div>
                       <div>Connection: {connectionStatus}</div>
                     </div>
                   </div>
@@ -664,108 +702,109 @@ export function ElevenLabsInterviewRoom({
           </Card>
         </div>
 
-        {/* Full Width Conversation Panel */}
-        <div className="h-[35vh] sm:h-[30vh] md:h-[40vh] lg:h-[35vh]">
-          <Card className="h-full card-elevated shadow-strong border-border/50">
-            <CardHeader className="pb-2 md:pb-3 border-b border-border/50 px-3 md:px-6 py-3 md:py-6">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 md:gap-3">
-                <div className="flex items-center gap-3 md:gap-4">
-                  <CardTitle className="flex items-center gap-2 text-base md:text-lg text-foreground">
-                    <MessageSquare className="w-4 h-4 md:w-5 md:h-5 text-primary" />
+        <div className="h-[35vh] lg:h-[30vh]">
+          <Card className="h-full shadow-xl border-slate-200/50 dark:border-slate-800/50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm">
+            <CardHeader className="pb-3 border-b border-slate-200/50 dark:border-slate-800/50 px-6 py-4">
+              <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3">
+                <div className="flex items-center gap-4">
+                  <CardTitle className="flex items-center gap-3 text-lg text-foreground">
+                    <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                      <MessageSquare className="w-4 h-4 text-white" />
+                    </div>
                     Interview Conversation
                   </CardTitle>
-                  <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20 text-xs">
+                  <Badge
+                    variant="secondary"
+                    className="bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800"
+                  >
                     {conversationHistory.length} messages
                   </Badge>
                 </div>
-                <div className="flex items-center gap-2 md:gap-4">
-                  {/* Stats */}
-                  <div className="flex items-center gap-2 md:gap-3 text-xs text-muted-foreground">
-                    <div className="flex items-center gap-1 px-2 py-1 rounded-md bg-muted/50">
-                      <Clock className="w-3 h-3 md:w-4 md:h-4" />
-                      <span className="font-mono font-medium text-xs md:text-sm">
-                        {minutes}:{seconds.toString().padStart(2, '0')}
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-3 text-sm">
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                      <Clock className="w-4 h-4 text-slate-600 dark:text-slate-400" />
+                      <span className="font-mono font-semibold text-foreground">
+                        {minutes}:{seconds.toString().padStart(2, "0")}
                       </span>
                     </div>
-                    <div className="flex items-center gap-1 px-2 py-1 rounded-md bg-muted/50 hidden sm:flex">
-                      <Zap className="w-3 h-3 md:w-4 md:h-4" />
-                      <span className="text-xs md:text-sm">{questions.length} questions</span>
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hidden sm:flex">
+                      <Zap className="w-4 h-4 text-slate-600 dark:text-slate-400" />
+                      <span className="text-foreground">{questions.length} questions</span>
                     </div>
                   </div>
-                  
-                  {/* Text Input Toggle */}
+
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => setShowTextInput(!showTextInput)}
-                    className="flex items-center gap-1 md:gap-2 text-xs border-border/50 hover:bg-muted/50 px-2 md:px-3"
+                    className="flex items-center gap-2 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors duration-200"
                   >
-                    <Send className="w-3 h-3 md:w-4 md:h-4" />
-                    <span className="hidden sm:inline">{showTextInput ? 'Hide Input' : 'Type Message'}</span>
-                    <span className="sm:hidden">{showTextInput ? 'Hide' : 'Type'}</span>
+                    <Send className="w-4 h-4" />
+                    {showTextInput ? "Hide Input" : "Type Message"}
                   </Button>
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="p-0 h-[calc(100%-4rem)]">
+            <CardContent className="p-0 h-[calc(100%-5rem)]">
               <div className="grid grid-cols-1 h-full">
-                {/* Conversation Messages */}
-                <div className="overflow-y-auto p-3 md:p-4 space-y-3 md:space-y-4 custom-scrollbar">
+                <div className="overflow-y-auto p-6 space-y-4 custom-scrollbar">
                   {conversationHistory.length === 0 ? (
-                    <div className="text-center py-12">
-                      <MessageSquare className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                      <p className="text-muted-foreground text-lg font-medium">
-                        Interview conversation will appear here
+                    <div className="text-center py-16">
+                      <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+                        <MessageSquare className="w-8 h-8 text-white" />
+                      </div>
+                      <h3 className="text-xl font-semibold text-foreground mb-2">Ready to Begin</h3>
+                      <p className="text-muted-foreground text-lg">
+                        Your conversation with the AI interviewer will appear here
                       </p>
                       <p className="text-muted-foreground/70 text-sm mt-2">
-                        Start speaking to begin your AI interview session
+                        Start speaking to begin your interview session
                       </p>
                     </div>
                   ) : (
                     conversationHistory.map((message, index) => (
-                      <div 
+                      <div
                         key={index}
-                        className={`flex gap-4 ${
-                          message.role === 'agent' ? 'justify-start' : 'justify-end'
-                        }`}
+                        className={`flex gap-4 ${message.role === "agent" ? "justify-start" : "justify-end"}`}
                       >
-                        {/* Avatar */}
-                        {message.role === 'agent' && (
+                        {message.role === "agent" && (
                           <div className="flex-shrink-0">
-                            <div className="w-10 h-10 rounded-full bg-gradient-to-r from-primary to-primary/80 flex items-center justify-center shadow-medium">
-                              <span className="text-primary-foreground text-sm font-bold">AI</span>
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center shadow-lg border-2 border-white dark:border-slate-800">
+                              <span className="text-white text-sm font-bold">AI</span>
                             </div>
                           </div>
                         )}
-                        
-                        {/* Message Content */}
-                        <div className={`max-w-xl md:max-w-2xl ${
-                          message.role === 'agent' ? 'mr-auto' : 'ml-auto'
-                        }`}>
-                          <div className={`p-3 md:p-4 rounded-2xl shadow-soft border ${
-                            message.role === 'agent' 
-                              ? 'bg-gradient-to-r from-primary/5 to-primary/10 border-primary/20' 
-                              : 'bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 border-green-200 dark:border-green-800'
-                          }`}>
+
+                        <div className={`max-w-2xl ${message.role === "agent" ? "mr-auto" : "ml-auto"}`}>
+                          <div
+                            className={`p-4 rounded-2xl shadow-md border transition-all duration-200 hover:shadow-lg ${
+                              message.role === "agent"
+                                ? "bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/50 dark:to-purple-950/50 border-blue-200 dark:border-blue-800"
+                                : "bg-gradient-to-r from-emerald-50 to-green-50 dark:from-emerald-950/50 dark:to-green-950/50 border-emerald-200 dark:border-emerald-800"
+                            }`}
+                          >
                             <div className="flex items-center gap-2 mb-2">
-                              <span className={`text-xs md:text-sm font-semibold ${
-                                message.role === 'agent' ? 'text-primary' : 'text-green-700 dark:text-green-300'
-                              }`}>
-                                <span className="hidden sm:inline">{message.role === 'agent' ? 'Sarah (AI Interviewer)' : 'You'}</span>
-                                <span className="sm:hidden">{message.role === 'agent' ? 'AI' : 'You'}</span>
+                              <span
+                                className={`text-sm font-semibold ${
+                                  message.role === "agent"
+                                    ? "text-blue-700 dark:text-blue-300"
+                                    : "text-emerald-700 dark:text-emerald-300"
+                                }`}
+                              >
+                                {message.role === "agent" ? "Sarah (AI Interviewer)" : "You"}
                               </span>
                               <span className="text-xs text-muted-foreground">
                                 {message.timestamp.toLocaleTimeString()}
                               </span>
                             </div>
-                            <p className="text-foreground leading-relaxed text-sm md:text-base">{message.content}</p>
+                            <p className="text-foreground leading-relaxed">{message.content}</p>
                           </div>
                         </div>
-                        
-                        {/* User Avatar */}
-                        {message.role === 'user' && (
+
+                        {message.role === "user" && (
                           <div className="flex-shrink-0">
-                            <div className="w-10 h-10 rounded-full bg-gradient-to-r from-green-500 to-emerald-600 flex items-center justify-center shadow-medium">
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-r from-emerald-500 to-green-600 flex items-center justify-center shadow-lg border-2 border-white dark:border-slate-800">
                               <User className="w-5 h-5 text-white" />
                             </div>
                           </div>
@@ -774,20 +813,19 @@ export function ElevenLabsInterviewRoom({
                     ))
                   )}
                 </div>
-                
-                {/* Text Input (Optional) */}
+
                 {showTextInput && (
-                  <div className="border-t border-border/50 p-4 bg-muted/30">
+                  <div className="border-t border-slate-200/50 dark:border-slate-800/50 p-4 bg-slate-50/50 dark:bg-slate-900/50">
                     <div className="flex gap-3">
                       <textarea
                         value={textMessage}
                         onChange={(e) => setTextMessage(e.target.value)}
                         placeholder="Type a message to the AI interviewer..."
-                        className="flex-1 p-3 border border-border/50 rounded-lg resize-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 bg-background text-foreground"
+                        className="flex-1 p-3 border border-slate-200 dark:border-slate-700 rounded-xl resize-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/50 bg-white dark:bg-slate-800 text-foreground transition-all duration-200"
                         rows={2}
-                        disabled={connectionStatus !== 'connected'}
+                        disabled={connectionStatus !== "connected"}
                         onKeyDown={(e) => {
-                          if (e.key === 'Enter' && !e.shiftKey) {
+                          if (e.key === "Enter" && !e.shiftKey) {
                             e.preventDefault()
                             handleSendMessage()
                           }
@@ -795,8 +833,8 @@ export function ElevenLabsInterviewRoom({
                       />
                       <Button
                         onClick={handleSendMessage}
-                        disabled={!textMessage.trim() || connectionStatus !== 'connected'}
-                        className="btn-gradient shadow-medium px-6"
+                        disabled={!textMessage.trim() || connectionStatus !== "connected"}
+                        className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 px-6"
                       >
                         <Send className="w-4 h-4" />
                       </Button>
@@ -809,24 +847,35 @@ export function ElevenLabsInterviewRoom({
         </div>
 
         {/* Hidden Audio Element */}
-        <audio ref={audioRef} style={{ display: 'none' }} />
+        <audio ref={audioRef} style={{ display: "none" }} />
       </div>
-      
-      {/* Custom Styles */}
+
       <style jsx>{`
         .custom-scrollbar::-webkit-scrollbar {
-          width: 4px;
+          width: 6px;
         }
         .custom-scrollbar::-webkit-scrollbar-track {
-          background: #f1f5f9;
-          border-radius: 2px;
+          background: rgba(148, 163, 184, 0.1);
+          border-radius: 3px;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: #cbd5e1;
-          border-radius: 2px;
+          background: rgba(148, 163, 184, 0.3);
+          border-radius: 3px;
+          transition: background 0.2s ease;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: #94a3b8;
+          background: rgba(148, 163, 184, 0.5);
+        }
+        
+        /* Dark mode scrollbar */
+        .dark .custom-scrollbar::-webkit-scrollbar-track {
+          background: rgba(71, 85, 105, 0.1);
+        }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: rgba(71, 85, 105, 0.3);
+        }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: rgba(71, 85, 105, 0.5);
         }
       `}</style>
     </div>

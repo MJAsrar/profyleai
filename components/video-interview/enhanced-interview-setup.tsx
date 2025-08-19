@@ -18,7 +18,8 @@ import {
   CheckCircle,
   AlertCircle,
   ArrowRight,
-  Eye
+  Eye,
+  MessageSquare
 } from 'lucide-react'
 import { InterviewJobData, PracticeQuestion } from '@/lib/services/interview-service'
 

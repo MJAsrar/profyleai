@@ -250,7 +250,7 @@ export function ElevenLabsInterviewRoom({
           console.log('✅ Video stream setup completed - will assign to video element when ready')
         } catch (videoError) {
           console.error('❌ Failed to get video stream:', videoError)
-          setStreamError(`Failed to access camera: ${videoError.message}`)
+          setStreamError(`Failed to access camera: ${videoError instanceof Error ? videoError.message : String(videoError)}`)
         }
 
         // Initialize ElevenLabs interview

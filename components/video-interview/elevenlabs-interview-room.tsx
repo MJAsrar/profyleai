@@ -507,7 +507,7 @@ export function ElevenLabsInterviewRoom({
         )}
 
         {/* Video Call Layout */}
-        <div className="h-[45vh] sm:h-[50vh] md:h-[35vh] mb-4 md:mb-6">
+        <div className="h-[55vh] sm:h-[60vh] md:h-[50vh] lg:h-[55vh] mb-4 md:mb-6">
           <Card className="h-full card-elevated shadow-strong border-border/50">
             <CardContent className="p-0 h-full">
               <div className={`relative h-full rounded-xl overflow-hidden bg-gradient-to-br from-gray-900 to-gray-800 dark:from-gray-950 dark:to-gray-900 ${isFullscreen ? 'fixed inset-0 z-50' : ''}`}>
@@ -663,7 +663,7 @@ export function ElevenLabsInterviewRoom({
         </div>
 
         {/* Full Width Conversation Panel */}
-        <div className="h-[45vh] sm:h-[40vh] md:h-[55vh]">
+        <div className="h-[35vh] sm:h-[30vh] md:h-[40vh] lg:h-[35vh]">
           <Card className="h-full card-elevated shadow-strong border-border/50">
             <CardHeader className="pb-2 md:pb-3 border-b border-border/50 px-3 md:px-6 py-3 md:py-6">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 md:gap-3">

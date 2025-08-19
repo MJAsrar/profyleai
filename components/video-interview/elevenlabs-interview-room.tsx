@@ -251,7 +251,7 @@ export function ElevenLabsInterviewRoom({
         } catch (videoError) {
           console.error('❌ Failed to get video stream:', videoError)
           setStreamError(`Failed to access camera: ${videoError instanceof Error ? videoError.message : String(videoError)}`)
-        }
+        }//
 
         // Initialize ElevenLabs interview
         await initializeInterview(sessionId, jobTitle, companyName, jobDescription, resumeData, questions)

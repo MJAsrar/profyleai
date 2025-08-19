@@ -3,6 +3,7 @@ import { GeistSans } from 'geist/font/sans'
 import { GeistMono } from 'geist/font/mono'
 import { Analytics } from '@vercel/analytics/next'
 import { SessionProviderWrapper } from '@/components/providers/session-provider'
+import { ThemeProvider } from '@/components/theme-provider'
 import { Toaster } from '@/components/ui/toaster'
 import { defaultMetadata, organizationSchema } from '@/lib/seo-config'
 import './globals.css'
@@ -46,10 +47,17 @@ html {
         />
       </head>
       <body>
-        <SessionProviderWrapper>
-          {children}
-          <Toaster />
-        </SessionProviderWrapper>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <SessionProviderWrapper>
+            {children}
+            <Toaster />
+          </SessionProviderWrapper>
+        </ThemeProvider>
         <Analytics />
       </body>
     </html>

@@ -5,20 +5,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Switch } from "@/components/ui/switch"
-import { Badge } from "@/components/ui/badge"
+
 import { useToast } from "@/hooks/use-toast"
 import { 
-  Shield, 
   Key, 
-  Smartphone, 
   Eye, 
   EyeOff, 
-  Loader2, 
-  CheckCircle2,
-  AlertTriangle,
-  Lock,
-  Trash2
+  Loader2,
+  AlertTriangle
 } from "lucide-react"
 
 export function SecuritySettings() {
@@ -34,22 +28,7 @@ export function SecuritySettings() {
     newPassword: "",
     confirmPassword: ""
   })
-  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false)
-  const [sessionTimeout, setSessionTimeout] = useState(30)
 
-  // Load settings from localStorage
-  useEffect(() => {
-    try {
-      const savedSettings = localStorage.getItem('profyle-security-settings')
-      if (savedSettings) {
-        const settings = JSON.parse(savedSettings)
-        setTwoFactorEnabled(settings.twoFactorEnabled ?? false)
-        setSessionTimeout(settings.sessionTimeout ?? 30)
-      }
-    } catch (error) {
-      console.error('Error loading security settings:', error)
-    }
-  }, [])
 
   const handlePasswordChange = async () => {
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
@@ -236,173 +215,11 @@ export function SecuritySettings() {
         </CardContent>
       </Card>
 
-      {/* Two-Factor Authentication */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Smartphone className="h-5 w-5" />
-            Two-Factor Authentication
-          </CardTitle>
-          <CardDescription>
-            Add an extra layer of security to your account
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between p-4 border rounded-lg">
-            <div className="flex items-center gap-3">
-              <div className={`p-2 rounded-full ${twoFactorEnabled ? 'bg-green-100' : 'bg-muted'}`}>
-                <Shield className={`h-4 w-4 ${twoFactorEnabled ? 'text-green-600' : 'text-muted-foreground'}`} />
-              </div>
-              <div>
-                <div className="font-medium">Authenticator App</div>
-                <div className="text-sm text-muted-foreground">
-                  Use an authenticator app to generate verification codes
-                </div>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              {twoFactorEnabled && (
-                <Badge variant="secondary" className="text-green-600">
-                  <CheckCircle2 className="h-3 w-3 mr-1" />
-                  Enabled
-                </Badge>
-              )}
-              <Switch
-                checked={twoFactorEnabled}
-                onCheckedChange={(checked) => {
-                  setTwoFactorEnabled(checked)
-                  try {
-                    const settings = { twoFactorEnabled: checked, sessionTimeout }
-                    localStorage.setItem('profyle-security-settings', JSON.stringify(settings))
-                  } catch (error) {
-                    console.error('Error saving security settings:', error)
-                  }
-                }}
-              />
-            </div>
-          </div>
 
-          {twoFactorEnabled && (
-            <div className="p-4 bg-muted/30 rounded-lg">
-              <h4 className="font-medium mb-2">Recovery Codes</h4>
-              <p className="text-sm text-muted-foreground mb-3">
-                Save these backup codes in a safe place. You can use them to access your account if you lose your authenticator device.
-              </p>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm">
-                  View Codes
-                </Button>
-                <Button variant="outline" size="sm">
-                  Generate New Codes
-                </Button>
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
 
-      {/* Session Management */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Lock className="h-5 w-5" />
-            Session Management
-          </CardTitle>
-          <CardDescription>
-            Manage your active sessions and security preferences
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <Label>Session Timeout</Label>
-                <p className="text-sm text-muted-foreground">
-                  Automatically log out after period of inactivity
-                </p>
-              </div>
-              <select 
-                value={sessionTimeout} 
-                onChange={(e) => {
-                  const newTimeout = Number(e.target.value)
-                  setSessionTimeout(newTimeout)
-                  try {
-                    const settings = { twoFactorEnabled, sessionTimeout: newTimeout }
-                    localStorage.setItem('profyle-security-settings', JSON.stringify(settings))
-                  } catch (error) {
-                    console.error('Error saving security settings:', error)
-                  }
-                }}
-                className="px-3 py-2 border rounded-md"
-              >
-                <option value={15}>15 minutes</option>
-                <option value={30}>30 minutes</option>
-                <option value={60}>1 hour</option>
-                <option value={240}>4 hours</option>
-                <option value={480}>8 hours</option>
-              </select>
-            </div>
-          </div>
 
-          <div className="border-t pt-4">
-            <h4 className="font-medium mb-3">Active Sessions</h4>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between p-3 border rounded-lg">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-green-100 rounded-full">
-                    <CheckCircle2 className="h-4 w-4 text-green-600" />
-                  </div>
-                  <div>
-                    <div className="font-medium">Current Session</div>
-                    <div className="text-sm text-muted-foreground">
-                      Windows • Chrome • {new Date().toLocaleDateString()}
-                    </div>
-                  </div>
-                </div>
-                <Badge variant="secondary">Active</Badge>
-              </div>
-            </div>
-            <Button variant="outline" className="w-full mt-3">
-              <Trash2 className="h-4 w-4 mr-2" />
-              Terminate All Other Sessions
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
 
-      {/* Login Activity */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Login Activity</CardTitle>
-          <CardDescription>
-            Review recent login attempts to your account
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {[
-              { date: new Date(), location: "New York, US", device: "Windows • Chrome", status: "Success" },
-              { date: new Date(Date.now() - 86400000), location: "New York, US", device: "Windows • Chrome", status: "Success" },
-              { date: new Date(Date.now() - 172800000), location: "New York, US", device: "iPhone • Safari", status: "Success" },
-            ].map((activity, index) => (
-              <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
-                <div className="flex items-center gap-3">
-                  <CheckCircle2 className="h-4 w-4 text-green-500" />
-                  <div>
-                    <div className="font-medium">{activity.location}</div>
-                    <div className="text-sm text-muted-foreground">
-                      {activity.device} • {activity.date.toLocaleDateString()}
-                    </div>
-                  </div>
-                </div>
-                <Badge variant="secondary" className="text-green-600">
-                  {activity.status}
-                </Badge>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+
     </div>
   )
 }

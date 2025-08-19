@@ -83,6 +83,9 @@ export function PreferencesSettings() {
           const parsed = JSON.parse(savedPreferences)
           setPreferences(prev => ({ ...prev, ...parsed }))
         }
+        
+        // Sync theme with the current theme from next-themes
+        setPreferences(prev => ({ ...prev, theme: theme || 'system' }))
       } catch (error) {
         console.error('Error loading preferences:', error)
       } finally {
@@ -91,7 +94,7 @@ export function PreferencesSettings() {
     }
 
     loadPreferences()
-  }, [])
+  }, [theme])
 
   const handleSave = async () => {
     setIsSaving(true)
@@ -203,13 +206,13 @@ export function PreferencesSettings() {
                       updatePreference('theme', themeOption.value)
                     }}
                     className={`p-4 border rounded-lg text-center transition-all hover:shadow-md ${
-                      preferences.theme === themeOption.value 
+                      theme === themeOption.value 
                         ? 'border-primary bg-primary/10' 
                         : 'hover:border-muted-foreground/50'
                     }`}
                   >
                     <themeOption.icon className={`h-6 w-6 mx-auto mb-2 ${
-                      preferences.theme === themeOption.value ? 'text-primary' : 'text-muted-foreground'
+                      theme === themeOption.value ? 'text-primary' : 'text-muted-foreground'
                     }`} />
                     <div className="text-sm font-medium">{themeOption.label}</div>
                   </button>

@@ -539,7 +539,7 @@ export function ElevenLabsInterviewRoom({
                       muted
                       playsInline
                       controls={false}
-                      className={`w-full h-full object-cover transition-opacity duration-300 ${
+                      className={`w-full h-full object-cover object-center transition-opacity duration-300 ${
                         localStream && isVideoEnabled ? 'opacity-100' : 'opacity-0'
                       }`}
                       style={{
@@ -560,11 +560,11 @@ export function ElevenLabsInterviewRoom({
                     {(!localStream || !isVideoEnabled) && (
                       <div className="absolute inset-0 w-full h-full flex items-center justify-center bg-gray-800">
                         <div className="text-center text-white">
-                          <div className="w-20 h-20 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <User className="w-10 h-10" />
+                          <div className="w-16 h-16 md:w-20 md:h-20 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-3 md:mb-4">
+                            <User className="w-8 h-8 md:w-10 md:h-10" />
                           </div>
-                          <p className="text-lg font-medium">Camera Off</p>
-                          <p className="text-sm text-gray-400">
+                          <p className="text-base md:text-lg font-medium">Camera Off</p>
+                          <p className="text-xs md:text-sm text-gray-400">
                             {streamError ? 'Camera access denied' : 'Video disabled'}
                           </p>
                         </div>
@@ -599,12 +599,14 @@ export function ElevenLabsInterviewRoom({
                     )}
                     
                     {/* Large AI Avatar */}
-                    <div className="scale-[1.4] md:scale-[1.8] z-10">
-                      <AiAvatar 
-                        isActive={connectionStatus === 'connected' || connectionStatus === 'speaking'}
-                        isSpeaking={isAgentSpeaking}
-                        name="Sarah"
-                      />
+                    <div className="flex items-center justify-center h-full">
+                      <div className="scale-[2.5] sm:scale-[3] md:scale-[3.5] lg:scale-[4] z-10">
+                        <AiAvatar 
+                          isActive={connectionStatus === 'connected' || connectionStatus === 'speaking'}
+                          isSpeaking={isAgentSpeaking}
+                          name="Sarah"
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>

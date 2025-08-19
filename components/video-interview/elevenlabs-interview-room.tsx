@@ -555,20 +555,20 @@ export function ElevenLabsInterviewRoom({
                       </div>
                     )}
 
-                    {/* User Video */}
-                    <video
-                      ref={localVideoRef}
-                      autoPlay
-                      muted
-                      playsInline
-                      controls={false}
-                      className={`w-full h-full object-cover object-center transition-all duration-500 ${
-                        localStream && isVideoEnabled ? "opacity-100 scale-100" : "opacity-0 scale-105"
-                      }`}
-                      style={{
-                        transform: "scaleX(-1)", // Mirror the video like a selfie camera
-                        backgroundColor: "#1f2937",
-                      }}
+                                         {/* User Video */}
+                     <video
+                       ref={localVideoRef}
+                       autoPlay
+                       muted
+                       playsInline
+                       controls={false}
+                       className={`w-full h-full object-contain object-center transition-all duration-500 ${
+                         localStream && isVideoEnabled ? "opacity-100 scale-100" : "opacity-0 scale-105"
+                       }`}
+                       style={{
+                         transform: "scaleX(-1)", // Mirror the video like a selfie camera
+                         backgroundColor: "#1f2937",
+                       }}
                       onCanPlay={() => {
                         console.log("📺 Video can play event fired")
                         if (localVideoRef.current) {
@@ -579,19 +579,19 @@ export function ElevenLabsInterviewRoom({
                       onError={(e) => console.error("📺 Video error:", e)}
                     />
 
-                    {(!localStream || !isVideoEnabled) && (
-                      <div className="absolute inset-0 w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-800 to-slate-900">
-                        <div className="text-center text-white">
-                          <div className="w-20 h-20 bg-gradient-to-r from-slate-600 to-slate-700 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-                            <User className="w-10 h-10" />
-                          </div>
-                          <p className="text-lg font-semibold mb-2">Camera Off</p>
-                          <p className="text-sm text-slate-300">
-                            {streamError ? "Camera access denied" : "Video disabled"}
-                          </p>
-                        </div>
-                      </div>
-                    )}
+                                         {(!localStream || !isVideoEnabled) && (
+                       <div className="absolute inset-0 w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-800 to-slate-900">
+                         <div className="text-center text-white p-4">
+                           <div className="w-16 h-16 bg-gradient-to-r from-slate-600 to-slate-700 rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg">
+                             <User className="w-8 h-8" />
+                           </div>
+                           <p className="text-base font-semibold mb-1">Camera Off</p>
+                           <p className="text-xs text-slate-300">
+                             {streamError ? "Camera access denied" : "Video disabled"}
+                           </p>
+                         </div>
+                       </div>
+                     )}
                   </div>
 
                   <div className="relative bg-gradient-to-br from-blue-900 via-indigo-900 to-purple-900 dark:from-blue-950 dark:via-indigo-950 dark:to-purple-950 flex items-center justify-center overflow-hidden">
@@ -630,15 +630,15 @@ export function ElevenLabsInterviewRoom({
                       </div>
                     )}
 
-                    <div className="flex items-center justify-center h-full relative z-10">
-                      <div className="scale-[3] sm:scale-[3.5] lg:scale-[4] xl:scale-[4.5] transform transition-transform duration-300">
-                        <AiAvatar
-                          isActive={connectionStatus === "connected" || connectionStatus === "speaking"}
-                          isSpeaking={isAgentSpeaking}
-                          name="Sarah"
-                        />
-                      </div>
-                    </div>
+                                         <div className="flex items-center justify-center h-full relative z-10 p-8">
+                       <div className="scale-[2] sm:scale-[2.2] lg:scale-[2.5] xl:scale-[2.8] transform transition-transform duration-300">
+                         <AiAvatar
+                           isActive={connectionStatus === "connected" || connectionStatus === "speaking"}
+                           isSpeaking={isAgentSpeaking}
+                           name="Sarah"
+                         />
+                       </div>
+                     </div>
                   </div>
                 </div>
 

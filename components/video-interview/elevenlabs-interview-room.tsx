@@ -437,34 +437,34 @@ export function ElevenLabsInterviewRoom({
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+    <div className="min-h-screen bg-background">
       {/* Header Bar */}
-      <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-40">
+      <div className="bg-card/80 backdrop-blur-sm border-b border-border sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-3 md:px-4 py-2 md:py-3">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div className="flex items-center gap-3 md:gap-4">
               <div className="flex items-center gap-2">
-                <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
-                  <Monitor className="w-5 h-5 text-white" />
+                <div className="w-10 h-10 bg-gradient-to-r from-primary to-primary/80 rounded-lg flex items-center justify-center">
+                  <Monitor className="w-5 h-5 text-primary-foreground" />
                 </div>
                 <div>
-                  <h1 className="text-base md:text-lg font-bold text-gray-900">AI Interview</h1>
-                  <p className="text-xs md:text-sm text-gray-600 truncate max-w-[200px] sm:max-w-none">{jobTitle} at {companyName}</p>
+                  <h1 className="text-base md:text-lg font-bold text-foreground">AI Interview</h1>
+                  <p className="text-xs md:text-sm text-muted-foreground truncate max-w-[200px] sm:max-w-none">{jobTitle} at {companyName}</p>
                 </div>
               </div>
               
               {/* Connection Status */}
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border">
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-card border border-border/50">
                 <div className={`w-2 h-2 rounded-full ${statusDisplay.color} animate-pulse`} />
-                <span className="text-sm font-medium text-gray-700">{statusDisplay.text}</span>
+                <span className="text-sm font-medium text-foreground">{statusDisplay.text}</span>
               </div>
             </div>
             
             <div className="flex items-center gap-3">
               {/* Session Timer */}
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-100">
-                <Clock className="w-4 h-4 text-gray-600" />
-                <span className="text-sm font-mono text-gray-700">
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted border border-border/50">
+                <Clock className="w-4 h-4 text-muted-foreground" />
+                <span className="text-sm font-mono text-foreground">
                   {minutes}:{seconds.toString().padStart(2, '0')}
                 </span>
               </div>
@@ -490,14 +490,14 @@ export function ElevenLabsInterviewRoom({
       <div className="max-w-7xl mx-auto px-3 md:px-4 py-4 md:py-6">
         {/* Error Display */}
         {(lastError || streamError) && (
-          <Alert className="mb-4" variant="destructive">
+          <Alert className="mb-4 shadow-medium border-destructive/50 bg-destructive/5" variant="destructive">
             <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
+            <AlertDescription className="text-foreground">
               {lastError || streamError}
               <Button 
                 variant="outline" 
                 size="sm" 
-                className="ml-2"
+                className="ml-2 border-border/50 hover:bg-muted/50"
                 onClick={clearErrors}
               >
                 Dismiss
@@ -507,26 +507,26 @@ export function ElevenLabsInterviewRoom({
         )}
 
         {/* Video Call Layout */}
-        <div className="h-[50vh] sm:h-[45vh] md:h-[35vh] mb-4">
-          <Card className="h-full shadow-xl border-0 bg-white/90 backdrop-blur-sm">
+        <div className="h-[45vh] sm:h-[50vh] md:h-[35vh] mb-4 md:mb-6">
+          <Card className="h-full card-elevated shadow-strong border-border/50">
             <CardContent className="p-0 h-full">
-              <div className={`relative h-full rounded-xl overflow-hidden bg-gradient-to-br from-gray-900 to-gray-800 ${isFullscreen ? 'fixed inset-0 z-50' : ''}`}>
+              <div className={`relative h-full rounded-xl overflow-hidden bg-gradient-to-br from-gray-900 to-gray-800 dark:from-gray-950 dark:to-gray-900 ${isFullscreen ? 'fixed inset-0 z-50' : ''}`}>
                 <div className="grid grid-cols-1 md:grid-cols-2 h-full">
                   {/* User Video Side */}
-                  <div className="relative bg-gray-900 md:border-r-2 border-b-2 md:border-b-0 border-gray-600/50">
-                    <div className="absolute top-4 left-4 z-10">
-                      <div className="px-3 py-2 bg-black/70 backdrop-blur-sm rounded-lg border border-white/10">
-                        <span className="text-white text-sm font-medium">You</span>
+                  <div className="relative bg-gray-900 dark:bg-gray-950 md:border-r-2 border-b-2 md:border-b-0 border-gray-600/50 dark:border-gray-500/50">
+                    <div className="absolute top-2 left-2 md:top-4 md:left-4 z-10">
+                      <div className="px-2 py-1 md:px-3 md:py-2 bg-black/70 backdrop-blur-sm rounded-lg border border-white/10">
+                        <span className="text-white text-xs md:text-sm font-medium">You</span>
                       </div>
                     </div>
                     
                     {/* User Speaking Indicator */}
                     {isUserSpeaking && (
-                      <div className="absolute top-4 right-4 z-10">
-                        <div className="px-3 py-2 bg-green-500/90 backdrop-blur-md rounded-lg border border-green-400/50">
-                          <div className="flex items-center gap-2">
-                            <Waves className="w-4 h-4 text-white animate-pulse" />
-                            <span className="text-white text-sm font-medium">Speaking</span>
+                      <div className="absolute top-2 right-2 md:top-4 md:right-4 z-10">
+                        <div className="px-2 py-1 md:px-3 md:py-2 bg-green-500/90 backdrop-blur-md rounded-lg border border-green-400/50">
+                          <div className="flex items-center gap-1 md:gap-2">
+                            <Waves className="w-3 h-3 md:w-4 md:h-4 text-white animate-pulse" />
+                            <span className="text-white text-xs md:text-sm font-medium hidden sm:inline">Speaking</span>
                           </div>
                         </div>
                       </div>
@@ -573,33 +573,33 @@ export function ElevenLabsInterviewRoom({
                   </div>
                   
                   {/* AI Avatar Side */}
-                  <div className="relative bg-gradient-to-br from-blue-900 to-indigo-900 flex items-center justify-center overflow-hidden">
+                  <div className="relative bg-gradient-to-br from-blue-900 to-indigo-900 dark:from-blue-950 dark:to-indigo-950 flex items-center justify-center overflow-hidden">
                     {/* Subtle background pattern */}
                     <div className="absolute inset-0 opacity-10">
                       <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,white_0%,transparent_50%)]"></div>
                       <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,white_0%,transparent_50%)]"></div>
                     </div>
                     
-                    <div className="absolute top-4 left-4 z-10">
-                      <div className="px-3 py-2 bg-black/70 backdrop-blur-sm rounded-lg border border-white/10">
-                        <span className="text-white text-sm font-medium">Sarah (AI)</span>
+                    <div className="absolute top-2 left-2 md:top-4 md:left-4 z-10">
+                      <div className="px-2 py-1 md:px-3 md:py-2 bg-black/70 backdrop-blur-sm rounded-lg border border-white/10">
+                        <span className="text-white text-xs md:text-sm font-medium">Sarah (AI)</span>
                       </div>
                     </div>
                     
                     {/* AI Speaking Indicator */}
                     {isAgentSpeaking && (
-                      <div className="absolute top-4 right-4 z-10">
-                        <div className="px-3 py-2 bg-blue-500/90 backdrop-blur-md rounded-lg border border-blue-400/50">
-                          <div className="flex items-center gap-2">
-                            <Waves className="w-4 h-4 text-white animate-pulse" />
-                            <span className="text-white text-sm font-medium">Speaking</span>
+                      <div className="absolute top-2 right-2 md:top-4 md:right-4 z-10">
+                        <div className="px-2 py-1 md:px-3 md:py-2 bg-blue-500/90 backdrop-blur-md rounded-lg border border-blue-400/50">
+                          <div className="flex items-center gap-1 md:gap-2">
+                            <Waves className="w-3 h-3 md:w-4 md:h-4 text-white animate-pulse" />
+                            <span className="text-white text-xs md:text-sm font-medium hidden sm:inline">Speaking</span>
                           </div>
                         </div>
                       </div>
                     )}
                     
                     {/* Large AI Avatar */}
-                    <div className="scale-[1.8] z-10">
+                    <div className="scale-[1.4] md:scale-[1.8] z-10">
                       <AiAvatar 
                         isActive={connectionStatus === 'connected' || connectionStatus === 'speaking'}
                         isSpeaking={isAgentSpeaking}
@@ -663,31 +663,31 @@ export function ElevenLabsInterviewRoom({
         </div>
 
         {/* Full Width Conversation Panel */}
-        <div className="h-[40vh] sm:h-[45vh] md:h-[55vh]">
-          <Card className="h-full shadow-xl border-0 bg-white/90 backdrop-blur-sm">
-            <CardHeader className="pb-3 border-b">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div className="h-[45vh] sm:h-[40vh] md:h-[55vh]">
+          <Card className="h-full card-elevated shadow-strong border-border/50">
+            <CardHeader className="pb-2 md:pb-3 border-b border-border/50 px-3 md:px-6 py-3 md:py-6">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 md:gap-3">
                 <div className="flex items-center gap-3 md:gap-4">
-                  <CardTitle className="flex items-center gap-2 text-base md:text-lg">
-                    <MessageSquare className="w-4 h-4 md:w-5 md:h-5 text-blue-600" />
+                  <CardTitle className="flex items-center gap-2 text-base md:text-lg text-foreground">
+                    <MessageSquare className="w-4 h-4 md:w-5 md:h-5 text-primary" />
                     Interview Conversation
                   </CardTitle>
-                  <Badge variant="secondary" className="bg-blue-100 text-blue-700 text-xs">
+                  <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20 text-xs">
                     {conversationHistory.length} messages
                   </Badge>
                 </div>
-                <div className="flex items-center gap-3 md:gap-4">
+                <div className="flex items-center gap-2 md:gap-4">
                   {/* Stats */}
-                  <div className="flex items-center gap-3 md:gap-4 text-xs md:text-sm text-gray-600">
-                    <div className="flex items-center gap-1">
-                      <Clock className="w-4 h-4" />
-                      <span className="font-mono font-medium">
+                  <div className="flex items-center gap-2 md:gap-3 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-1 px-2 py-1 rounded-md bg-muted/50">
+                      <Clock className="w-3 h-3 md:w-4 md:h-4" />
+                      <span className="font-mono font-medium text-xs md:text-sm">
                         {minutes}:{seconds.toString().padStart(2, '0')}
                       </span>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <Zap className="w-4 h-4" />
-                      <span>{questions.length} questions</span>
+                    <div className="flex items-center gap-1 px-2 py-1 rounded-md bg-muted/50 hidden sm:flex">
+                      <Zap className="w-3 h-3 md:w-4 md:h-4" />
+                      <span className="text-xs md:text-sm">{questions.length} questions</span>
                     </div>
                   </div>
                   
@@ -696,10 +696,11 @@ export function ElevenLabsInterviewRoom({
                     variant="outline"
                     size="sm"
                     onClick={() => setShowTextInput(!showTextInput)}
-                    className="flex items-center gap-2 text-xs md:text-sm"
+                    className="flex items-center gap-1 md:gap-2 text-xs border-border/50 hover:bg-muted/50 px-2 md:px-3"
                   >
-                    <Send className="w-4 h-4" />
-                    {showTextInput ? 'Hide Input' : 'Type Message'}
+                    <Send className="w-3 h-3 md:w-4 md:h-4" />
+                    <span className="hidden sm:inline">{showTextInput ? 'Hide Input' : 'Type Message'}</span>
+                    <span className="sm:hidden">{showTextInput ? 'Hide' : 'Type'}</span>
                   </Button>
                 </div>
               </div>
@@ -707,14 +708,14 @@ export function ElevenLabsInterviewRoom({
             <CardContent className="p-0 h-[calc(100%-4rem)]">
               <div className="grid grid-cols-1 h-full">
                 {/* Conversation Messages */}
-                <div className="overflow-y-auto p-4 space-y-4 custom-scrollbar">
+                <div className="overflow-y-auto p-3 md:p-4 space-y-3 md:space-y-4 custom-scrollbar">
                   {conversationHistory.length === 0 ? (
                     <div className="text-center py-12">
-                      <MessageSquare className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                      <p className="text-gray-500 text-lg font-medium">
+                      <MessageSquare className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                      <p className="text-muted-foreground text-lg font-medium">
                         Interview conversation will appear here
                       </p>
-                      <p className="text-gray-400 text-sm mt-2">
+                      <p className="text-muted-foreground/70 text-sm mt-2">
                         Start speaking to begin your AI interview session
                       </p>
                     </div>
@@ -729,39 +730,40 @@ export function ElevenLabsInterviewRoom({
                         {/* Avatar */}
                         {message.role === 'agent' && (
                           <div className="flex-shrink-0">
-                            <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center">
-                              <span className="text-white text-sm font-bold">AI</span>
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-r from-primary to-primary/80 flex items-center justify-center shadow-medium">
+                              <span className="text-primary-foreground text-sm font-bold">AI</span>
                             </div>
                           </div>
                         )}
                         
                         {/* Message Content */}
-                        <div className={`max-w-2xl ${
+                        <div className={`max-w-xl md:max-w-2xl ${
                           message.role === 'agent' ? 'mr-auto' : 'ml-auto'
                         }`}>
-                          <div className={`p-4 rounded-2xl ${
+                          <div className={`p-3 md:p-4 rounded-2xl shadow-soft border ${
                             message.role === 'agent' 
-                              ? 'bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200' 
-                              : 'bg-gradient-to-r from-green-50 to-green-100 border border-green-200'
+                              ? 'bg-gradient-to-r from-primary/5 to-primary/10 border-primary/20' 
+                              : 'bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 border-green-200 dark:border-green-800'
                           }`}>
                             <div className="flex items-center gap-2 mb-2">
-                              <span className={`text-sm font-semibold ${
-                                message.role === 'agent' ? 'text-blue-700' : 'text-green-700'
+                              <span className={`text-xs md:text-sm font-semibold ${
+                                message.role === 'agent' ? 'text-primary' : 'text-green-700 dark:text-green-300'
                               }`}>
-                                {message.role === 'agent' ? 'Sarah (AI Interviewer)' : 'You'}
+                                <span className="hidden sm:inline">{message.role === 'agent' ? 'Sarah (AI Interviewer)' : 'You'}</span>
+                                <span className="sm:hidden">{message.role === 'agent' ? 'AI' : 'You'}</span>
                               </span>
-                              <span className="text-xs text-gray-500">
+                              <span className="text-xs text-muted-foreground">
                                 {message.timestamp.toLocaleTimeString()}
                               </span>
                             </div>
-                            <p className="text-gray-800 leading-relaxed">{message.content}</p>
+                            <p className="text-foreground leading-relaxed text-sm md:text-base">{message.content}</p>
                           </div>
                         </div>
                         
                         {/* User Avatar */}
                         {message.role === 'user' && (
                           <div className="flex-shrink-0">
-                            <div className="w-10 h-10 rounded-full bg-gradient-to-r from-green-500 to-emerald-600 flex items-center justify-center">
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-r from-green-500 to-emerald-600 flex items-center justify-center shadow-medium">
                               <User className="w-5 h-5 text-white" />
                             </div>
                           </div>
@@ -773,13 +775,13 @@ export function ElevenLabsInterviewRoom({
                 
                 {/* Text Input (Optional) */}
                 {showTextInput && (
-                  <div className="border-t p-4 bg-gray-50">
+                  <div className="border-t border-border/50 p-4 bg-muted/30">
                     <div className="flex gap-3">
                       <textarea
                         value={textMessage}
                         onChange={(e) => setTextMessage(e.target.value)}
                         placeholder="Type a message to the AI interviewer..."
-                        className="flex-1 p-3 border border-gray-200 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="flex-1 p-3 border border-border/50 rounded-lg resize-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 bg-background text-foreground"
                         rows={2}
                         disabled={connectionStatus !== 'connected'}
                         onKeyDown={(e) => {
@@ -792,7 +794,7 @@ export function ElevenLabsInterviewRoom({
                       <Button
                         onClick={handleSendMessage}
                         disabled={!textMessage.trim() || connectionStatus !== 'connected'}
-                        className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 px-6"
+                        className="btn-gradient shadow-medium px-6"
                       >
                         <Send className="w-4 h-4" />
                       </Button>

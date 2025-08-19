@@ -1,6 +1,8 @@
 'use client'
 
 import { useState } from 'react'
+import { Card, CardContent } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 import { EnhancedInterviewSetup } from '@/components/video-interview/enhanced-interview-setup'
 import { ElevenLabsInterviewRoom } from '@/components/video-interview/elevenlabs-interview-room'
 import { VideoInterviewErrorBoundary } from '@/components/video-interview/video-interview-error-boundary'
@@ -114,8 +116,8 @@ export default function EnhancedVideoInterviewPage() {
 
   return (
     <VideoInterviewErrorBoundary>
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-        <div className="container mx-auto py-8">
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto py-6 md:py-8">
           {currentPhase === 'setup' && (
             <EnhancedInterviewSetup
               onSetupComplete={handleSetupComplete}
@@ -138,35 +140,42 @@ export default function EnhancedVideoInterviewPage() {
 
           {currentPhase === 'completed' && (
             <div className="max-w-2xl mx-auto">
-              <div className="bg-white rounded-lg shadow-sm p-8 text-center">
-                <div className="mb-6">
-                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
+              <Card className="card-elevated shadow-strong border-border/50 text-center">
+                <CardContent className="p-8 space-y-6">
+                  <div className="space-y-4">
+                    <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center mx-auto shadow-medium">
+                      <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                    <div className="space-y-2">
+                      <h2 className="heading-2 text-foreground">Interview Complete!</h2>
+                      <p className="body-large text-muted-foreground">
+                        Great job! Your interview has been recorded and analyzed. We'll provide detailed feedback to help you improve.
+                      </p>
+                    </div>
                   </div>
-                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Interview Complete!</h2>
-                  <p className="text-gray-600">
-                    Great job! Your interview has been recorded and analyzed.
-                  </p>
-                </div>
 
-                <div className="space-y-4">
-                  <button
-                    onClick={handleInterviewEnd}
-                    className="w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
-                  >
-                    View Results & Feedback
-                  </button>
-                  
-                  <button
-                    onClick={handleStartOver}
-                    className="w-full bg-gray-100 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-200 transition-colors"
-                  >
-                    Start Another Interview
-                  </button>
-                </div>
-              </div>
+                  <div className="space-y-3">
+                    <Button
+                      onClick={handleInterviewEnd}
+                      className="w-full btn-gradient shadow-medium py-4 text-base font-semibold"
+                      size="lg"
+                    >
+                      View Results & Feedback
+                    </Button>
+                    
+                    <Button
+                      onClick={handleStartOver}
+                      variant="outline"
+                      className="w-full border-border/50 hover:bg-muted/50 py-4 text-base"
+                      size="lg"
+                    >
+                      Start Another Interview
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           )}
         </div>

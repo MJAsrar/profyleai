@@ -191,12 +191,12 @@ export function EnhancedInterviewSetup({ onSetupComplete, isLoading = false }: E
   }
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
+    <div className="max-w-5xl mx-auto space-y-6 md:space-y-8">
       {/* Progress Steps */}
-      <Card className="shadow-lg border-0 bg-white/90 backdrop-blur-sm">
-        <CardContent className="p-6">
+      <Card className="card-elevated border-primary/20 bg-gradient-to-br from-card to-muted/20 shadow-medium">
+        <CardContent className="p-4 md:p-6">
           <div className="flex items-center justify-center">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 md:gap-2 overflow-x-auto pb-2">
               {[
                 { id: 'job-details', label: 'Job Details', number: 1 },
                 { id: 'resume-selection', label: 'Resume', number: 2 },
@@ -204,22 +204,22 @@ export function EnhancedInterviewSetup({ onSetupComplete, isLoading = false }: E
                 { id: 'ready', label: 'Ready', number: 4 }
               ].map((step, index) => (
                 <div key={step.id} className="flex items-center">
-                  <div className={`flex items-center gap-3 px-4 py-2 rounded-full transition-all ${
+                  <div className={`flex items-center gap-2 md:gap-3 px-3 md:px-4 py-2 rounded-full transition-all ${
                     currentStep === step.id 
-                      ? 'bg-blue-600 text-white shadow-lg' 
-                      : 'bg-gray-100 text-gray-600'
+                      ? 'bg-primary text-primary-foreground shadow-medium' 
+                      : 'bg-muted/50 text-muted-foreground hover:bg-muted'
                   }`}>
                     <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                      currentStep === step.id ? 'bg-white/20' : 'bg-white'
+                      currentStep === step.id ? 'bg-primary-foreground/20' : 'bg-background'
                     }`}>
-                      <span className={currentStep === step.id ? 'text-white' : 'text-gray-600'}>
+                      <span className={currentStep === step.id ? 'text-primary-foreground' : 'text-muted-foreground'}>
                         {step.number}
                       </span>
                     </div>
-                    <span className="text-sm font-medium">{step.label}</span>
+                    <span className="text-sm font-medium whitespace-nowrap">{step.label}</span>
                   </div>
                   {index < 3 && (
-                    <div className="w-8 h-0.5 bg-gray-300 mx-2" />
+                    <div className="w-4 md:w-8 h-0.5 bg-border mx-1 md:mx-2" />
                   )}
                 </div>
               ))}
@@ -230,65 +230,68 @@ export function EnhancedInterviewSetup({ onSetupComplete, isLoading = false }: E
 
       {/* Error Display */}
       {error && (
-        <Alert variant="destructive" className="shadow-lg border-red-200">
+        <Alert variant="destructive" className="shadow-medium border-destructive/50 bg-destructive/5">
           <AlertCircle className="h-4 w-4" />
-          <AlertDescription className="font-medium">{error}</AlertDescription>
+          <AlertDescription className="font-medium text-foreground">{error}</AlertDescription>
         </Alert>
       )}
 
       {/* Step 1: Job Details */}
       {currentStep === 'job-details' && (
-        <Card className="shadow-xl border-0 bg-white/90 backdrop-blur-sm">
-          <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-t-lg">
+        <Card className="card-elevated shadow-strong border-border/50">
+          <CardHeader className="bg-gradient-to-br from-primary/5 to-primary/10 border-b border-border/50 rounded-t-lg">
             <CardTitle className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
-                <Briefcase className="h-5 w-5 text-white" />
+              <div className="w-12 h-12 bg-gradient-to-br from-primary to-primary/80 rounded-xl flex items-center justify-center shadow-medium">
+                <Briefcase className="h-6 w-6 text-primary-foreground" />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-gray-900">Job Details</h2>
-                <p className="text-sm text-gray-600 font-normal">Tell us about the position you're interviewing for</p>
+                <h2 className="heading-3 text-foreground">Job Details</h2>
+                <p className="body-small text-muted-foreground font-normal">Tell us about the position you're interviewing for</p>
               </div>
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="jobTitle">Job Title *</Label>
+          <CardContent className="p-6 space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <Label htmlFor="jobTitle" className="body-default font-semibold text-foreground">Job Title *</Label>
                 <Input
                   id="jobTitle"
                   value={jobData.jobTitle}
                   onChange={(e) => setJobData({ ...jobData, jobTitle: e.target.value })}
                   placeholder="e.g., Senior Software Engineer"
+                  className="border-border/50 focus:border-primary/50 focus:ring-primary/20"
                 />
               </div>
-              <div>
-                <Label htmlFor="companyName">Company Name *</Label>
+              <div className="space-y-2">
+                <Label htmlFor="companyName" className="body-default font-semibold text-foreground">Company Name *</Label>
                 <Input
                   id="companyName"
                   value={jobData.companyName}
                   onChange={(e) => setJobData({ ...jobData, companyName: e.target.value })}
                   placeholder="e.g., Google"
+                  className="border-border/50 focus:border-primary/50 focus:ring-primary/20"
                 />
               </div>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="industry">Industry</Label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <Label htmlFor="industry" className="body-default font-semibold text-foreground">Industry</Label>
                 <Input
                   id="industry"
                   value={jobData.industry}
                   onChange={(e) => setJobData({ ...jobData, industry: e.target.value })}
                   placeholder="e.g., Technology"
+                  className="border-border/50 focus:border-primary/50 focus:ring-primary/20"
                 />
               </div>
-              <div>
-                <Label htmlFor="experienceLevel">Experience Level</Label>
+              <div className="space-y-2">
+                <Label htmlFor="experienceLevel" className="body-default font-semibold text-foreground">Experience Level</Label>
                 <Select 
                   value={jobData.experienceLevel} 
                   onValueChange={(value: any) => setJobData({ ...jobData, experienceLevel: value })}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="border-border/50 focus:border-primary/50 focus:ring-primary/20">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -301,19 +304,27 @@ export function EnhancedInterviewSetup({ onSetupComplete, isLoading = false }: E
               </div>
             </div>
             
-            <div>
-              <Label htmlFor="jobDescription">Job Description</Label>
+            <div className="space-y-2">
+              <Label htmlFor="jobDescription" className="body-default font-semibold text-foreground">Job Description</Label>
               <Textarea
                 id="jobDescription"
                 value={jobData.jobDescription}
                 onChange={(e) => setJobData({ ...jobData, jobDescription: e.target.value })}
                 placeholder="Paste the job description here (optional but recommended for better questions)"
                 rows={6}
+                className="border-border/50 focus:border-primary/50 focus:ring-primary/20 resize-none"
               />
+              <p className="body-small text-muted-foreground">
+                Adding a job description helps us generate more targeted interview questions.
+              </p>
             </div>
             
-            <div className="flex justify-end">
-              <Button onClick={handleJobDataSubmit}>
+            <div className="flex justify-end pt-4">
+              <Button 
+                onClick={handleJobDataSubmit}
+                className="btn-gradient shadow-medium px-6 py-3"
+                size="lg"
+              >
                 Next: Select Resume <ArrowRight className="h-4 w-4 ml-2" />
               </Button>
             </div>
@@ -323,66 +334,95 @@ export function EnhancedInterviewSetup({ onSetupComplete, isLoading = false }: E
 
       {/* Step 2: Resume Selection */}
       {currentStep === 'resume-selection' && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              Select Your Resume
+        <Card className="card-elevated shadow-strong border-border/50">
+          <CardHeader className="bg-gradient-to-br from-primary/5 to-primary/10 border-b border-border/50 rounded-t-lg">
+            <CardTitle className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-gradient-to-br from-primary to-primary/80 rounded-xl flex items-center justify-center shadow-medium">
+                <FileText className="h-6 w-6 text-primary-foreground" />
+              </div>
+              <div>
+                <h2 className="heading-3 text-foreground">Select Your Resume</h2>
+                <p className="body-small text-muted-foreground font-normal">
+                  Choose the resume that best matches this job opportunity. The AI will reference your specific experience during the interview.
+                </p>
+              </div>
             </CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Choose the resume that best matches this job opportunity. The AI will reference your specific experience during the interview.
-            </p>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="p-6 space-y-6">
             {isLoadingResumes ? (
-              <div className="text-center py-8">
-                <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-                <p>Loading your resumes...</p>
+              <div className="text-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
+                <p className="text-muted-foreground">Loading your resumes...</p>
               </div>
             ) : resumes.length === 0 ? (
-              <div className="text-center py-8">
-                <FileText className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                <h3 className="font-semibold mb-2">No Resumes Found</h3>
-                <p className="text-muted-foreground mb-4">
-                  You need to create a resume first before starting a video interview.
-                </p>
-                <Button variant="outline" onClick={() => window.location.href = '/dashboard/resume-builder'}>
+              <div className="text-center py-12 space-y-4">
+                <div className="w-16 h-16 bg-muted/50 rounded-2xl flex items-center justify-center mx-auto">
+                  <FileText className="h-8 w-8 text-muted-foreground" />
+                </div>
+                <div className="space-y-2">
+                  <h3 className="heading-3 text-foreground">No Resumes Found</h3>
+                  <p className="body-default text-muted-foreground max-w-sm mx-auto">
+                    You need to create a resume first before starting a video interview.
+                  </p>
+                </div>
+                <Button 
+                  variant="outline" 
+                  onClick={() => window.location.href = '/dashboard/resume-builder'}
+                  className="border-primary/20 hover:bg-primary/5"
+                >
                   Create Resume
                 </Button>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {resumes.map((resume) => (
                   <div
                     key={resume.id}
-                    className={`border rounded-lg p-4 cursor-pointer transition-all ${
+                    className={`group border rounded-xl p-4 cursor-pointer transition-all duration-200 ${
                       selectedResumeId === resume.id
-                        ? 'border-primary bg-primary/5'
-                        : 'border-border hover:border-primary/50'
+                        ? 'border-primary bg-primary/5 shadow-medium'
+                        : 'border-border/50 hover:border-primary/30 hover:shadow-soft bg-card'
                     }`}
                     onClick={() => setSelectedResumeId(resume.id)}
                   >
                     <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <h3 className="font-semibold">{resume.title}</h3>
+                      <div className="flex-1 space-y-3">
+                        <div className="flex items-center gap-3">
+                          <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors">
+                            {resume.title}
+                          </h3>
                           {selectedResumeId === resume.id && (
-                            <CheckCircle className="h-4 w-4 text-primary" />
+                            <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center">
+                              <CheckCircle className="h-4 w-4 text-primary-foreground" />
+                            </div>
                           )}
                         </div>
-                        <p className="text-sm text-muted-foreground mb-2">
-                          {resume.personalInfo?.fullName || 'No name provided'}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {getResumeSummary(resume)}
-                        </p>
-                        {resume.summary && (
-                          <p className="text-sm mt-2 line-clamp-2">
-                            {resume.summary.substring(0, 150)}...
+                        
+                        <div className="space-y-2">
+                          <p className="body-small text-muted-foreground">
+                            <User className="h-4 w-4 inline mr-2" />
+                            {resume.personalInfo?.fullName || 'No name provided'}
                           </p>
+                          <p className="body-small text-muted-foreground">
+                            {getResumeSummary(resume)}
+                          </p>
+                        </div>
+                        
+                        {resume.summary && (
+                          <div className="p-3 rounded-lg bg-muted/30 border border-border/50">
+                            <p className="body-small text-foreground line-clamp-2">
+                              {resume.summary.substring(0, 150)}...
+                            </p>
+                          </div>
                         )}
                       </div>
-                      <Button variant="outline" size="sm" className="ml-4">
+                      
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="ml-4 border-border/50 hover:bg-primary/5 hover:border-primary/30"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <Eye className="h-4 w-4" />
                       </Button>
                     </div>
@@ -392,11 +432,20 @@ export function EnhancedInterviewSetup({ onSetupComplete, isLoading = false }: E
             )}
             
             {resumes.length > 0 && (
-              <div className="flex justify-between">
-                <Button variant="outline" onClick={() => setCurrentStep('job-details')}>
+              <div className="flex justify-between pt-4">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setCurrentStep('job-details')}
+                  className="border-border/50 hover:bg-muted/50"
+                >
                   Back
                 </Button>
-                <Button onClick={handleResumeSelection} disabled={!selectedResumeId}>
+                <Button 
+                  onClick={handleResumeSelection} 
+                  disabled={!selectedResumeId}
+                  className="btn-gradient shadow-medium px-6"
+                  size="lg"
+                >
                   {isGeneratingQuestions ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -416,67 +465,90 @@ export function EnhancedInterviewSetup({ onSetupComplete, isLoading = false }: E
 
       {/* Step 3: Review Questions */}
       {currentStep === 'questions' && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5" />
-              Interview Questions Ready
+        <Card className="card-elevated shadow-strong border-border/50">
+          <CardHeader className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-b border-border/50 rounded-t-lg">
+            <CardTitle className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-gradient-to-br from-green-600 to-emerald-600 rounded-xl flex items-center justify-center shadow-medium">
+                <CheckCircle className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <h2 className="heading-3 text-foreground">Interview Questions Ready</h2>
+                <p className="body-small text-muted-foreground font-normal">
+                  We've generated {questions.length} personalized questions based on the {jobData.jobTitle} role and your resume.
+                </p>
+              </div>
             </CardTitle>
-            <p className="text-sm text-muted-foreground">
-              We've generated {questions.length} personalized questions based on the {jobData.jobTitle} role and your resume.
-            </p>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="bg-muted/50 rounded-lg p-4">
-              <h4 className="font-semibold mb-2">Interview Overview</h4>
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span className="text-muted-foreground">Position:</span>
-                  <span className="ml-2 font-medium">{jobData.jobTitle}</span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Company:</span>
-                  <span className="ml-2 font-medium">{jobData.companyName}</span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Resume:</span>
-                  <span className="ml-2 font-medium">{getSelectedResume()?.title}</span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Questions:</span>
-                  <span className="ml-2 font-medium">{questions.length} questions</span>
-                </div>
+          <CardContent className="p-6 space-y-6">
+            <div className="bg-gradient-to-br from-primary/5 to-primary/10 rounded-xl p-6 border border-primary/20">
+              <h4 className="font-semibold mb-4 text-foreground">Interview Overview</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {[
+                  { label: "Position", value: jobData.jobTitle, icon: Briefcase },
+                  { label: "Company", value: jobData.companyName, icon: Building },
+                  { label: "Resume", value: getSelectedResume()?.title, icon: FileText },
+                  { label: "Questions", value: `${questions.length} questions`, icon: MessageSquare }
+                ].map((item, index) => (
+                  <div key={index} className="flex items-center gap-3 p-3 rounded-lg bg-card border border-border/50">
+                    <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                      <item.icon className="h-4 w-4 text-primary" />
+                    </div>
+                    <div>
+                      <span className="body-small text-muted-foreground">{item.label}:</span>
+                      <span className="ml-2 font-medium text-foreground">{item.value}</span>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
             
-            <div>
-              <h4 className="font-semibold mb-3">Sample Questions</h4>
-              <div className="space-y-2">
+            <div className="space-y-4">
+              <h4 className="font-semibold text-foreground">Sample Questions Preview</h4>
+              <div className="space-y-3">
                 {questions.slice(0, 3).map((question, index) => (
-                  <div key={index} className="border-l-2 border-primary/20 pl-3">
-                    <p className="text-sm">{question.question}</p>
+                  <div key={index} className="p-4 rounded-xl bg-muted/30 border border-border/50 border-l-4 border-l-primary">
+                    <div className="flex items-start gap-3">
+                      <div className="w-6 h-6 bg-primary/10 rounded-full flex items-center justify-center mt-0.5">
+                        <span className="text-xs font-bold text-primary">{index + 1}</span>
+                      </div>
+                      <p className="body-default text-foreground leading-relaxed">{question.question}</p>
+                    </div>
                   </div>
                 ))}
                 {questions.length > 3 && (
-                  <p className="text-xs text-muted-foreground">
-                    + {questions.length - 3} more questions...
-                  </p>
+                  <div className="text-center p-4 rounded-lg bg-muted/20 border border-border/30">
+                    <p className="body-small text-muted-foreground">
+                      + {questions.length - 3} more personalized questions await you...
+                    </p>
+                  </div>
                 )}
               </div>
             </div>
             
-            <div className="flex justify-between">
-              <Button variant="outline" onClick={() => setCurrentStep('resume-selection')}>
+            <div className="flex justify-between pt-6">
+              <Button 
+                variant="outline" 
+                onClick={() => setCurrentStep('resume-selection')}
+                className="border-border/50 hover:bg-muted/50"
+              >
                 Back
               </Button>
-              <Button onClick={handleStartInterview} disabled={isLoading}>
+              <Button 
+                onClick={handleStartInterview} 
+                disabled={isLoading}
+                className="btn-gradient shadow-medium px-8 py-3"
+                size="lg"
+              >
                 {isLoading ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                     Starting Interview...
                   </>
                 ) : (
-                  'Start Interview'
+                  <>
+                    Start AI Interview
+                    <ArrowRight className="h-4 w-4 ml-2" />
+                  </>
                 )}
               </Button>
             </div>

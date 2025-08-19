@@ -172,6 +172,19 @@ export const pageMetadata = {
     description: 'Preview your resume and export as a professional PDF. Make final adjustments before downloading your polished resume.',
     robots: { index: false, follow: true }
   },
+
+  settings: {
+    title: 'Account Settings - Manage Your Profile and Preferences',
+    description: 'Manage your account settings, profile information, security preferences, and application settings.',
+    keywords: [
+      'account settings',
+      'profile settings',
+      'user preferences',
+      'security settings',
+      'privacy settings'
+    ],
+    robots: { index: false, follow: true }
+  },
   
   contact: {
     title: 'Contact Us - Get Help with Profyle AI Resume Builder',

@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { FileText, Eye, MessageSquare, Users, Plus, Target } from "lucide-react"
+import { FileText, Eye, MessageSquare, Users, Plus, Target, Settings } from "lucide-react"
 import Link from "next/link"
 
 export function DashboardOverview() {
@@ -38,6 +38,13 @@ export function DashboardOverview() {
       description: "Practice with AI-generated questions",
       icon: Users,
       href: "/dashboard/interview",
+      gradient: "from-slate-600 to-slate-700",
+    },
+    {
+      title: "Settings",
+      description: "Manage your account and preferences",
+      icon: Settings,
+      href: "/dashboard/settings",
       gradient: "from-slate-600 to-slate-700",
     },
   ]

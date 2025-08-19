@@ -65,6 +65,12 @@ const additionalTools = [
     icon: Video,
     description: "AI video interview practice"
   },
+  {
+    title: "Settings",
+    url: "/dashboard/settings",
+    icon: Settings,
+    description: "Account & preferences"
+  },
 ]
 
 export function DashboardSidebar() {

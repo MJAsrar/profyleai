@@ -12,7 +12,7 @@ Main Sections:
 - Resume Builder: /dashboard/resume-builder
 - Templates: /templates
 - Cover Letter Generator: /dashboard/cover-letter
-- LinkedIn Optimizer: /dashboard/linkedin
+
 - Interview Prep: /dashboard/interview
 
 # Public Resources

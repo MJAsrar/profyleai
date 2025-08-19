@@ -13,7 +13,7 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar"
-import { FileText, Eye, MessageSquare, Linkedin, Users, Settings, Sparkles, User, Target, FolderOpen, Video } from "lucide-react"
+import { FileText, Eye, MessageSquare, Users, Settings, Sparkles, User, Target, FolderOpen, Video } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useSession, signOut } from "next-auth/react"
@@ -52,12 +52,6 @@ const additionalTools = [
     url: "/dashboard/cover-letter",
     icon: MessageSquare,
     description: "Generate cover letters"
-  },
-  {
-    title: "LinkedIn Optimizer",
-    url: "/dashboard/linkedin",
-    icon: Linkedin,
-    description: "Optimize your profile"
   },
   {
     title: "Interview Prep",

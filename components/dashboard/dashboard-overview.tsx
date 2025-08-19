@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { FileText, Eye, MessageSquare, Linkedin, Users, Plus, Target } from "lucide-react"
+import { FileText, Eye, MessageSquare, Users, Plus, Target } from "lucide-react"
 import Link from "next/link"
 
 export function DashboardOverview() {
@@ -31,13 +31,6 @@ export function DashboardOverview() {
       description: "Generate personalized cover letters",
       icon: MessageSquare,
       href: "/dashboard/cover-letter",
-      gradient: "from-slate-600 to-slate-700",
-    },
-    {
-      title: "LinkedIn Optimizer",
-      description: "Optimize your LinkedIn profile",
-      icon: Linkedin,
-      href: "/dashboard/linkedin",
       gradient: "from-slate-600 to-slate-700",
     },
     {

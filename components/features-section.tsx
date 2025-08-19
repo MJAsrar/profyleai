@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { FileText, Linkedin, MessageSquare, Users, Download, Sparkles, Target, CheckCircle2 } from "lucide-react"
+import { FileText, MessageSquare, Users, Download, Sparkles, Target, CheckCircle2 } from "lucide-react"
 
 export function FeaturesSection() {
   const features = [
@@ -28,11 +28,7 @@ export function FeaturesSection() {
       title: "Cover Letter Generator",
       description: "Generate personalized cover letters that match your resume and target job.",
     },
-    {
-      icon: Linkedin,
-      title: "LinkedIn Optimizer",
-      description: "Optimize your LinkedIn profile to attract recruiters and opportunities.",
-    },
+
     {
       icon: Sparkles,
       title: "AI Enhancement",

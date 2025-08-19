@@ -3,7 +3,7 @@ import { Metadata } from 'next'
 // Base configuration
 export const siteConfig = {
   name: 'Profyle',
-  description: 'Build professional resumes with AI assistance. Create ATS-friendly resumes, cover letters, and optimize your LinkedIn profile with our AI-powered platform.',
+  description: 'Build professional resumes with AI assistance. Create ATS-friendly resumes, cover letters, and prepare for interviews with our AI-powered platform.',
   url: process.env.NEXT_PUBLIC_APP_URL || 'https://www.profyleai.com',
   ogImage: '/og-image.png',
   creator: '@profyleai',
@@ -15,7 +15,6 @@ export const siteConfig = {
     'ATS resume',
     'resume templates',
     'cover letter generator',
-    'LinkedIn optimizer',
     'interview prep',
     'job application',
     'career tools',
@@ -84,7 +83,7 @@ export const defaultMetadata: Metadata = {
 export const pageMetadata = {
   home: {
     title: 'AI Resume Builder - Create Professional Resumes with AI | Profyle',
-    description: 'Build professional, ATS-friendly resumes in minutes with AI assistance. Choose from expert-designed templates, generate cover letters, and optimize your LinkedIn profile.',
+    description: 'Build professional, ATS-friendly resumes in minutes with AI assistance. Choose from expert-designed templates, generate cover letters, and prepare for interviews.',
     keywords: [
       'AI resume builder',
       'resume maker online',
@@ -96,7 +95,7 @@ export const pageMetadata = {
     ],
     openGraph: {
       title: 'Build Your Perfect Resume with AI Assistance',
-      description: 'Create professional resumes, cover letters, and optimize your LinkedIn profile with our AI-powered platform. Get hired faster with personalized content.',
+      description: 'Create professional resumes, cover letters, and prepare for interviews with our AI-powered platform. Get hired faster with personalized content.',
     }
   },
   
@@ -120,7 +119,7 @@ export const pageMetadata = {
   
   dashboard: {
     title: 'Dashboard - Manage Your Career Tools',
-    description: 'Access your resume builder, cover letter generator, LinkedIn optimizer, and interview prep tools from your personalized dashboard.',
+    description: 'Access your resume builder, cover letter generator, and interview prep tools from your personalized dashboard.',
     robots: { index: false, follow: true }
   },
   
@@ -154,17 +153,7 @@ export const pageMetadata = {
     ]
   },
   
-  linkedin: {
-    title: 'LinkedIn Optimizer - Enhance Your Professional Profile',
-    description: 'Optimize your LinkedIn profile to attract recruiters and opportunities. Get AI-powered suggestions to improve your professional presence.',
-    keywords: [
-      'LinkedIn optimizer',
-      'LinkedIn profile optimization',
-      'professional networking',
-      'LinkedIn headline',
-      'LinkedIn summary'
-    ]
-  },
+
   
   interview: {
     title: 'Interview Prep - Practice with AI-Generated Questions',
@@ -351,7 +340,7 @@ function getPagePath(page: keyof typeof pageMetadata): string {
     resumeBuilder: '/dashboard/resume-builder',
     viewResumes: '/dashboard/view-resumes',
     coverLetter: '/dashboard/cover-letter',
-    linkedin: '/dashboard/linkedin',
+
     interview: '/dashboard/interview',
     preview: '/dashboard/preview',
     contact: '/contact',
@@ -411,7 +400,7 @@ export const softwareApplicationSchema = {
     'AI-powered resume builder',
     'Professional resume templates',
     'Cover letter generator',
-    'LinkedIn profile optimizer',
+
     'Interview preparation tools',
     'ATS-friendly formats'
   ]
@@ -456,24 +445,7 @@ export const coverLetterServiceSchema = {
   }
 }
 
-export const linkedinOptimizerServiceSchema = {
-  '@context': 'https://schema.org',
-  '@type': 'Service',
-  name: 'LinkedIn Profile Optimizer',
-  description: 'Optimize your LinkedIn profile to attract recruiters and career opportunities.',
-  provider: {
-    '@type': 'Organization',
-    name: siteConfig.name,
-    url: siteConfig.url
-  },
-  serviceType: 'Professional Profile Optimization',
-  areaServed: 'Worldwide',
-  availableChannel: {
-    '@type': 'ServiceChannel',
-    serviceUrl: `${siteConfig.url}/dashboard/linkedin`,
-    serviceType: 'Online'
-  }
-}
+
 
 // FAQ Schema for common resume questions
 export const resumeFAQSchema = {

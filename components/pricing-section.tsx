@@ -37,7 +37,7 @@ export function PricingSection() {
         "Unlimited tailored resumes",
         "Unlimited tailored cover letters",
         "AI-enhanced content",
-        "LinkedIn optimizer",
+
         "Interview prep",
         "ATS optimization",
         "Priority support",
@@ -57,7 +57,7 @@ export function PricingSection() {
         "Unlimited tailored resumes",
         "Unlimited tailored cover letters", 
         "AI-enhanced content",
-        "LinkedIn optimizer",
+
         "Interview prep",
         "Student ID verification required",
       ],

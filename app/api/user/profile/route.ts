@@ -20,12 +20,6 @@ export async function GET(req: NextRequest) {
         subscriptionTier: true,
         createdAt: true,
         updatedAt: true,
-        // Add custom profile fields if they exist in your schema
-        // bio: true,
-        // location: true,
-        // website: true,
-        // linkedin: true,
-        // github: true,
       }
     })
 
@@ -48,7 +42,7 @@ export async function PUT(req: NextRequest) {
     }
 
     const body = await req.json()
-    const { name, bio, location, website, linkedin, github } = body
+    const { name } = body
 
     // Validate input
     if (name && typeof name !== 'string') {
@@ -59,12 +53,6 @@ export async function PUT(req: NextRequest) {
       where: { id: user.id },
       data: {
         name: name || undefined,
-        // Add other fields if they exist in your schema
-        // bio: bio || undefined,
-        // location: location || undefined,
-        // website: website || undefined,
-        // linkedin: linkedin || undefined,
-        // github: github || undefined,
         updatedAt: new Date(),
       },
       select: {

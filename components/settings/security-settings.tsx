@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -36,6 +36,20 @@ export function SecuritySettings() {
   })
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false)
   const [sessionTimeout, setSessionTimeout] = useState(30)
+
+  // Load settings from localStorage
+  useEffect(() => {
+    try {
+      const savedSettings = localStorage.getItem('profyle-security-settings')
+      if (savedSettings) {
+        const settings = JSON.parse(savedSettings)
+        setTwoFactorEnabled(settings.twoFactorEnabled ?? false)
+        setSessionTimeout(settings.sessionTimeout ?? 30)
+      }
+    } catch (error) {
+      console.error('Error loading security settings:', error)
+    }
+  }, [])
 
   const handlePasswordChange = async () => {
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
@@ -255,7 +269,15 @@ export function SecuritySettings() {
               )}
               <Switch
                 checked={twoFactorEnabled}
-                onCheckedChange={setTwoFactorEnabled}
+                onCheckedChange={(checked) => {
+                  setTwoFactorEnabled(checked)
+                  try {
+                    const settings = { twoFactorEnabled: checked, sessionTimeout }
+                    localStorage.setItem('profyle-security-settings', JSON.stringify(settings))
+                  } catch (error) {
+                    console.error('Error saving security settings:', error)
+                  }
+                }}
               />
             </div>
           </div>
@@ -301,7 +323,16 @@ export function SecuritySettings() {
               </div>
               <select 
                 value={sessionTimeout} 
-                onChange={(e) => setSessionTimeout(Number(e.target.value))}
+                onChange={(e) => {
+                  const newTimeout = Number(e.target.value)
+                  setSessionTimeout(newTimeout)
+                  try {
+                    const settings = { twoFactorEnabled, sessionTimeout: newTimeout }
+                    localStorage.setItem('profyle-security-settings', JSON.stringify(settings))
+                  } catch (error) {
+                    console.error('Error saving security settings:', error)
+                  }
+                }}
                 className="px-3 py-2 border rounded-md"
               >
                 <option value={15}>15 minutes</option>

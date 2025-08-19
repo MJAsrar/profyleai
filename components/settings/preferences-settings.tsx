@@ -75,12 +75,13 @@ export function PreferencesSettings() {
   })
 
   useEffect(() => {
-    const loadPreferences = async () => {
+    const loadPreferences = () => {
       try {
-        const response = await fetch('/api/user/preferences')
-        if (response.ok) {
-          const data = await response.json()
-          setPreferences(prev => ({ ...prev, ...data }))
+        // Load from localStorage
+        const savedPreferences = localStorage.getItem('profyle-preferences')
+        if (savedPreferences) {
+          const parsed = JSON.parse(savedPreferences)
+          setPreferences(prev => ({ ...prev, ...parsed }))
         }
       } catch (error) {
         console.error('Error loading preferences:', error)
@@ -95,20 +96,13 @@ export function PreferencesSettings() {
   const handleSave = async () => {
     setIsSaving(true)
     try {
-      const response = await fetch('/api/user/preferences', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(preferences)
+      // Save to localStorage
+      localStorage.setItem('profyle-preferences', JSON.stringify(preferences))
+      
+      toast({
+        title: "Success",
+        description: "Preferences saved successfully"
       })
-
-      if (response.ok) {
-        toast({
-          title: "Success",
-          description: "Preferences saved successfully"
-        })
-      } else {
-        throw new Error('Failed to save preferences')
-      }
     } catch (error) {
       toast({
         title: "Error",
@@ -121,7 +115,7 @@ export function PreferencesSettings() {
   }
 
   const handleReset = () => {
-    setPreferences({
+    const defaultPrefs = {
       theme: 'system',
       language: 'en',
       timezone: 'UTC',
@@ -141,7 +135,11 @@ export function PreferencesSettings() {
         analytics: true,
         crashReports: true
       }
-    })
+    }
+    
+    setPreferences(defaultPrefs)
+    localStorage.setItem('profyle-preferences', JSON.stringify(defaultPrefs))
+    
     toast({
       title: "Reset Complete",
       description: "All preferences have been reset to defaults"

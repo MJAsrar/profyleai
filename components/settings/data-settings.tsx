@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useSession } from "next-auth/react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -28,16 +29,50 @@ interface DataUsage {
 }
 
 export function DataSettings() {
+  const { data: session } = useSession()
   const { toast } = useToast()
   const [isExporting, setIsExporting] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
-  const [dataUsage] = useState<DataUsage>({
-    resumes: 5,
-    coverLetters: 3,
-    interviews: 2,
-    totalSize: "2.4 MB",
-    lastBackup: "2024-01-15T10:30:00Z"
+  const [isLoading, setIsLoading] = useState(true)
+  const [dataUsage, setDataUsage] = useState<DataUsage>({
+    resumes: 0,
+    coverLetters: 0,
+    interviews: 0,
+    totalSize: "0 MB",
+    lastBackup: undefined
   })
+
+  // Fetch real data usage
+  useEffect(() => {
+    const fetchDataUsage = async () => {
+      if (!session?.user?.id) return
+
+      try {
+        const response = await fetch('/api/user/account')
+        if (response.ok) {
+          const data = await response.json()
+          setDataUsage({
+            resumes: data._count.resumes,
+            coverLetters: data._count.coverLetters,
+            interviews: data._count.interviewPreps,
+            totalSize: "< 1 MB", // Approximate, could calculate actual size
+            lastBackup: undefined // Not implemented yet
+          })
+        }
+      } catch (error) {
+        console.error('Error fetching data usage:', error)
+        toast({
+          title: "Error",
+          description: "Failed to load data usage statistics",
+          variant: "destructive"
+        })
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchDataUsage()
+  }, [session, toast])
 
   const handleExportData = async () => {
     setIsExporting(true)
@@ -109,6 +144,14 @@ export function DataSettings() {
     }
   }
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
       {/* Data Overview */}
@@ -145,17 +188,13 @@ export function DataSettings() {
             <div>
               <div className="flex justify-between text-sm mb-2">
                 <span>Storage Used</span>
-                <span>{dataUsage.totalSize} / 100 MB</span>
+                <span>{dataUsage.totalSize}</span>
               </div>
-              <Progress value={2.4} className="h-2" />
+              <Progress value={1} className="h-2" />
+              <p className="text-xs text-muted-foreground mt-1">
+                Your data is stored efficiently and takes minimal space
+              </p>
             </div>
-            
-            {dataUsage.lastBackup && (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Calendar className="h-4 w-4" />
-                <span>Last backup: {new Date(dataUsage.lastBackup).toLocaleDateString()}</span>
-              </div>
-            )}
           </div>
         </CardContent>
       </Card>

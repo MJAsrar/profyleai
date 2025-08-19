@@ -14,16 +14,11 @@ import { Loader2, Upload, User, Mail, Calendar, Crown, CheckCircle2 } from "luci
 
 interface UserProfile {
   id: string
-  name: string
+  name: string | null
   email: string
-  image?: string
-  bio?: string
-  location?: string
-  website?: string
-  linkedin?: string
-  github?: string
+  image?: string | null
   subscriptionTier: string
-  emailVerified?: string
+  emailVerified?: string | null
   createdAt: string
   updatedAt: string
 }
@@ -35,12 +30,7 @@ export function UserProfileSettings() {
   const [isSaving, setIsSaving] = useState(false)
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [formData, setFormData] = useState({
-    name: "",
-    bio: "",
-    location: "",
-    website: "",
-    linkedin: "",
-    github: ""
+    name: ""
   })
 
   // Fetch user profile data
@@ -54,12 +44,7 @@ export function UserProfileSettings() {
           const data = await response.json()
           setProfile(data)
           setFormData({
-            name: data.name || "",
-            bio: data.bio || "",
-            location: data.location || "",
-            website: data.website || "",
-            linkedin: data.linkedin || "",
-            github: data.github || ""
+            name: data.name || ""
           })
         }
       } catch (error) {
@@ -187,7 +172,7 @@ export function UserProfileSettings() {
           </div>
 
           {/* Profile Form */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="name">Full Name</Label>
               <Input
@@ -196,57 +181,9 @@ export function UserProfileSettings() {
                 onChange={(e) => handleInputChange("name", e.target.value)}
                 placeholder="Enter your full name"
               />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="location">Location</Label>
-              <Input
-                id="location"
-                value={formData.location}
-                onChange={(e) => handleInputChange("location", e.target.value)}
-                placeholder="City, Country"
-              />
-            </div>
-
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="bio">Bio</Label>
-              <Textarea
-                id="bio"
-                value={formData.bio}
-                onChange={(e) => handleInputChange("bio", e.target.value)}
-                placeholder="Tell us about yourself..."
-                rows={3}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="website">Website</Label>
-              <Input
-                id="website"
-                value={formData.website}
-                onChange={(e) => handleInputChange("website", e.target.value)}
-                placeholder="https://yourwebsite.com"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="linkedin">LinkedIn</Label>
-              <Input
-                id="linkedin"
-                value={formData.linkedin}
-                onChange={(e) => handleInputChange("linkedin", e.target.value)}
-                placeholder="https://linkedin.com/in/username"
-              />
-            </div>
-
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="github">GitHub</Label>
-              <Input
-                id="github"
-                value={formData.github}
-                onChange={(e) => handleInputChange("github", e.target.value)}
-                placeholder="https://github.com/username"
-              />
+              <p className="text-sm text-muted-foreground">
+                This is your display name that will appear on your resumes and throughout the application.
+              </p>
             </div>
           </div>
 
@@ -263,28 +200,28 @@ export function UserProfileSettings() {
       {/* Account Stats */}
       <Card>
         <CardHeader>
-          <CardTitle>Account Statistics</CardTitle>
+          <CardTitle>Account Information</CardTitle>
           <CardDescription>
-            Your activity and usage statistics
+            Your account details and subscription status
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="text-center p-4 bg-muted/30 rounded-lg">
-              <div className="text-2xl font-bold text-primary">0</div>
-              <div className="text-sm text-muted-foreground">Resumes</div>
+              <div className="text-lg font-bold text-primary">{profile.subscriptionTier}</div>
+              <div className="text-sm text-muted-foreground">Subscription Plan</div>
             </div>
             <div className="text-center p-4 bg-muted/30 rounded-lg">
-              <div className="text-2xl font-bold text-primary">0</div>
-              <div className="text-sm text-muted-foreground">Cover Letters</div>
+              <div className="text-lg font-bold text-primary">
+                {profile.emailVerified ? 'Verified' : 'Unverified'}
+              </div>
+              <div className="text-sm text-muted-foreground">Email Status</div>
             </div>
             <div className="text-center p-4 bg-muted/30 rounded-lg">
-              <div className="text-2xl font-bold text-primary">0</div>
-              <div className="text-sm text-muted-foreground">Interviews</div>
-            </div>
-            <div className="text-center p-4 bg-muted/30 rounded-lg">
-              <div className="text-2xl font-bold text-primary">{profile.subscriptionTier}</div>
-              <div className="text-sm text-muted-foreground">Plan</div>
+              <div className="text-lg font-bold text-primary">
+                {new Date(profile.createdAt).toLocaleDateString()}
+              </div>
+              <div className="text-sm text-muted-foreground">Member Since</div>
             </div>
           </div>
         </CardContent>

@@ -68,6 +68,18 @@ export function AccountSettings() {
       }
     }
 
+    // Load email preferences from localStorage
+    try {
+      const savedPrefs = localStorage.getItem('profyle-email-preferences')
+      if (savedPrefs) {
+        const prefs = JSON.parse(savedPrefs)
+        setEmailNotifications(prefs.emailNotifications ?? true)
+        setMarketingEmails(prefs.marketingEmails ?? false)
+      }
+    } catch (error) {
+      console.error('Error loading email preferences:', error)
+    }
+
     fetchAccountData()
   }, [session, toast])
 
@@ -190,7 +202,7 @@ export function AccountSettings() {
 
           {/* Usage Stats */}
           <div>
-            <h4 className="font-medium mb-3">Usage This Month</h4>
+            <h4 className="font-medium mb-3">Your Content</h4>
             <div className="grid grid-cols-3 gap-4">
               <div className="text-center p-3 bg-muted/30 rounded-lg">
                 <div className="text-xl font-bold">{accountData._count.resumes}</div>
@@ -263,7 +275,15 @@ export function AccountSettings() {
                 <Switch
                   id="email-notifications"
                   checked={emailNotifications}
-                  onCheckedChange={setEmailNotifications}
+                  onCheckedChange={(checked) => {
+                    setEmailNotifications(checked)
+                    try {
+                      const prefs = { emailNotifications: checked, marketingEmails }
+                      localStorage.setItem('profyle-email-preferences', JSON.stringify(prefs))
+                    } catch (error) {
+                      console.error('Error saving email preferences:', error)
+                    }
+                  }}
                 />
               </div>
               <div className="flex items-center justify-between">
@@ -276,7 +296,15 @@ export function AccountSettings() {
                 <Switch
                   id="marketing-emails"
                   checked={marketingEmails}
-                  onCheckedChange={setMarketingEmails}
+                  onCheckedChange={(checked) => {
+                    setMarketingEmails(checked)
+                    try {
+                      const prefs = { emailNotifications, marketingEmails: checked }
+                      localStorage.setItem('profyle-email-preferences', JSON.stringify(prefs))
+                    } catch (error) {
+                      console.error('Error saving email preferences:', error)
+                    }
+                  }}
                 />
               </div>
             </div>

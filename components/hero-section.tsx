@@ -38,7 +38,7 @@ export function HeroSection() {
           </p>
 
           {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 md:gap-6 animate-fade-in-up">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 md:gap-6 animate-fade-in-up w-full max-w-2xl mx-auto">
             <Link href="https://chromewebstore.google.com/detail/profyle-job-tailoring-ass/pefncjpobdnoiodnooiefjlcboblpnlf" target="_blank" rel="noopener noreferrer">
               <Button size="lg" className="text-base touch-target hover-lift w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white border-0">
                 <Chrome className="mr-2 h-4 w-4" />

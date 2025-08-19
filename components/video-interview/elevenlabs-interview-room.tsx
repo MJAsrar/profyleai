@@ -440,16 +440,16 @@ export function ElevenLabsInterviewRoom({
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       {/* Header Bar */}
       <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 py-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+        <div className="max-w-7xl mx-auto px-3 md:px-4 py-2 md:py-3">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3 md:gap-4">
               <div className="flex items-center gap-2">
                 <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
                   <Monitor className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-lg font-bold text-gray-900">AI Interview</h1>
-                  <p className="text-sm text-gray-600">{jobTitle} at {companyName}</p>
+                  <h1 className="text-base md:text-lg font-bold text-gray-900">AI Interview</h1>
+                  <p className="text-xs md:text-sm text-gray-600 truncate max-w-[200px] sm:max-w-none">{jobTitle} at {companyName}</p>
                 </div>
               </div>
               
@@ -475,10 +475,11 @@ export function ElevenLabsInterviewRoom({
                 size="sm"
                 onClick={handleEndInterview}
                 disabled={connectionStatus === 'ended'}
-                className="shadow-sm"
+                className="shadow-sm text-xs md:text-sm px-2 md:px-3"
               >
-                <PhoneOff className="w-4 h-4 mr-2" />
-                End Interview
+                <PhoneOff className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
+                <span className="hidden sm:inline">End Interview</span>
+                <span className="sm:hidden">End</span>
               </Button>
             </div>
           </div>
@@ -486,7 +487,7 @@ export function ElevenLabsInterviewRoom({
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto p-4 pt-6">
+      <div className="max-w-7xl mx-auto px-3 md:px-4 py-4 md:py-6">
         {/* Error Display */}
         {(lastError || streamError) && (
           <Alert className="mb-4" variant="destructive">
@@ -506,13 +507,13 @@ export function ElevenLabsInterviewRoom({
         )}
 
         {/* Video Call Layout */}
-        <div className="h-[35vh] mb-4">
+        <div className="h-[50vh] sm:h-[45vh] md:h-[35vh] mb-4">
           <Card className="h-full shadow-xl border-0 bg-white/90 backdrop-blur-sm">
             <CardContent className="p-0 h-full">
               <div className={`relative h-full rounded-xl overflow-hidden bg-gradient-to-br from-gray-900 to-gray-800 ${isFullscreen ? 'fixed inset-0 z-50' : ''}`}>
-                <div className="grid grid-cols-2 h-full">
+                <div className="grid grid-cols-1 md:grid-cols-2 h-full">
                   {/* User Video Side */}
-                  <div className="relative bg-gray-900 border-r-2 border-gray-600/50">
+                  <div className="relative bg-gray-900 md:border-r-2 border-b-2 md:border-b-0 border-gray-600/50">
                     <div className="absolute top-4 left-4 z-10">
                       <div className="px-3 py-2 bg-black/70 backdrop-blur-sm rounded-lg border border-white/10">
                         <span className="text-white text-sm font-medium">You</span>
@@ -609,14 +610,14 @@ export function ElevenLabsInterviewRoom({
                 </div>
                 
                 {/* Video Controls Overlay */}
-                <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2">
-                  <div className="flex items-center gap-3 px-4 py-3 bg-black/50 backdrop-blur-md rounded-2xl border border-white/10">
+                <div className="absolute bottom-4 md:bottom-6 left-1/2 transform -translate-x-1/2">
+                  <div className="flex items-center gap-2 md:gap-3 px-3 md:px-4 py-2 md:py-3 bg-black/50 backdrop-blur-md rounded-2xl border border-white/10">
                     {/* Video Toggle */}
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={toggleVideo}
-                      className={`w-12 h-12 rounded-full ${isVideoEnabled ? 'bg-white/20 hover:bg-white/30' : 'bg-red-500 hover:bg-red-600'} text-white border-0`}
+                      className={`w-10 h-10 md:w-12 md:h-12 rounded-full ${isVideoEnabled ? 'bg-white/20 hover:bg-white/30' : 'bg-red-500 hover:bg-red-600'} text-white border-0`}
                     >
                       {isVideoEnabled ? <Camera className="w-5 h-5" /> : <CameraOff className="w-5 h-5" />}
                     </Button>
@@ -626,7 +627,7 @@ export function ElevenLabsInterviewRoom({
                       variant="ghost"
                       size="sm"
                       onClick={toggleMic}
-                      className={`w-12 h-12 rounded-full ${isMicEnabled ? 'bg-white/20 hover:bg-white/30' : 'bg-red-500 hover:bg-red-600'} text-white border-0`}
+                      className={`w-10 h-10 md:w-12 md:h-12 rounded-full ${isMicEnabled ? 'bg-white/20 hover:bg-white/30' : 'bg-red-500 hover:bg-red-600'} text-white border-0`}
                     >
                       {isMicEnabled ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
                     </Button>
@@ -636,7 +637,7 @@ export function ElevenLabsInterviewRoom({
                       variant="ghost"
                       size="sm"
                       onClick={toggleFullscreen}
-                      className="w-12 h-12 rounded-full bg-white/20 hover:bg-white/30 text-white border-0"
+                      className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/20 hover:bg-white/30 text-white border-0"
                     >
                       {isFullscreen ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
                     </Button>
@@ -662,22 +663,22 @@ export function ElevenLabsInterviewRoom({
         </div>
 
         {/* Full Width Conversation Panel */}
-        <div className="h-[55vh]">
+        <div className="h-[40vh] sm:h-[45vh] md:h-[55vh]">
           <Card className="h-full shadow-xl border-0 bg-white/90 backdrop-blur-sm">
             <CardHeader className="pb-3 border-b">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <CardTitle className="flex items-center gap-2 text-lg">
-                    <MessageSquare className="w-5 h-5 text-blue-600" />
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-3 md:gap-4">
+                  <CardTitle className="flex items-center gap-2 text-base md:text-lg">
+                    <MessageSquare className="w-4 h-4 md:w-5 md:h-5 text-blue-600" />
                     Interview Conversation
                   </CardTitle>
-                  <Badge variant="secondary" className="bg-blue-100 text-blue-700">
+                  <Badge variant="secondary" className="bg-blue-100 text-blue-700 text-xs">
                     {conversationHistory.length} messages
                   </Badge>
                 </div>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3 md:gap-4">
                   {/* Stats */}
-                  <div className="flex items-center gap-4 text-sm text-gray-600">
+                  <div className="flex items-center gap-3 md:gap-4 text-xs md:text-sm text-gray-600">
                     <div className="flex items-center gap-1">
                       <Clock className="w-4 h-4" />
                       <span className="font-mono font-medium">
@@ -695,7 +696,7 @@ export function ElevenLabsInterviewRoom({
                     variant="outline"
                     size="sm"
                     onClick={() => setShowTextInput(!showTextInput)}
-                    className="flex items-center gap-2"
+                    className="flex items-center gap-2 text-xs md:text-sm"
                   >
                     <Send className="w-4 h-4" />
                     {showTextInput ? 'Hide Input' : 'Type Message'}

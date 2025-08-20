@@ -305,7 +305,7 @@ export function VideoInterviewSetup({ onSetupComplete, isLoading = false }: Vide
 
   if (setupStep === 'checking') {
     return (
-      <Card className="w-full max-w-2xl mx-auto">
+      <Card className="w-full max-w-4xl mx-auto">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Loader2 className="h-5 w-5 animate-spin" />
@@ -325,7 +325,7 @@ export function VideoInterviewSetup({ onSetupComplete, isLoading = false }: Vide
 
   if (!systemCheck?.webrtc || !systemCheck?.camera || !systemCheck?.microphone) {
     return (
-      <Card className="w-full max-w-2xl mx-auto">
+      <Card className="w-full max-w-4xl mx-auto">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-destructive">
             <AlertCircle className="h-5 w-5" />

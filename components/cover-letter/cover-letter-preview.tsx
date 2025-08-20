@@ -55,7 +55,7 @@ export function CoverLetterPreview() {
   }
 
   const renderCoverLetter = () => (
-    <div className="max-w-2xl mx-auto bg-white px-8 pt-2 pb-8 text-slate-800" style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}>
+    <div className="w-full bg-white px-8 pt-2 pb-8 text-slate-800" style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}>
       {/* Header with elegant styling - tight spacing */}
       <div className="mb-5">
         <h1 className="text-3xl font-bold text-center tracking-wider text-slate-700 mb-1 uppercase">

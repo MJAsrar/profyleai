@@ -139,7 +139,7 @@ export default function EnhancedVideoInterviewPage() {
           )}
 
           {currentPhase === 'completed' && (
-            <div className="max-w-2xl mx-auto">
+            <div className="w-full max-w-4xl mx-auto">
               <Card className="card-elevated shadow-strong border-border/50 text-center">
                 <CardContent className="p-8 space-y-6">
                   <div className="space-y-4">

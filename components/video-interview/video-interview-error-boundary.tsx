@@ -59,8 +59,8 @@ export class VideoInterviewErrorBoundary extends React.Component<
       const { error } = this.state
       
       return (
-        <div className="container mx-auto py-8 px-4">
-          <Card className="max-w-2xl mx-auto">
+        <div className="content-container py-8">
+          <Card className="max-w-4xl mx-auto">
             <CardHeader className="text-center">
               <div className="mx-auto mb-4 p-3 bg-red-100 rounded-full w-fit">
                 <AlertTriangle className="h-8 w-8 text-red-600" />

@@ -215,9 +215,9 @@ export function ElevenLabsInterviewRoom({
     console.error("❌ Failed to setup video after maximum retries")
   }
 
-  // Cleanup function to stop all media streams
+  // Cleanup function to stop all media streams and audio
   const cleanupMediaStreams = useCallback(() => {
-    console.log("🧹 Cleaning up media streams...")
+    console.log("🧹 Cleaning up media streams and audio...")
     
     if (localStream) {
       localStream.getTracks().forEach((track) => {
@@ -232,6 +232,24 @@ export function ElevenLabsInterviewRoom({
       localVideoRef.current.srcObject = null
     }
     
+    // Stop any playing audio from the audio ref
+    if (audioRef.current) {
+      audioRef.current.pause()
+      audioRef.current.src = ""
+      audioRef.current.load() // Reset the audio element
+    }
+    
+    // Stop all Audio elements that might be playing from ElevenLabs
+    const audioElements = document.querySelectorAll('audio')
+    audioElements.forEach((audio) => {
+      if (!audio.paused) {
+        console.log("🔇 Stopping audio element")
+        audio.pause()
+        audio.src = ""
+        audio.load()
+      }
+    })
+    
     // Additional cleanup for any other video elements that might have been created
     const videoElements = document.querySelectorAll('video')
     videoElements.forEach((video) => {
@@ -243,7 +261,7 @@ export function ElevenLabsInterviewRoom({
       }
     })
     
-    console.log("✅ Media streams cleanup completed")
+    console.log("✅ Media streams and audio cleanup completed")
   }, [localStream])
 
   // Initialize interview on component mount
@@ -255,44 +273,62 @@ export function ElevenLabsInterviewRoom({
         console.log("🎥 Initializing ElevenLabs interview room...")
         setIsInitializing(true)
 
-        // Get user media for video display (audio handled by ElevenLabs)
-        try {
-          console.log("🎥 Requesting user media...")
-          const stream = await navigator.mediaDevices.getUserMedia({
-            video: {
-              width: { min: 320, ideal: 640, max: 1280 },
-              height: { min: 240, ideal: 480, max: 720 },
-              frameRate: { min: 15, ideal: 24, max: 30 },
-            },
-            audio: false, // Audio handled by ElevenLabs service
-          })
+        // Start both video stream and interview initialization in parallel for faster loading
+        const initPromises = []
 
-          console.log("📹 Got media stream:", stream)
-          console.log("📹 Video tracks:", stream.getVideoTracks())
+        // 1. Get user media for video display (audio handled by ElevenLabs)
+        const videoPromise = (async () => {
+          try {
+            console.log("🎥 Requesting user media...")
+            const stream = await navigator.mediaDevices.getUserMedia({
+              video: {
+                width: { min: 320, ideal: 640, max: 1280 },
+                height: { min: 240, ideal: 480, max: 720 },
+                frameRate: { min: 15, ideal: 24, max: 30 },
+              },
+              audio: false, // Audio handled by ElevenLabs service
+            })
 
-          if (isMountedRef.current) {
-            setLocalStream(stream)
-            setStreamError(null)
-          } else {
-            // Component was unmounted while we were getting the stream
-            stream.getTracks().forEach((track) => track.stop())
-            return
+            console.log("📹 Got media stream:", stream)
+            console.log("📹 Video tracks:", stream.getVideoTracks())
+
+            if (isMountedRef.current) {
+              setLocalStream(stream)
+              setStreamError(null)
+              console.log("✅ Video stream setup completed")
+            } else {
+              // Component was unmounted while we were getting the stream
+              stream.getTracks().forEach((track) => track.stop())
+            }
+          } catch (videoError) {
+            console.error("❌ Failed to get video stream:", videoError)
+            setStreamError(
+              `Failed to access camera: ${videoError instanceof Error ? videoError.message : String(videoError)}`,
+            )
           }
+        })()
 
-          console.log("✅ Video stream setup completed - will assign to video element when ready")
+        // 2. Initialize ElevenLabs interview in parallel
+        const interviewPromise = (async () => {
+          if (isMountedRef.current) {
+            console.log("🤖 Starting ElevenLabs interview initialization...")
+            await initializeInterview(sessionId, jobTitle, companyName, jobDescription, resumeData, questions)
+            console.log("✅ ElevenLabs interview initialized")
+          }
+        })()
+
+        // Wait for both to complete, but don't block on video if it fails
+        initPromises.push(interviewPromise)
+        try {
+          await videoPromise
         } catch (videoError) {
-          console.error("❌ Failed to get video stream:", videoError)
-          setStreamError(
-            `Failed to access camera: ${videoError instanceof Error ? videoError.message : String(videoError)}`,
-          )
+          console.log("📹 Video initialization failed, continuing with interview...")
         }
 
-        // Initialize ElevenLabs interview
-        if (isMountedRef.current) {
-          await initializeInterview(sessionId, jobTitle, companyName, jobDescription, resumeData, questions)
-        }
+        // Wait for interview initialization to complete
+        await Promise.all(initPromises)
 
-        console.log("✅ ElevenLabs interview room initialized")
+        console.log("✅ Interview room initialization completed")
       } catch (error) {
         console.error("❌ Failed to initialize interview room:", error)
       } finally {

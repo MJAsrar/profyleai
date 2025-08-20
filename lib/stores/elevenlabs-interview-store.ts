@@ -36,6 +36,7 @@ export interface ElevenLabsInterviewState {
   isAgentSpeaking: boolean
   isUserSpeaking: boolean
   currentAudioUrl: string | null
+  currentAudioElement: HTMLAudioElement | null
   
   // Transcript callbacks (for subtitle integration)
   onAgentTranscript: ((transcript: string, timestamp: number, isComplete: boolean) => void) | null
@@ -118,6 +119,7 @@ const initialState: ElevenLabsInterviewState = {
   isAgentSpeaking: false,
   isUserSpeaking: false,
   currentAudioUrl: null,
+  currentAudioElement: null,
   
   // Transcript callbacks
   onAgentTranscript: null,
@@ -169,6 +171,17 @@ export const useElevenLabsInterviewStore = create<ElevenLabsInterviewStore>()(
             onAgentSpeaking: (audio: ArrayBuffer, text: string) => {
               console.log('🤖 Agent speaking:', text)
               
+              // Stop any currently playing audio first
+              const currentState = get()
+              if (currentState.currentAudioElement) {
+                console.log('🔇 Stopping previous audio before playing new one')
+                currentState.currentAudioElement.pause()
+                currentState.currentAudioElement.src = ""
+                if (currentState.currentAudioUrl) {
+                  URL.revokeObjectURL(currentState.currentAudioUrl)
+                }
+              }
+              
               // Send transcript to subtitle system
               const state = get()
               if (state.onAgentTranscript && text) {
@@ -180,29 +193,47 @@ export const useElevenLabsInterviewStore = create<ElevenLabsInterviewStore>()(
               const audioBlob = new Blob([audio], { type: 'audio/mpeg' })
               const audioUrl = URL.createObjectURL(audioBlob)
               
-              get().setCurrentAudioUrl(audioUrl)
-              get().setAgentSpeaking(true)
+              // Create and track the audio element
+              const audioElement = new Audio(audioUrl)
+              
+              // Store references for cleanup
+              set((draft) => {
+                draft.currentAudioUrl = audioUrl
+                draft.currentAudioElement = audioElement
+                draft.isAgentSpeaking = true
+              })
+              
               get().addToConversationHistory('agent', text)
               
-              // Play audio
-              const audioElement = new Audio(audioUrl)
               audioElement.onended = () => {
-                get().setAgentSpeaking(false)
-                get().setCurrentAudioUrl(null)
-                URL.revokeObjectURL(audioUrl)
                 console.log('🤖 Agent finished speaking')
+                set((draft) => {
+                  draft.isAgentSpeaking = false
+                  draft.currentAudioUrl = null
+                  draft.currentAudioElement = null
+                })
+                URL.revokeObjectURL(audioUrl)
               }
               
               audioElement.onerror = (error) => {
                 console.error('❌ Audio playback error:', error)
-                get().setAgentSpeaking(false)
-                get().setCurrentAudioUrl(null)
+                set((draft) => {
+                  draft.isAgentSpeaking = false
+                  draft.currentAudioUrl = null
+                  draft.currentAudioElement = null
+                })
                 URL.revokeObjectURL(audioUrl)
               }
               
               audioElement.play().catch((error) => {
                 console.error('❌ Failed to play audio:', error)
                 get().addError('Failed to play AI response audio')
+                set((draft) => {
+                  draft.isAgentSpeaking = false
+                  draft.currentAudioUrl = null
+                  draft.currentAudioElement = null
+                })
+                URL.revokeObjectURL(audioUrl)
               })
             },
             
@@ -373,7 +404,28 @@ export const useElevenLabsInterviewStore = create<ElevenLabsInterviewStore>()(
       // ===== CLEANUP =====
 
       cleanup: () => {
-        const { interviewService, currentAudioUrl } = get()
+        const { interviewService, currentAudioUrl, currentAudioElement } = get()
+        
+        console.log('🧹 Starting comprehensive interview cleanup...')
+        
+        // Stop the tracked audio element first
+        if (currentAudioElement) {
+          console.log('🔇 Stopping tracked audio element')
+          currentAudioElement.pause()
+          currentAudioElement.src = ""
+          currentAudioElement.load()
+        }
+        
+        // Stop all other audio elements that might be playing (fallback)
+        const audioElements = document.querySelectorAll('audio')
+        audioElements.forEach((audio) => {
+          if (!audio.paused) {
+            console.log('🔇 Stopping additional audio element from store cleanup')
+            audio.pause()
+            audio.src = ""
+            audio.load()
+          }
+        })
         
         // End interview service
         if (interviewService) {
@@ -389,6 +441,8 @@ export const useElevenLabsInterviewStore = create<ElevenLabsInterviewStore>()(
         set((draft) => {
           Object.assign(draft, initialState)
         })
+        
+        console.log('✅ Interview cleanup completed')
       }
     }))
   )

@@ -192,7 +192,7 @@ export function EnhancedInterviewSetup({ onSetupComplete, isLoading = false }: E
   }
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6 md:space-y-8">
+    <div className="w-full space-y-6 md:space-y-8">
       {/* Progress Steps */}
       <Card className="card-elevated border-primary/20 bg-gradient-to-br from-card to-muted/20 shadow-medium">
         <CardContent className="p-4 md:p-6">

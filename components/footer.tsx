@@ -4,8 +4,8 @@ import { Mail, Github, Twitter, Linkedin } from "lucide-react"
 export function Footer() {
   return (
     <footer className="border-t bg-muted/30">
-      <div className="container py-16">
-        <div className="max-w-6xl mx-auto px-4">
+      <div className="content-container py-16">
+        <div className="w-full">
           <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
           {/* Brand Section */}
           <div className="sm:col-span-2 lg:col-span-1 text-center sm:text-left">
@@ -133,7 +133,7 @@ export function Footer() {
         </div>
 
         {/* Bottom Section */}
-        <div className="max-w-6xl mx-auto px-4">
+        <div className="w-full">
           <div className="border-t mt-12 pt-8">
           <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0 text-center sm:text-left">
             <p className="text-sm text-muted-foreground">

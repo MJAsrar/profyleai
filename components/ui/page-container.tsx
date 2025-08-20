@@ -14,7 +14,7 @@ interface PageContainerProps {
 export function PageContainer({ 
   children, 
   className = "",
-  maxWidth = '6xl',
+  maxWidth = 'full',
   padding = 'md',
   center = true
 }: PageContainerProps) {

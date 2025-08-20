@@ -63,7 +63,7 @@ export function Header() {
         ? 'h-14 border-b bg-background/98 backdrop-blur-md shadow-sm supports-[backdrop-filter]:bg-background/80' 
         : 'h-16 border-b bg-gradient-to-r from-background/95 via-background/98 to-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60'
     }`}>
-      <div className="container flex items-center justify-between px-6 h-full">
+      <div className="content-container flex items-center justify-between h-full">
         <Link href="/" className="flex items-center group relative">
           <img 
             src="/logo.png" 

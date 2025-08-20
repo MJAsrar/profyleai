@@ -8,8 +8,8 @@ import Link from "next/link"
 export function ChromeExtensionBanner() {
   return (
     <section className="py-20 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20">
-      <div className="container">
-        <div className="max-w-6xl mx-auto px-4">
+      <div className="content-container">
+        <div className="w-full">
           <Card className="relative overflow-hidden border-2 border-blue-200 dark:border-blue-800">
             {/* Background decoration */}
             <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-indigo-500/5" />

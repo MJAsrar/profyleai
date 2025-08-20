@@ -38,7 +38,7 @@ export function FeaturesSection() {
 
   return (
     <section id="features" className="py-20 bg-muted/50">
-      <div className="container">
+      <div className="content-container">
         <div className="text-center mb-16">
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Everything you need to land your dream job</h2>
           <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
@@ -46,7 +46,7 @@ export function FeaturesSection() {
           </p>
         </div>
 
-        <div className="max-w-6xl mx-auto px-4">
+        <div className="w-full">
           <div className="grid grid-cols-1 gap-6 sm:gap-8 sm:grid-cols-2 lg:grid-cols-3">
           {features.map((feature: any) => (
             <div

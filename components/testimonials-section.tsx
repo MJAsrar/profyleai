@@ -68,8 +68,8 @@ const TESTIMONIALS: Testimonial[] = [
 export function TestimonialsSection() {
   return (
     <section className="py-20 bg-background">
-      <div className="container">
-        <div className="max-w-6xl mx-auto px-4">
+      <div className="content-container">
+        <div className="w-full">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
               Loved by job seekers worldwide

@@ -193,7 +193,7 @@ export function ResumePreviewFull() {
         <EnhancedResumeRenderer 
           template={selectedTemplate} 
           data={resumeData}
-          className="w-full mx-auto max-w-4xl shadow-medium rounded-lg overflow-hidden"
+          className="w-full mx-auto shadow-medium rounded-lg overflow-hidden"
         />
       </div>
     </div>

@@ -108,7 +108,7 @@ export function VideoInterviewResults({
   const rating = getOverallRating(summary.overallScore)
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
+    <div className="w-full space-y-6">
       
       {/* Header */}
       <Card>

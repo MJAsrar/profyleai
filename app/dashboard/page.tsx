@@ -8,7 +8,7 @@ export const metadata = generateMetadata('dashboard')
 
 export default function DashboardPage() {
   return (
-    <PageContainer maxWidth="7xl" padding="lg" className="min-h-screen">
+    <PageContainer maxWidth="full" padding="lg" className="min-h-screen">
       <div className="space-y-8">
         <MotionWrapper animation="fade-in-down">
           <DashboardHeader />

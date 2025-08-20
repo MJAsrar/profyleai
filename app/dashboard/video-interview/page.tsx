@@ -90,7 +90,7 @@ export default function VideoInterviewPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto py-6 md:py-8 space-y-6 md:space-y-8">
+      <div className="content-container py-6 md:py-8 space-y-6 md:space-y-8">
         {/* Header Section */}
         <div className="text-center space-y-4">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium">

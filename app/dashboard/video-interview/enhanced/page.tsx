@@ -117,7 +117,7 @@ export default function EnhancedVideoInterviewPage() {
   return (
     <VideoInterviewErrorBoundary>
       <div className="min-h-screen bg-background">
-        <div className="container mx-auto py-6 md:py-8">
+        <div className="content-container py-6 md:py-8">
           {currentPhase === 'setup' && (
             <EnhancedInterviewSetup
               onSetupComplete={handleSetupComplete}

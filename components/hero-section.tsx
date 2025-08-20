@@ -10,7 +10,7 @@ export function HeroSection() {
       {/* Background gradient */}
       <div className="absolute inset-0 -z-10 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5" />
       
-      <PageContainer maxWidth="4xl" padding="sm">
+      <PageContainer maxWidth="full" padding="sm">
         <div className="text-center space-y-8">
           {/* Badge */}
           <div className="flex justify-center animate-bounce-in">
@@ -63,7 +63,7 @@ export function HeroSection() {
           {/* Feature highlights */}
           <StaggeredContainer 
             staggerDelay={150}
-            className="grid grid-cols-1 gap-6 sm:gap-8 sm:grid-cols-2 lg:grid-cols-3 max-w-4xl mx-auto"
+            className="grid grid-cols-1 gap-6 sm:gap-8 sm:grid-cols-2 lg:grid-cols-3 max-w-6xl mx-auto"
           >
             {[
               {

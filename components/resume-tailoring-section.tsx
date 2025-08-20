@@ -53,8 +53,8 @@ export function ResumeTailoringSection() {
 
   return (
     <section className="py-20 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5">
-      <div className="container">
-        <div className="max-w-6xl mx-auto px-4">
+      <div className="content-container">
+        <div className="w-full">
           {/* Header */}
           <div className="text-center mb-16">
             <div className="flex justify-center mb-6">

@@ -87,7 +87,7 @@ export function ResumeSelection({ onCreateNew, onSelectResume, onBack }: ResumeS
   // Show option selection first
   if (selectedOption !== 'edit') {
     return (
-      <div className="max-w-4xl mx-auto space-y-6">
+      <div className="w-full space-y-6">
         <div className="text-center space-y-2">
           <h1 className="text-3xl font-bold">Resume Builder</h1>
           <p className="text-muted-foreground">
@@ -140,7 +140,7 @@ export function ResumeSelection({ onCreateNew, onSelectResume, onBack }: ResumeS
 
   // Show resume selection when editing
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
+    <div className="w-full space-y-6">
       <div className="flex items-center gap-3 mb-6">
         <Button variant="ghost" size="sm" onClick={() => setSelectedOption(null)}>
           <ArrowLeft className="h-4 w-4 mr-2" />

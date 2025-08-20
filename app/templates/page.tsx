@@ -98,7 +98,7 @@ export default function TemplatesPage() {
       <main>
         {/* Hero Section */}
         <section className="py-20 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5">
-          <PageContainer maxWidth="4xl" padding="lg">
+          <PageContainer maxWidth="full" padding="lg">
             <MotionWrapper animation="fade-in-up">
               <div className="text-center space-y-8">
                 <div className="space-y-4">
@@ -140,7 +140,7 @@ export default function TemplatesPage() {
 
         {/* Template Gallery */}
         <section className="py-20">
-          <PageContainer maxWidth="7xl" padding="lg">
+          <PageContainer maxWidth="full" padding="lg">
             <div className="space-y-12">
               {/* Category Filter */}
               <MotionWrapper animation="fade-in-up">
@@ -305,7 +305,7 @@ export default function TemplatesPage() {
 
         {/* CTA Section */}
         <section className="py-20 bg-muted/50">
-          <PageContainer maxWidth="4xl" padding="lg">
+          <PageContainer maxWidth="full" padding="lg">
             <MotionWrapper animation="fade-in-up">
               <div className="text-center space-y-8">
                 <div className="space-y-4">

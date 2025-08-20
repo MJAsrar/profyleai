@@ -95,7 +95,7 @@ export function SubtitleOverlay({
   return (
     <div
       className={`
-        absolute z-40 max-w-4xl px-6 py-3 
+        absolute z-40 max-w-full px-6 py-3 
         rounded-xl backdrop-blur-md border
         text-white text-center shadow-2xl
         transition-all duration-300 ease-in-out

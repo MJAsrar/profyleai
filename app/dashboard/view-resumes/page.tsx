@@ -227,7 +227,7 @@ export default function ViewResumesPage() {
   }
 
   return (
-    <PageContainer maxWidth="7xl" padding="lg" className="min-h-screen">
+    <PageContainer maxWidth="full" padding="lg" className="min-h-screen">
       <MotionWrapper animation="fade-in-down">
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">

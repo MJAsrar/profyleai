@@ -91,7 +91,7 @@ export function PricingSection() {
 
   return (
     <section id="pricing" className="py-20 bg-muted/50">
-      <div className="container">
+      <div className="content-container">
         <div className="text-center mb-16">
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Simple, transparent pricing</h2>
           <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
@@ -125,7 +125,7 @@ export function PricingSection() {
           </div>
         </div>
 
-        <div className="max-w-7xl mx-auto px-4">
+        <div className="w-full">
           <div className="grid grid-cols-1 gap-6 sm:gap-8 md:grid-cols-2 lg:grid-cols-4">
           {plans.map((plan) => (
             <Card key={plan.name} className={`relative hover:shadow-md transition-shadow ${plan.popular ? "border-primary shadow-lg scale-105" : ""}`}>

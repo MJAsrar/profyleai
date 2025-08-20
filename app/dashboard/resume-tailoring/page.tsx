@@ -97,7 +97,7 @@ export default function ResumeTailoringPage() {
   }
 
   return (
-    <PageContainer maxWidth="7xl" padding="lg" className="min-h-screen">
+    <PageContainer maxWidth="full" padding="lg" className="min-h-screen">
       <MotionWrapper animation="fade-in-down">
         <ResumeTailoringHeader onReset={handleReset} showReset={showPreview} />
       </MotionWrapper>

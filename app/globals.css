@@ -60,6 +60,24 @@
   .container-padding-lg {
     @apply px-4 sm:px-6 lg:px-8 xl:px-12;
   }
+
+  /* Full width utilities */
+  .full-width {
+    @apply w-full;
+  }
+  
+  .content-width {
+    @apply w-full max-w-none;
+  }
+  
+  /* Optional constrained width for reading comfort - use sparingly */
+  .reading-width {
+    @apply max-w-4xl mx-auto;
+  }
+  
+  .content-container {
+    @apply w-full px-4 sm:px-6 lg:px-8;
+  }
   
   /* Safe area utilities for mobile */
   .safe-top {

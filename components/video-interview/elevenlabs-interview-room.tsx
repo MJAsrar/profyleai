@@ -219,8 +219,10 @@ export function ElevenLabsInterviewRoom({
   const cleanupMediaStreams = useCallback(() => {
     console.log("🧹 Cleaning up media streams and audio...")
     
-    if (localStream) {
-      localStream.getTracks().forEach((track) => {
+    // Use current localStream state directly instead of closure
+    const currentLocalStream = localStream
+    if (currentLocalStream) {
+      currentLocalStream.getTracks().forEach((track) => {
         console.log(`🔇 Stopping ${track.kind} track:`, track.label)
         track.stop()
       })
@@ -262,7 +264,7 @@ export function ElevenLabsInterviewRoom({
     })
     
     console.log("✅ Media streams and audio cleanup completed")
-  }, [localStream])
+  }, []) // Remove localStream dependency to prevent effect re-runs
 
   // Initialize interview on component mount
   useEffect(() => {
@@ -344,16 +346,71 @@ export function ElevenLabsInterviewRoom({
     return () => {
       console.log("🧹 Component unmounting - cleaning up resources...")
       isMountedRef.current = false
-      cleanupMediaStreams()
+      
+      // Inline cleanup to avoid dependency issues
+      console.log("🧹 Cleaning up media streams and audio...")
+      
+      if (localStream) {
+        localStream.getTracks().forEach((track) => {
+          console.log(`🔇 Stopping ${track.kind} track:`, track.label)
+          track.stop()
+        })
+      }
+      
+      // Clear video element source
+      if (localVideoRef.current) {
+        localVideoRef.current.srcObject = null
+      }
+      
+      // Stop any playing audio from the audio ref
+      if (audioRef.current) {
+        audioRef.current.pause()
+        audioRef.current.src = ""
+        audioRef.current.load()
+      }
+      
+      // Stop all Audio elements that might be playing from ElevenLabs
+      const audioElements = document.querySelectorAll('audio')
+      audioElements.forEach((audio) => {
+        if (!audio.paused) {
+          console.log("🔇 Stopping audio element")
+          audio.pause()
+          audio.src = ""
+          audio.load()
+        }
+      })
+      
+      // Additional cleanup for any other video elements
+      const videoElements = document.querySelectorAll('video')
+      videoElements.forEach((video) => {
+        if (video.srcObject instanceof MediaStream) {
+          console.log("🔇 Cleaning up additional video element")
+          const stream = video.srcObject as MediaStream
+          stream.getTracks().forEach((track) => track.stop())
+          video.srcObject = null
+        }
+      })
+      
+      console.log("✅ Media streams and audio cleanup completed")
+      
+      // Call store cleanup
       cleanup()
     }
-  }, [sessionId, initializeInterview, cleanup, cleanupMediaStreams])
+  }, [sessionId]) // Only depend on sessionId to prevent re-runs during initialization
 
   // Handle page navigation and browser close events
   useEffect(() => {
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
       console.log("🧹 Page unloading - cleaning up media resources...")
-      cleanupMediaStreams()
+      
+      // Inline cleanup for beforeunload
+      if (localStream) {
+        localStream.getTracks().forEach((track) => track.stop())
+      }
+      if (audioRef.current) {
+        audioRef.current.pause()
+        audioRef.current.src = ""
+      }
       cleanup()
       
       // Standard way to show confirmation dialog (optional)
@@ -381,7 +438,7 @@ export function ElevenLabsInterviewRoom({
       window.removeEventListener("beforeunload", handleBeforeUnload)
       document.removeEventListener("visibilitychange", handleVisibilityChange)
     }
-  }, [cleanupMediaStreams, cleanup, connectionStatus])
+  }, [connectionStatus])
 
   // Expose cleanup function globally for emergency cleanup
   useEffect(() => {
@@ -392,7 +449,7 @@ export function ElevenLabsInterviewRoom({
       // Remove global reference on unmount
       delete (window as any).__resumeAid_cleanupVideo
     }
-  }, [cleanupMediaStreams])
+  }, [])
 
   // Handle video stream assignment when both stream and ref are available
   useEffect(() => {
@@ -483,8 +540,15 @@ export function ElevenLabsInterviewRoom({
   const handleEndInterview = () => {
     console.log("🔚 Ending interview and cleaning up resources...")
     
-    // Clean up media streams first
-    cleanupMediaStreams()
+    // Clean up media streams first (inline to avoid dependency issues)
+    if (localStream) {
+      localStream.getTracks().forEach((track) => track.stop())
+      setLocalStream(null)
+    }
+    if (audioRef.current) {
+      audioRef.current.pause()
+      audioRef.current.src = ""
+    }
     
     // End the interview session
     endInterview()

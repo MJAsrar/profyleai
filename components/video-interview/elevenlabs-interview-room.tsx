@@ -215,6 +215,37 @@ export function ElevenLabsInterviewRoom({
     console.error("❌ Failed to setup video after maximum retries")
   }
 
+  // Cleanup function to stop all media streams
+  const cleanupMediaStreams = useCallback(() => {
+    console.log("🧹 Cleaning up media streams...")
+    
+    if (localStream) {
+      localStream.getTracks().forEach((track) => {
+        console.log(`🔇 Stopping ${track.kind} track:`, track.label)
+        track.stop()
+      })
+      setLocalStream(null)
+    }
+    
+    // Clear video element source
+    if (localVideoRef.current) {
+      localVideoRef.current.srcObject = null
+    }
+    
+    // Additional cleanup for any other video elements that might have been created
+    const videoElements = document.querySelectorAll('video')
+    videoElements.forEach((video) => {
+      if (video.srcObject instanceof MediaStream) {
+        console.log("🔇 Cleaning up additional video element")
+        const stream = video.srcObject as MediaStream
+        stream.getTracks().forEach((track) => track.stop())
+        video.srcObject = null
+      }
+    })
+    
+    console.log("✅ Media streams cleanup completed")
+  }, [localStream])
+
   // Initialize interview on component mount
   useEffect(() => {
     const initialize = async () => {
@@ -239,8 +270,14 @@ export function ElevenLabsInterviewRoom({
           console.log("📹 Got media stream:", stream)
           console.log("📹 Video tracks:", stream.getVideoTracks())
 
-          setLocalStream(stream)
-          setStreamError(null)
+          if (isMountedRef.current) {
+            setLocalStream(stream)
+            setStreamError(null)
+          } else {
+            // Component was unmounted while we were getting the stream
+            stream.getTracks().forEach((track) => track.stop())
+            return
+          }
 
           console.log("✅ Video stream setup completed - will assign to video element when ready")
         } catch (videoError) {
@@ -248,16 +285,20 @@ export function ElevenLabsInterviewRoom({
           setStreamError(
             `Failed to access camera: ${videoError instanceof Error ? videoError.message : String(videoError)}`,
           )
-        } //
+        }
 
         // Initialize ElevenLabs interview
-        await initializeInterview(sessionId, jobTitle, companyName, jobDescription, resumeData, questions)
+        if (isMountedRef.current) {
+          await initializeInterview(sessionId, jobTitle, companyName, jobDescription, resumeData, questions)
+        }
 
         console.log("✅ ElevenLabs interview room initialized")
       } catch (error) {
         console.error("❌ Failed to initialize interview room:", error)
       } finally {
-        setIsInitializing(false)
+        if (isMountedRef.current) {
+          setIsInitializing(false)
+        }
       }
     }
 
@@ -265,15 +306,57 @@ export function ElevenLabsInterviewRoom({
 
     // Cleanup on unmount
     return () => {
+      console.log("🧹 Component unmounting - cleaning up resources...")
       isMountedRef.current = false
-
-      if (localStream) {
-        localStream.getTracks().forEach((track) => track.stop())
-      }
-
+      cleanupMediaStreams()
       cleanup()
     }
-  }, [sessionId, jobTitle, companyName, jobDescription, resumeData, questions])
+  }, [sessionId, initializeInterview, cleanup, cleanupMediaStreams])
+
+  // Handle page navigation and browser close events
+  useEffect(() => {
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      console.log("🧹 Page unloading - cleaning up media resources...")
+      cleanupMediaStreams()
+      cleanup()
+      
+      // Standard way to show confirmation dialog (optional)
+      if (connectionStatus === "connected" || connectionStatus === "speaking" || connectionStatus === "listening") {
+        event.preventDefault()
+        event.returnValue = "Your interview session is still active. Are you sure you want to leave?"
+        return "Your interview session is still active. Are you sure you want to leave?"
+      }
+    }
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        console.log("🔍 Page hidden - interview session may need attention")
+      } else {
+        console.log("🔍 Page visible - interview session resumed")
+      }
+    }
+
+    // Add event listeners
+    window.addEventListener("beforeunload", handleBeforeUnload)
+    document.addEventListener("visibilitychange", handleVisibilityChange)
+
+    // Cleanup event listeners
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload)
+      document.removeEventListener("visibilitychange", handleVisibilityChange)
+    }
+  }, [cleanupMediaStreams, cleanup, connectionStatus])
+
+  // Expose cleanup function globally for emergency cleanup
+  useEffect(() => {
+    // Store cleanup function globally for emergency access
+    (window as any).__resumeAid_cleanupVideo = cleanupMediaStreams
+    
+    return () => {
+      // Remove global reference on unmount
+      delete (window as any).__resumeAid_cleanupVideo
+    }
+  }, [cleanupMediaStreams])
 
   // Handle video stream assignment when both stream and ref are available
   useEffect(() => {
@@ -362,7 +445,15 @@ export function ElevenLabsInterviewRoom({
 
   // Handle interview end
   const handleEndInterview = () => {
+    console.log("🔚 Ending interview and cleaning up resources...")
+    
+    // Clean up media streams first
+    cleanupMediaStreams()
+    
+    // End the interview session
     endInterview()
+    
+    // Notify parent component
     onInterviewEnd()
   }
 
@@ -380,8 +471,14 @@ export function ElevenLabsInterviewRoom({
       const videoTracks = localStream.getVideoTracks()
       videoTracks.forEach((track) => {
         track.enabled = !isVideoEnabled
+        console.log(`📹 Video track ${track.enabled ? 'enabled' : 'disabled'}:`, track.label)
       })
       setIsVideoEnabled(!isVideoEnabled)
+      
+      // If disabling video, clear the video element source
+      if (isVideoEnabled && localVideoRef.current) {
+        localVideoRef.current.srcObject = null
+      }
     }
   }
 

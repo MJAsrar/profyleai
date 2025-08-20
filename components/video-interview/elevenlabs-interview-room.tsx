@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef, useCallback } from "react"
+import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -21,7 +22,16 @@ import {
   Zap,
   Maximize,
   Minimize,
+  AlertTriangle,
 } from "lucide-react"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { useElevenLabsInterviewStore } from "@/lib/stores/elevenlabs-interview-store"
 import type { PracticeQuestion } from "@/lib/services/interview-service"
 import { AiAvatar } from "./ai-avatar"
@@ -88,6 +98,11 @@ export function ElevenLabsInterviewRoom({
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [streamError, setStreamError] = useState<string | null>(null)
   const isMountedRef = useRef(true)
+  
+  // Navigation guard state
+  const [showExitDialog, setShowExitDialog] = useState(false)
+  const [pendingNavigation, setPendingNavigation] = useState<string | null>(null)
+  const router = useRouter()
 
   // Subtitle management
   const {
@@ -440,14 +455,35 @@ export function ElevenLabsInterviewRoom({
     }
   }, [connectionStatus])
 
-  // Expose cleanup function globally for emergency cleanup
+  // Navigation guard - intercept route changes
   useEffect(() => {
+    // Store interview state globally for navigation guard
+    const windowObj = window as any
+    windowObj.__resumeAid_interviewActive = true
+    windowObj.__resumeAid_showExitDialog = () => {
+      setShowExitDialog(true)
+      return false
+    }
+    windowObj.__resumeAid_setPendingNavigation = setPendingNavigation
+    
     // Store cleanup function globally for emergency access
-    (window as any).__resumeAid_cleanupVideo = cleanupMediaStreams
+    windowObj.__resumeAid_cleanupVideo = () => {
+      // Inline cleanup to avoid dependency issues
+      if (localStream) {
+        localStream.getTracks().forEach((track) => track.stop())
+      }
+      if (audioRef.current) {
+        audioRef.current.pause()
+        audioRef.current.src = ""
+      }
+    }
     
     return () => {
-      // Remove global reference on unmount
-      delete (window as any).__resumeAid_cleanupVideo
+      // Remove global references on unmount
+      delete windowObj.__resumeAid_interviewActive
+      delete windowObj.__resumeAid_showExitDialog
+      delete windowObj.__resumeAid_setPendingNavigation
+      delete windowObj.__resumeAid_cleanupVideo
     }
   }, [])
 
@@ -536,25 +572,81 @@ export function ElevenLabsInterviewRoom({
     }
   }, [currentAudioUrl])
 
-  // Handle interview end
-  const handleEndInterview = () => {
-    console.log("🔚 Ending interview and cleaning up resources...")
+  // Complete shutdown function
+  const performCompleteShutdown = useCallback(() => {
+    const logMessage = "🔚 Performing complete interview shutdown..."
+    console.log(logMessage)
+    
+    // Mark as no longer active
+    ;(window as any).__resumeAid_interviewActive = false
     
     // Clean up media streams first (inline to avoid dependency issues)
     if (localStream) {
-      localStream.getTracks().forEach((track) => track.stop())
+      localStream.getTracks().forEach((track) => {
+        console.log(`🔇 Stopping ${track.kind} track:`, track.label)
+        track.stop()
+      })
       setLocalStream(null)
     }
+    
+    // Stop any playing audio
     if (audioRef.current) {
       audioRef.current.pause()
       audioRef.current.src = ""
+      audioRef.current.load()
     }
     
-    // End the interview session
+    // Stop all Audio elements that might be playing from ElevenLabs
+    const audioElements = document.querySelectorAll('audio')
+    audioElements.forEach((audio) => {
+      if (!audio.paused) {
+        console.log("🔇 Stopping audio element")
+        audio.pause()
+        audio.src = ""
+        audio.load()
+      }
+    })
+    
+    // Clear video element source
+    if (localVideoRef.current) {
+      localVideoRef.current.srcObject = null
+    }
+    
+    // End the interview session in store
     endInterview()
     
-    // Notify parent component
+    // Call store cleanup
+    cleanup()
+    
+    console.log("✅ Complete interview shutdown completed")
+  }, [localStream, endInterview, cleanup])
+
+  // Handle interview end
+  const handleEndInterview = () => {
+    performCompleteShutdown()
     onInterviewEnd()
+  }
+
+  // Handle exit dialog confirmation
+  const handleExitConfirm = () => {
+    console.log("✅ User confirmed exit - shutting down interview...")
+    performCompleteShutdown()
+    setShowExitDialog(false)
+    
+    // Navigate to pending route or dashboard
+    if (pendingNavigation) {
+      router.push(pendingNavigation)
+      setPendingNavigation(null)
+    } else {
+      router.push('/dashboard')
+    }
+  }
+
+  // Handle exit dialog cancellation
+  const handleExitCancel = () => {
+    console.log("❌ User cancelled exit")
+    setShowExitDialog(false)
+    setPendingNavigation(null)
   }
 
   // Send text message
@@ -1045,6 +1137,66 @@ export function ElevenLabsInterviewRoom({
 
         {/* Hidden Audio Element */}
         <audio ref={audioRef} style={{ display: "none" }} />
+
+        {/* Exit Confirmation Dialog */}
+        <Dialog open={showExitDialog} onOpenChange={setShowExitDialog}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center">
+                  <AlertTriangle className="w-6 h-6 text-amber-600 dark:text-amber-400" />
+                </div>
+                <div>
+                  <DialogTitle>End Interview Session?</DialogTitle>
+                  <DialogDescription className="mt-1">
+                    Your interview session is currently active. Are you sure you want to end it?
+                  </DialogDescription>
+                </div>
+              </div>
+            </DialogHeader>
+            
+            <div className="py-4">
+              <div className="bg-slate-50 dark:bg-slate-900/50 rounded-lg p-4 space-y-2">
+                <h4 className="font-medium text-sm text-foreground">This will:</h4>
+                <ul className="text-sm text-muted-foreground space-y-1">
+                  <li className="flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 bg-red-500 rounded-full" />
+                    End your AI interview session
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 bg-red-500 rounded-full" />
+                    Stop camera and microphone access
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 bg-red-500 rounded-full" />
+                    Close the ElevenLabs connection
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 bg-blue-500 rounded-full" />
+                    Your conversation history will be preserved
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <DialogFooter className="gap-2">
+              <Button
+                variant="outline"
+                onClick={handleExitCancel}
+                className="flex-1"
+              >
+                Continue Interview
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleExitConfirm}
+                className="flex-1"
+              >
+                End Interview
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <style jsx>{`

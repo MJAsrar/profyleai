@@ -107,13 +107,13 @@ export function DashboardSidebar() {
         {/* Credit Balance */}
         <SidebarGroup>
           <SidebarGroupContent>
-            <div className="px-2 pb-2">
+            <div className="px-2 pb-1">
               <CreditBalance 
                 showDetails={false}
                 showPurchaseButton={true}
                 autoRefresh={true}
                 refreshInterval={15000}
-                className="border-0 shadow-none bg-sidebar-accent/20 text-xs"
+                className="border-0 shadow-none bg-sidebar-accent/20"
               />
             </div>
           </SidebarGroupContent>

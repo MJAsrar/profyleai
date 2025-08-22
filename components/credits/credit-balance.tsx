@@ -154,43 +154,76 @@ export function CreditBalance({
   return (
     <>
       <Card className={className}>
-        <CardHeader className={showDetails ? "pb-3" : "pb-2"}>
-          <div className="flex items-center justify-between">
-            <CardTitle className={`${showDetails ? 'text-base' : 'text-sm'} font-medium flex items-center gap-2`}>
-              <Coins className={`${showDetails ? 'h-4 w-4' : 'h-3 w-3'} text-yellow-500`} />
-              Credits
-            </CardTitle>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleRefresh}
-              disabled={refreshing}
-              className={showDetails ? "h-8 w-8 p-0" : "h-6 w-6 p-0"}
-            >
-              <RefreshCw className={`${showDetails ? 'h-4 w-4' : 'h-3 w-3'} ${refreshing ? 'animate-spin' : ''}`} />
-            </Button>
-          </div>
-          {creditSummary.lowBalanceWarning && (
+        {showDetails && (
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base font-medium flex items-center gap-2">
+                <Coins className="h-4 w-4 text-yellow-500" />
+                Credits
+              </CardTitle>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleRefresh}
+                disabled={refreshing}
+                className="h-8 w-8 p-0"
+              >
+                <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+              </Button>
+            </div>
+            {creditSummary.lowBalanceWarning && (
+              <CardDescription className="text-yellow-600 dark:text-yellow-400 text-xs">
+                Low credit balance - consider purchasing more credits
+              </CardDescription>
+            )}
+          </CardHeader>
+        )}
+        
+        {!showDetails && creditSummary.lowBalanceWarning && (
+          <CardHeader className="pb-1">
             <CardDescription className="text-yellow-600 dark:text-yellow-400 text-xs">
-              Low credit balance - consider purchasing more credits
+              Low credit balance
             </CardDescription>
-          )}
-        </CardHeader>
+          </CardHeader>
+        )}
 
-        <CardContent className="space-y-4">
+        <CardContent className={showDetails ? "space-y-4" : "space-y-2 pt-2 pb-2"}>
           {/* Current Balance */}
           <div className="space-y-1">
             <div className="flex items-center justify-between">
-              <span className={`${showDetails ? 'text-2xl' : 'text-xl'} font-bold ${getBalanceColor()}`}>
-                {creditSummary.currentBalance}
-              </span>
-              <Badge variant={getBalanceBadgeVariant()} className="text-xs">
-                {creditSummary.currentBalance <= CREDIT_THRESHOLDS.CRITICAL_BALANCE
-                  ? 'Critical'
-                  : creditSummary.currentBalance <= CREDIT_THRESHOLDS.LOW_BALANCE
-                  ? 'Low'
-                  : 'Good'}
-              </Badge>
+              {!showDetails && (
+                <div className="flex items-center gap-1">
+                  <Coins className="h-3 w-3 text-yellow-500" />
+                  <span className="text-xl font-bold text-yellow-600">
+                    {creditSummary.currentBalance}
+                  </span>
+                </div>
+              )}
+              {showDetails && (
+                <span className="text-2xl font-bold text-yellow-600">
+                  {creditSummary.currentBalance}
+                </span>
+              )}
+              <div className="flex items-center gap-1">
+                <Badge variant={getBalanceBadgeVariant()} className="text-xs">
+                  {creditSummary.currentBalance <= CREDIT_THRESHOLDS.CRITICAL_BALANCE
+                    ? 'Critical'
+                    : creditSummary.currentBalance <= CREDIT_THRESHOLDS.LOW_BALANCE
+                    ? 'Low'
+                    : 'Good'}
+                </Badge>
+                {!showDetails && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleRefresh}
+                    disabled={refreshing}
+                    className="h-6 w-6 p-0 ml-1"
+                  >
+                    <RefreshCw className={`h-3 w-3 ${refreshing ? 'animate-spin' : ''}`} />
+                  </Button>
+                )}
+              </div>
             </div>
             <p className="text-xs text-muted-foreground">
               ≈ ${(creditSummary.currentBalance * 0.1).toFixed(2)} value

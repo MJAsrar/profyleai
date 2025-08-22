@@ -183,10 +183,10 @@ export const useElevenLabsInterviewStore = create<ElevenLabsInterviewStore>()(
               }
               
               // Send transcript to subtitle system
-              const state = get()
-              if (state.onAgentTranscript && text) {
+              const subtitleState = get()
+              if (subtitleState.onAgentTranscript && text) {
                 console.log('📝 Sending agent transcript to subtitles:', text)
-                state.onAgentTranscript(text, Date.now(), true)
+                subtitleState.onAgentTranscript(text, Date.now(), true)
               }
               
               // Convert audio to playable URL
@@ -199,9 +199,12 @@ export const useElevenLabsInterviewStore = create<ElevenLabsInterviewStore>()(
               // Store references for cleanup
               set((draft) => {
                 draft.currentAudioUrl = audioUrl
-                draft.currentAudioElement = audioElement
                 draft.isAgentSpeaking = true
               })
+              
+              // Store audio element outside of Immer draft to avoid type conflicts
+              const storeState = get()
+              storeState.currentAudioElement = audioElement
               
               get().addToConversationHistory('agent', text)
               
@@ -210,8 +213,8 @@ export const useElevenLabsInterviewStore = create<ElevenLabsInterviewStore>()(
                 set((draft) => {
                   draft.isAgentSpeaking = false
                   draft.currentAudioUrl = null
-                  draft.currentAudioElement = null
                 })
+                get().currentAudioElement = null
                 URL.revokeObjectURL(audioUrl)
               }
               
@@ -220,8 +223,8 @@ export const useElevenLabsInterviewStore = create<ElevenLabsInterviewStore>()(
                 set((draft) => {
                   draft.isAgentSpeaking = false
                   draft.currentAudioUrl = null
-                  draft.currentAudioElement = null
                 })
+                get().currentAudioElement = null
                 URL.revokeObjectURL(audioUrl)
               }
               
@@ -231,8 +234,8 @@ export const useElevenLabsInterviewStore = create<ElevenLabsInterviewStore>()(
                 set((draft) => {
                   draft.isAgentSpeaking = false
                   draft.currentAudioUrl = null
-                  draft.currentAudioElement = null
                 })
+                get().currentAudioElement = null
                 URL.revokeObjectURL(audioUrl)
               })
             },

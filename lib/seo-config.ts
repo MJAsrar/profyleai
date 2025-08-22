@@ -94,7 +94,7 @@ export const pageMetadata = {
       'job application tools'
     ],
     openGraph: {
-      title: 'Build Your Perfect Resume with AI Assistance',
+      title: 'Land an Interview in Less Than a Week',
       description: 'Create professional resumes, cover letters, and prepare for interviews with our AI-powered platform. Get hired faster with personalized content.',
     }
   },

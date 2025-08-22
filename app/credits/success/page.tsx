@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { CheckCircle, ArrowRight, CreditCard } from 'lucide-react'
@@ -12,7 +12,7 @@ interface PurchaseDetails {
   packageName: string
 }
 
-export default function CreditPurchaseSuccess() {
+function SuccessPageContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const [purchaseDetails, setPurchaseDetails] = useState<PurchaseDetails | null>(null)
@@ -101,5 +101,20 @@ export default function CreditPurchaseSuccess() {
         </div>
       </div>
     </PageContainer>
+  )
+}
+
+export default function CreditPurchaseSuccess() {
+  return (
+    <Suspense fallback={
+      <PageContainer className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </PageContainer>
+    }>
+      <SuccessPageContent />
+    </Suspense>
   )
 }

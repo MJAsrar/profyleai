@@ -1,12 +1,12 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { XCircle, ArrowLeft, RefreshCw } from 'lucide-react'
 import { PageContainer } from '@/components/ui/page-container'
 
-export default function CreditPurchaseCancel() {
+function CancelPageContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const [loading, setLoading] = useState(false)
@@ -80,5 +80,20 @@ export default function CreditPurchaseCancel() {
         </p>
       </div>
     </PageContainer>
+  )
+}
+
+export default function CreditPurchaseCancel() {
+  return (
+    <Suspense fallback={
+      <PageContainer className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </PageContainer>
+    }>
+      <CancelPageContent />
+    </Suspense>
   )
 }

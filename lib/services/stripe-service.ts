@@ -73,6 +73,86 @@ export async function createStripeProducts() {
 }
 
 // =============================================================================
+// CHECKOUT SESSION OPERATIONS
+// =============================================================================
+
+/**
+ * Create checkout session for credit purchase
+ */
+export async function createCreditCheckoutSession(
+  packageId: CreditPackageId,
+  userId: string,
+  purchaseId: string,
+  options: {
+    successUrl: string
+    cancelUrl: string
+    userEmail?: string
+    userName?: string
+  }
+): Promise<Stripe.Checkout.Session> {
+  if (!isCreditPackageId(packageId)) {
+    throw new Error(`Invalid package ID: ${packageId}`)
+  }
+  
+  const package_ = CREDIT_PACKAGES[packageId]
+  
+  try {
+    const session = await stripe.checkout.sessions.create({
+      mode: 'payment',
+      payment_method_types: ['card'],
+      line_items: [
+        {
+          price_data: {
+            currency: STRIPE_CONFIG.currency,
+            product_data: {
+              name: `${package_.name}`,
+              description: `${package_.credits} Credits - ${package_.description}`,
+              metadata: {
+                packageId,
+                credits: package_.credits.toString(),
+              },
+            },
+            unit_amount: Math.round(package_.price * 100), // Convert to cents
+          },
+          quantity: 1,
+        },
+      ],
+      metadata: {
+        userId,
+        purchaseId,
+        packageId,
+        credits: package_.credits.toString(),
+        creditsPerDollar: package_.creditsPerDollar.toString(),
+      },
+      success_url: options.successUrl,
+      cancel_url: options.cancelUrl,
+      customer_email: options.userEmail,
+      billing_address_collection: 'auto',
+      automatic_tax: {
+        enabled: false, // Enable if you need tax calculation
+      },
+    })
+    
+    return session
+  } catch (error) {
+    console.error('Failed to create Stripe checkout session:', error)
+    throw new Error('Failed to create checkout session')
+  }
+}
+
+/**
+ * Retrieve checkout session
+ */
+export async function getCheckoutSession(sessionId: string): Promise<Stripe.Checkout.Session> {
+  try {
+    return await stripe.checkout.sessions.retrieve(sessionId)
+  } catch (error) {
+    console.error('Failed to retrieve checkout session:', error)
+    throw new Error('Failed to retrieve checkout session')
+  }
+}
+
+// =============================================================================
 // PAYMENT INTENT OPERATIONS
 // =============================================================================
 
@@ -170,6 +250,12 @@ export async function processWebhookEvent(event: Stripe.Event): Promise<{
 }> {
   try {
     switch (event.type) {
+      case 'checkout.session.completed':
+        return await handleCheckoutSessionCompleted(event.data.object as Stripe.Checkout.Session)
+      
+      case 'checkout.session.expired':
+        return await handleCheckoutSessionExpired(event.data.object as Stripe.Checkout.Session)
+      
       case 'payment_intent.succeeded':
         return await handlePaymentSuccess(event.data.object as Stripe.PaymentIntent)
       
@@ -197,6 +283,86 @@ export async function processWebhookEvent(event: Stripe.Event): Promise<{
 // =============================================================================
 // WEBHOOK EVENT HANDLERS
 // =============================================================================
+
+/**
+ * Handle completed checkout session
+ */
+async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session): Promise<{
+  processed: boolean
+  message: string
+}> {
+  const { purchaseId, userId, packageId, credits } = session.metadata || {}
+  
+  if (!purchaseId || !userId || !packageId || !credits) {
+    return {
+      processed: false,
+      message: 'Missing required metadata in checkout session'
+    }
+  }
+  
+  try {
+    // Import here to avoid circular dependencies
+    const { creditService } = await import('@/lib/services/credit-service')
+    
+    // Complete the credit purchase
+    await creditService.completeCreditPurchase(purchaseId, session.id)
+    
+    return {
+      processed: true,
+      message: `Successfully processed credit purchase for user ${userId}`
+    }
+  } catch (error) {
+    console.error('Error completing credit purchase from checkout session:', error)
+    return {
+      processed: false,
+      message: `Failed to complete credit purchase: ${error instanceof Error ? error.message : 'Unknown error'}`
+    }
+  }
+}
+
+/**
+ * Handle expired checkout session
+ */
+async function handleCheckoutSessionExpired(session: Stripe.Checkout.Session): Promise<{
+  processed: boolean
+  message: string
+}> {
+  const { purchaseId, userId } = session.metadata || {}
+  
+  if (!purchaseId || !userId) {
+    return {
+      processed: false,
+      message: 'Missing required metadata in checkout session'
+    }
+  }
+  
+  try {
+    // Import here to avoid circular dependencies
+    const { prisma } = await import('@/lib/prisma')
+    const { CreditPurchaseStatus } = await import('@prisma/client')
+    
+    // Update purchase status to expired
+    await prisma.creditPurchase.update({
+      where: { id: purchaseId },
+      data: {
+        status: CreditPurchaseStatus.CANCELLED,
+        errorMessage: 'Checkout session expired',
+        paymentId: session.id,
+      }
+    })
+    
+    return {
+      processed: true,
+      message: `Checkout session expired for user ${userId}, purchase ${purchaseId}`
+    }
+  } catch (error) {
+    console.error('Error handling checkout session expiration:', error)
+    return {
+      processed: false,
+      message: `Failed to handle checkout session expiration: ${error instanceof Error ? error.message : 'Unknown error'}`
+    }
+  }
+}
 
 /**
  * Handle successful payment

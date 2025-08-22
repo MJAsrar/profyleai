@@ -407,19 +407,25 @@ export class CreditService implements ICreditService {
   }
   
   /**
-   * Update purchase record with payment intent ID
+   * Update purchase record with payment intent ID or checkout session ID
    */
   async updatePurchaseRecord(
     purchaseId: string,
-    paymentIntentId: string
+    paymentIdentifier: string,
+    type: 'payment_intent' | 'checkout_session' = 'checkout_session'
   ): Promise<void> {
     try {
+      const updateData = {
+        updatedAt: new Date(),
+        ...(type === 'payment_intent' 
+          ? { paymentIntentId: paymentIdentifier }
+          : { checkoutSessionId: paymentIdentifier }
+        )
+      }
+
       await prisma.creditPurchase.update({
         where: { id: purchaseId },
-        data: {
-          paymentIntentId,
-          updatedAt: new Date(),
-        }
+        data: updateData
       })
     } catch (error) {
       throw this.createError(CreditErrorType.TRANSACTION_FAILED, 'Failed to update purchase record', { originalError: error })

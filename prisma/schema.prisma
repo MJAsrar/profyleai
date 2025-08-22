@@ -482,7 +482,8 @@ model CreditPurchase {
   
   // Payment processing
   paymentProvider String   // "stripe", "paypal", etc.
-  paymentIntentId String   // External payment intent ID
+  paymentIntentId String?  // External payment intent ID (for legacy purchases)
+  checkoutSessionId String? // Stripe checkout session ID (for new purchases)
   paymentId       String?  // External payment ID (after completion)
   status          CreditPurchaseStatus @default(PENDING)
   

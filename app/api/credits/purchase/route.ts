@@ -8,7 +8,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { creditService } from "@/lib/services/credit-service"
-import { createCreditPurchaseIntent } from "@/lib/services/stripe-service"
+import { createCreditCheckoutSession } from "@/lib/services/stripe-service"
 import { z } from "zod"
 import { 
   CreditPackageId, 
@@ -54,31 +54,30 @@ export async function POST(req: NextRequest) {
       packageId as CreditPackageId
     )
 
-    // Create Stripe payment intent
-    const paymentIntent = await createCreditPurchaseIntent(
+    // Create Stripe checkout session
+    const checkoutSession = await createCreditCheckoutSession(
       packageId as CreditPackageId,
       session.user.id,
       purchaseRecord.purchaseId,
       {
-        userEmail: session.user.email || "",
-        userName: session.user.name || "",
-        successUrl: successUrl || "",
-        cancelUrl: cancelUrl || "",
+        successUrl: successUrl || `${process.env.NEXTAUTH_URL}/credits/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancelUrl: cancelUrl || `${process.env.NEXTAUTH_URL}/credits/cancel?purchase_id=${purchaseRecord.purchaseId}`,
+        userEmail: session.user.email || undefined,
+        userName: session.user.name || undefined,
       }
     )
 
-    // Update purchase record with Stripe payment intent ID
+    // Update purchase record with Stripe checkout session ID
     await creditService.updatePurchaseRecord(
       purchaseRecord.purchaseId,
-      paymentIntent.id
+      checkoutSession.id
     )
 
     return NextResponse.json({
       success: true,
       data: {
         purchaseId: purchaseRecord.purchaseId,
-        paymentIntentId: paymentIntent.id,
-        clientSecret: paymentIntent.client_secret,
+        checkoutUrl: checkoutSession.url,
         amount: package_.price,
         credits: package_.credits,
         packageName: package_.name,

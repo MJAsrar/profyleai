@@ -595,10 +595,21 @@ export class ElevenLabsInterviewService {
   } {
     const personalInfo = resumeData?.personalInfo || {}
     
+    // Fix name extraction to prioritize fullName properly
+    let extractedName = 'there' // Default fallback
+    
+    if (personalInfo?.fullName && personalInfo.fullName.trim()) {
+      extractedName = personalInfo.fullName.trim()
+    } else if (personalInfo?.firstName && personalInfo?.lastName) {
+      extractedName = `${personalInfo.firstName.trim()} ${personalInfo.lastName.trim()}`.trim()
+    } else if (personalInfo?.name && personalInfo.name.trim()) {
+      extractedName = personalInfo.name.trim()
+    } else if (personalInfo?.firstName && personalInfo.firstName.trim()) {
+      extractedName = personalInfo.firstName.trim()
+    }
+    
     return {
-      name: personalInfo?.fullName || personalInfo?.name || personalInfo?.firstName 
-        ? `${personalInfo.firstName || ''} ${personalInfo.lastName || ''}`.trim() 
-        : 'there',
+      name: extractedName,
       email: personalInfo?.email || '',
       phone: personalInfo?.phone || personalInfo?.phoneNumber || '',
       location: personalInfo?.location || personalInfo?.address || personalInfo?.city 

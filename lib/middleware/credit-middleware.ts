@@ -126,12 +126,17 @@ export function withCreditCheck(
             const referenceId = responseData.id || responseData.sessionId || responseData.resumeId
             
             // Spend credits after successful operation
-            await creditService.spendCredits(
+            const transaction = await creditService.spendCredits(
               middlewareResult.user.id,
               action,
               referenceId,
               options.metadata
             )
+
+            // Add credit update header to trigger frontend refresh
+            response.headers.set('X-Credit-Balance-Updated', transaction.balanceAfter.toString())
+            response.headers.set('X-Credits-Spent', Math.abs(transaction.amount).toString())
+            
           } catch (error) {
             console.error('Failed to deduct credits after successful operation:', error)
             // Continue with response - don't fail the operation due to credit deduction issues

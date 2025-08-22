@@ -15,13 +15,17 @@ interface CreditBalanceProps {
   showPurchaseButton?: boolean
   onBalanceUpdate?: (balance: number) => void
   className?: string
+  autoRefresh?: boolean
+  refreshInterval?: number
 }
 
 export function CreditBalance({ 
   showDetails = true, 
   showPurchaseButton = true,
   onBalanceUpdate,
-  className = ""
+  className = "",
+  autoRefresh = false,
+  refreshInterval = 30000 // 30 seconds default
 }: CreditBalanceProps) {
   const { data: session } = useSession()
   const [creditSummary, setCreditSummary] = useState<CreditSummary | null>(null)
@@ -61,6 +65,31 @@ export function CreditBalance({
   useEffect(() => {
     fetchCreditBalance()
   }, [session?.user?.id])
+
+  // Auto-refresh functionality
+  useEffect(() => {
+    if (!autoRefresh || !session?.user?.id) return
+
+    const interval = setInterval(() => {
+      fetchCreditBalance()
+    }, refreshInterval)
+
+    return () => clearInterval(interval)
+  }, [autoRefresh, refreshInterval, session?.user?.id])
+
+  // Listen for credit usage events
+  useEffect(() => {
+    const handleCreditUpdate = () => {
+      fetchCreditBalance()
+    }
+
+    // Listen for custom credit update events
+    window.addEventListener('credit-updated', handleCreditUpdate)
+    
+    return () => {
+      window.removeEventListener('credit-updated', handleCreditUpdate)
+    }
+  }, [])
 
   if (loading) {
     return (
@@ -125,10 +154,10 @@ export function CreditBalance({
   return (
     <>
       <Card className={className}>
-        <CardHeader className="pb-3">
+        <CardHeader className={showDetails ? "pb-3" : "pb-2"}>
           <div className="flex items-center justify-between">
-            <CardTitle className="text-base font-medium flex items-center gap-2">
-              <Coins className="h-4 w-4 text-yellow-500" />
+            <CardTitle className={`${showDetails ? 'text-base' : 'text-sm'} font-medium flex items-center gap-2`}>
+              <Coins className={`${showDetails ? 'h-4 w-4' : 'h-3 w-3'} text-yellow-500`} />
               Credits
             </CardTitle>
             <Button
@@ -136,9 +165,9 @@ export function CreditBalance({
               size="sm"
               onClick={handleRefresh}
               disabled={refreshing}
-              className="h-8 w-8 p-0"
+              className={showDetails ? "h-8 w-8 p-0" : "h-6 w-6 p-0"}
             >
-              <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`${showDetails ? 'h-4 w-4' : 'h-3 w-3'} ${refreshing ? 'animate-spin' : ''}`} />
             </Button>
           </div>
           {creditSummary.lowBalanceWarning && (
@@ -152,7 +181,7 @@ export function CreditBalance({
           {/* Current Balance */}
           <div className="space-y-1">
             <div className="flex items-center justify-between">
-              <span className={`text-2xl font-bold ${getBalanceColor()}`}>
+              <span className={`${showDetails ? 'text-2xl' : 'text-xl'} font-bold ${getBalanceColor()}`}>
                 {creditSummary.currentBalance}
               </span>
               <Badge variant={getBalanceBadgeVariant()} className="text-xs">
@@ -221,9 +250,10 @@ export function CreditBalance({
               onClick={() => setShowPurchaseModal(true)}
               className="w-full"
               variant={creditSummary.lowBalanceWarning ? "default" : "outline"}
+              size={showDetails ? "default" : "sm"}
             >
-              <Coins className="h-4 w-4 mr-2" />
-              Buy Credits
+              <Coins className={`${showDetails ? 'h-4 w-4' : 'h-3 w-3'} mr-2`} />
+              {showDetails ? "Buy Credits" : "Buy"}
             </Button>
           )}
         </CardContent>

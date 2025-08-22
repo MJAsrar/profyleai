@@ -104,6 +104,21 @@ export function DashboardSidebar() {
       </SidebarHeader>
 
       <SidebarContent className="gap-0">
+        {/* Credit Balance */}
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <div className="px-2 pb-2">
+              <CreditBalance 
+                showDetails={false}
+                showPurchaseButton={true}
+                autoRefresh={true}
+                refreshInterval={15000}
+                className="border-0 shadow-none bg-sidebar-accent/20 text-xs"
+              />
+            </div>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
         {/* Core Resume Tools */}
         <SidebarGroup>
           <SidebarGroupLabel className="text-xs font-medium text-sidebar-foreground/60 mb-2">
@@ -171,19 +186,6 @@ export function DashboardSidebar() {
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        {/* Credit Balance */}
-        <SidebarGroup className="mt-auto">
-          <SidebarGroupContent>
-            <div className="px-3">
-              <CreditBalance 
-                showDetails={false}
-                showPurchaseButton={true}
-                className="border-0 shadow-none bg-sidebar-accent/30"
-              />
-            </div>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>

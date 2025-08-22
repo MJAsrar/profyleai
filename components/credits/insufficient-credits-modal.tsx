@@ -97,8 +97,8 @@ export function InsufficientCreditsModal({
   return (
     <>
       <Dialog open={isOpen && !showPurchaseModal} onOpenChange={onClose}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader className="pb-4">
             <DialogTitle className="flex items-center gap-2 text-orange-600">
               <AlertTriangle className="h-5 w-5" />
               Insufficient Credits
@@ -108,119 +108,119 @@ export function InsufficientCreditsModal({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4">
-            {/* Credit Status */}
-            <Card className="border-orange-200 bg-orange-50 dark:bg-orange-950/20">
-              <CardContent className="pt-4">
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium">Current Balance:</span>
-                    <Badge variant="secondary" className="font-mono">
-                      {currentBalance} credits
-                    </Badge>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium">Required:</span>
-                    <Badge variant="outline" className="font-mono">
-                      {requiredCredits} credits
-                    </Badge>
-                  </div>
-                  <div className="border-t pt-2">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium text-orange-700 dark:text-orange-300">
-                        Need:
-                      </span>
-                      <Badge className="bg-orange-600 text-white font-mono">
-                        {shortfall} more credits
-                      </Badge>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Feature Benefits */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Zap className="h-4 w-4 text-primary" />
-                  What You'll Get
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-2">
-                  {ACTION_BENEFITS[action].map((benefit, index) => (
-                    <li key={index} className="flex items-start gap-2 text-sm">
-                      <ArrowRight className="h-3 w-3 mt-0.5 text-primary flex-shrink-0" />
-                      <span>{benefit}</span>
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-            </Card>
-
-            {/* Suggested Package */}
-            {suggestedPackage && (
-              <Card className="border-primary/20 bg-primary/5">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg">Recommended Package</CardTitle>
-                  <CardDescription>
-                    Perfect for your needs with extra credits for future use
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Left Column - Credit Status & Benefits */}
+            <div className="space-y-4">
+              {/* Credit Status */}
+              <Card className="border-orange-200 bg-orange-50 dark:bg-orange-950/20">
+                <CardContent className="p-4">
                   <div className="space-y-3">
                     <div className="flex justify-between items-center">
-                      <div>
-                        <p className="font-semibold">{suggestedPackage.name}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {suggestedPackage.credits} credits
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-semibold">${suggestedPackage.price}</p>
-                        <p className="text-xs text-muted-foreground">
-                          ${(suggestedPackage.price / suggestedPackage.credits).toFixed(3)}/credit
-                        </p>
-                      </div>
+                      <span className="text-sm font-medium">Current:</span>
+                      <Badge variant="secondary" className="font-mono">
+                        {currentBalance}
+                      </Badge>
                     </div>
-                    
-                    {suggestedPackage.bonusPercentage > 0 && (
-                      <div className="bg-green-100 dark:bg-green-950/20 p-2 rounded text-sm">
-                        <span className="text-green-700 dark:text-green-300 font-medium">
-                          Save {suggestedPackage.bonusPercentage}%! 
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium">Required:</span>
+                      <Badge variant="outline" className="font-mono">
+                        {requiredCredits}
+                      </Badge>
+                    </div>
+                    <div className="border-t pt-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium text-orange-700 dark:text-orange-300">
+                          Need:
                         </span>
-                        <span className="text-green-600 dark:text-green-400 ml-1">
-                          Get {suggestedPackage.credits - Math.floor(suggestedPackage.price * 10)} bonus credits
-                        </span>
+                        <Badge className="bg-orange-600 text-white font-mono">
+                          +{shortfall}
+                        </Badge>
                       </div>
-                    )}
-
-                    <div className="pt-2 border-t">
-                      <p className="text-xs text-muted-foreground">
-                        After purchase: <span className="font-medium text-foreground">
-                          {currentBalance + suggestedPackage.credits} credits
-                        </span>
-                      </p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
-            )}
 
-            {/* Action Buttons */}
-            <div className="flex gap-3 pt-2">
-              <Button variant="outline" onClick={onClose} className="flex-1">
-                Maybe Later
-              </Button>
-              <Button 
-                onClick={() => setShowPurchaseModal(true)}
-                className="flex-1"
-              >
-                <CreditCard className="h-4 w-4 mr-2" />
-                Buy Credits
-              </Button>
+              {/* Feature Benefits - Compact */}
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Zap className="h-4 w-4 text-primary" />
+                    What You'll Get
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="grid grid-cols-1 gap-1">
+                    {ACTION_BENEFITS[action].slice(0, 3).map((benefit, index) => (
+                      <div key={index} className="flex items-start gap-2 text-xs">
+                        <ArrowRight className="h-3 w-3 mt-0.5 text-primary flex-shrink-0" />
+                        <span>{benefit}</span>
+                      </div>
+                    ))}
+                    {ACTION_BENEFITS[action].length > 3 && (
+                      <div className="text-xs text-muted-foreground mt-1">
+                        +{ACTION_BENEFITS[action].length - 3} more features
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
             </div>
+
+            {/* Right Column - Suggested Package */}
+            <div className="space-y-4">
+              {suggestedPackage && (
+                <Card className="border-primary/20 bg-primary/5">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base">Recommended Package</CardTitle>
+                    <CardDescription className="text-xs">
+                      Perfect for your needs with extra credits
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="space-y-3">
+                      <div className="text-center p-3 bg-white dark:bg-background rounded-lg border">
+                        <div className="text-xl font-bold text-primary">
+                          {suggestedPackage.credits} credits
+                        </div>
+                        <div className="text-2xl font-bold">${suggestedPackage.price}</div>
+                        <div className="text-xs text-muted-foreground">
+                          ${(suggestedPackage.price / suggestedPackage.credits).toFixed(3)} per credit
+                        </div>
+                      </div>
+                      
+                      {suggestedPackage.bonusPercentage > 0 && (
+                        <div className="bg-green-100 dark:bg-green-950/20 p-2 rounded text-xs text-center">
+                          <span className="text-green-700 dark:text-green-300 font-medium">
+                            Save {suggestedPackage.bonusPercentage}%! 
+                          </span>
+                        </div>
+                      )}
+
+                      <div className="text-center p-2 bg-muted/50 rounded text-xs">
+                        After purchase: <span className="font-medium">
+                          {currentBalance + suggestedPackage.credits} credits
+                        </span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex gap-3 pt-4 border-t">
+            <Button variant="outline" onClick={onClose} className="flex-1">
+              Maybe Later
+            </Button>
+            <Button 
+              onClick={() => setShowPurchaseModal(true)}
+              className="flex-1"
+            >
+              <CreditCard className="h-4 w-4 mr-2" />
+              Buy Credits
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

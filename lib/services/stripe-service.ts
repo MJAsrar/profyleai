@@ -10,7 +10,7 @@ import { CREDIT_PACKAGES, CreditPackageId, isCreditPackageId } from '@/lib/types
 
 // Initialize Stripe with secret key
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2024-12-18.acacia',
+  apiVersion: '2025-03-31.basil',
   typescript: true,
 })
 

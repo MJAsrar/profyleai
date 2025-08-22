@@ -18,31 +18,37 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useSession, signOut } from "next-auth/react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { CreditBalance } from "@/components/credits/credit-balance"
+import { CREDIT_COSTS } from "@/lib/types/credits"
 
 const resumeTools = [
   {
     title: "Resume Builder",
     url: "/dashboard/resume-builder",
     icon: FileText,
-    description: "Create & edit resumes"
+    description: "Create & edit resumes",
+    credits: CREDIT_COSTS.RESUME_BUILDER
   },
   {
     title: "Resume Tailoring",
     url: "/dashboard/resume-tailoring",
     icon: Target,
-    description: "Optimize for jobs"
+    description: "Optimize for jobs",
+    credits: CREDIT_COSTS.RESUME_TAILORING
   },
   {
     title: "View Resumes",
     url: "/dashboard/view-resumes",
     icon: FolderOpen,
-    description: "Manage your resumes"
+    description: "Manage your resumes",
+    credits: null // Free action
   },
   {
     title: "Preview & Export",
     url: "/dashboard/preview",
     icon: Eye,
-    description: "View & download"
+    description: "View & download",
+    credits: null // Free action
   },
 ]
 
@@ -51,25 +57,29 @@ const additionalTools = [
     title: "Cover Letter",
     url: "/dashboard/cover-letter",
     icon: MessageSquare,
-    description: "Generate cover letters"
+    description: "Generate cover letters",
+    credits: CREDIT_COSTS.COVER_LETTER
   },
   {
     title: "Interview Prep",
     url: "/dashboard/interview",
     icon: Users,
-    description: "Practice interviews"
+    description: "Practice interviews",
+    credits: CREDIT_COSTS.TEXT_INTERVIEW
   },
   {
     title: "Video Interview",
     url: "/dashboard/video-interview",
     icon: Video,
-    description: "AI video interview practice"
+    description: "AI video interview practice",
+    credits: CREDIT_COSTS.VIDEO_INTERVIEW
   },
   {
     title: "Settings",
     url: "/dashboard/settings",
     icon: Settings,
-    description: "Account & preferences"
+    description: "Account & preferences",
+    credits: null // Free action
   },
 ]
 
@@ -110,8 +120,15 @@ export function DashboardSidebar() {
                   >
                     <Link href={item.url} className="flex items-center gap-3">
                       <item.icon className="h-4 w-4 text-sidebar-foreground/70" />
-                      <div className="flex flex-col">
-                        <span className="text-sm font-medium">{item.title}</span>
+                      <div className="flex flex-col flex-1">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium">{item.title}</span>
+                          {item.credits !== null && (
+                            <span className="text-xs text-yellow-600 dark:text-yellow-400 font-mono">
+                              {item.credits}c
+                            </span>
+                          )}
+                        </div>
                         <span className="text-xs text-sidebar-foreground/50 leading-tight">{item.description}</span>
                       </div>
                     </Link>
@@ -138,8 +155,15 @@ export function DashboardSidebar() {
                   >
                     <Link href={item.url} className="flex items-center gap-3">
                       <item.icon className="h-4 w-4 text-sidebar-foreground/70" />
-                      <div className="flex flex-col">
-                        <span className="text-sm font-medium">{item.title}</span>
+                      <div className="flex flex-col flex-1">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium">{item.title}</span>
+                          {item.credits !== null && (
+                            <span className="text-xs text-yellow-600 dark:text-yellow-400 font-mono">
+                              {item.credits}c
+                            </span>
+                          )}
+                        </div>
                         <span className="text-xs text-sidebar-foreground/50 leading-tight">{item.description}</span>
                       </div>
                     </Link>
@@ -147,6 +171,19 @@ export function DashboardSidebar() {
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Credit Balance */}
+        <SidebarGroup className="mt-auto">
+          <SidebarGroupContent>
+            <div className="px-3">
+              <CreditBalance 
+                showDetails={false}
+                showPurchaseButton={true}
+                className="border-0 shadow-none bg-sidebar-accent/30"
+              />
+            </div>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>

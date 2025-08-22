@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getAuthenticatedUser, createAuthError } from "@/lib/auth-utils"
 import { tailorResumeWithGemini, applyTailoredContent, type JobData } from "@/lib/services/gemini-service"
+import { withCreditCheck } from "@/lib/middleware/credit-middleware"
 import { z } from "zod"
 
 // Validation schema for the request
@@ -15,12 +16,15 @@ const tailoringRequestSchema = z.object({
 /**
  * POST /api/resume-tailoring - Tailor resume for a specific job posting
  */
-export async function POST(req: NextRequest) {
+export const POST = withCreditCheck('RESUME_TAILORING')(async (req, context) => {
   try {
-    // Check authentication
-    const user = await getAuthenticatedUser(req)
+    // Get user from middleware context
+    const user = req.user
     if (!user) {
-      return createAuthError()
+      return NextResponse.json(
+        { error: "Authentication required" },
+        { status: 401 }
+      )
     }
 
     // Parse and validate request body
@@ -263,7 +267,7 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     )
   }
-}
+})
 
 /**
  * GET /api/resume-tailoring - Get tailoring history and current status

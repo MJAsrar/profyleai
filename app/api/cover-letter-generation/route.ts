@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getAuthenticatedUser, createAuthError } from "@/lib/auth-utils"
 import { generateCoverLetterWithGemini, type CoverLetterJobData, type CoverLetterPersonalInfo, type CoverLetterTone } from "@/lib/services/gemini-service"
+import { withCreditCheck } from "@/lib/middleware/credit-middleware"
 import { z } from "zod"
 
 // Validation schema for the request
@@ -21,12 +22,15 @@ const coverLetterRequestSchema = z.object({
 /**
  * POST /api/cover-letter-generation - Generate a cover letter using AI
  */
-export async function POST(req: NextRequest) {
+export const POST = withCreditCheck('COVER_LETTER')(async (req, context) => {
   try {
-    // Check authentication
-    const user = await getAuthenticatedUser(req)
+    // Get user from middleware context
+    const user = req.user
     if (!user) {
-      return createAuthError()
+      return NextResponse.json(
+        { error: "Authentication required" },
+        { status: 401 }
+      )
     }
 
     // Parse and validate request body
@@ -89,4 +93,4 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     )
   }
-}
+})

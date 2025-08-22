@@ -7,7 +7,7 @@ generator client {
 
 datasource db {
   provider = "mongodb"
-  url      = env("DATABASE_URL")
+  url      = "mongodb+srv://i220770:XqZ7jgOQJ3X2hv3r@cluster0.yaqdgrp.mongodb.net/resumaid?retryWrites=true&w=majority"
 }
 
 // NextAuth.js models for MongoDB
@@ -46,17 +46,26 @@ model User {
   image         String?
   password      String?
   subscriptionTier SubscriptionTier @default(FREE)
+  
+  // Credit system fields
+  credits           Int      @default(50)   // Current credit balance
+  totalCreditsEarned Int     @default(50)   // Lifetime credits earned (includes signup bonus)
+  totalCreditsSpent  Int     @default(0)    // Lifetime credits spent
+  lastCreditUpdate  DateTime @default(now()) // Last time credits were modified
+  
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  accounts      Account[]
-  sessions      Session[]
-  resumes       Resume[]
-  tailoredResumes TailoredResume[]
-  coverLetters  CoverLetter[]
-  interviewPreps InterviewPrep[]
-  mockInterviews MockInterview[]
-  videoInterviews VideoInterview[]
+  accounts         Account[]
+  sessions         Session[]
+  resumes          Resume[]
+  tailoredResumes  TailoredResume[]
+  coverLetters     CoverLetter[]
+  interviewPreps   InterviewPrep[]
+  mockInterviews   MockInterview[]
+  videoInterviews  VideoInterview[]
+  creditTransactions CreditTransaction[]
+  creditPurchases    CreditPurchase[]
 }
 
 model VerificationToken {
@@ -428,4 +437,103 @@ model InterviewProgress {
   createdAt     DateTime @default(now())
 
   @@map("interview_progress")
+}
+
+// Credit System Models
+model CreditTransaction {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String   @db.ObjectId
+  type        CreditTransactionType
+  amount      Int      // Positive = earned, Negative = spent
+  description String   // Human-readable description
+  
+  // Reference to what action triggered this transaction
+  referenceId   String?  // ID of resume, interview, purchase, etc.
+  referenceType String?  // "resume", "video_interview", "cover_letter", "purchase", etc.
+  
+  // Audit fields
+  balanceAfter    Int     // User's credit balance after this transaction
+  balanceBefore   Int     // User's credit balance before this transaction
+  isReversed      Boolean @default(false) // For refunds/corrections
+  reversalId      String? // Reference to the transaction that reverses this one
+  
+  // Metadata for additional context
+  metadata      Json?    // Store additional context like job details, pricing info, etc.
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId, createdAt])
+  @@index([userId, type])
+  @@index([referenceId, referenceType])
+}
+
+model CreditPurchase {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId          String   @db.ObjectId
+  
+  // Purchase details
+  packageType     String   // "starter", "value", "premium", "pro", "enterprise"
+  creditsAmount   Int      // Credits purchased
+  dollarAmount    Float    // Amount paid in dollars (e.g., 5.00, 10.00)
+  creditsPerDollar Float   // Rate at time of purchase (e.g., 10.0 for 10¢ per credit)
+  
+  // Payment processing
+  paymentProvider String   // "stripe", "paypal", etc.
+  paymentIntentId String   // External payment intent ID
+  paymentId       String?  // External payment ID (after completion)
+  status          CreditPurchaseStatus @default(PENDING)
+  
+  // Timestamps
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  completedAt     DateTime? // When payment was successfully processed
+  failedAt        DateTime? // When payment failed (if applicable)
+  
+  // Error handling
+  errorMessage    String?  // Error message if payment failed
+  retryCount      Int      @default(0) // Number of retry attempts
+  
+  // Metadata for audit trail
+  purchaseMetadata Json?   // Store payment details, IP, user agent, etc.
+  
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId, status])
+  @@index([paymentIntentId])
+  @@index([status, createdAt])
+}
+
+// Enums for credit system
+enum CreditTransactionType {
+  // Credit earning events
+  EARNED_SIGNUP           // Initial signup bonus
+  EARNED_EMAIL_VERIFICATION // Email verification bonus
+  EARNED_REFERRAL         // Referral bonus
+  EARNED_PURCHASE         // Credits purchased
+  EARNED_ADMIN            // Admin granted credits
+  EARNED_PROMOTION        // Promotional credits
+  
+  // Credit spending events
+  SPENT_VIDEO_INTERVIEW   // Video interview session
+  SPENT_TEXT_INTERVIEW    // Text interview prep
+  SPENT_RESUME_BUILDER    // Resume creation/editing
+  SPENT_RESUME_TAILORING  // Resume tailoring
+  SPENT_COVER_LETTER      // Cover letter generation
+  
+  // Credit refund events
+  REFUND_RESUME_DELETE    // Refund when resume deleted
+  REFUND_FAILED_OPERATION // Refund when operation fails
+  REFUND_ADMIN           // Admin refund
+}
+
+enum CreditPurchaseStatus {
+  PENDING     // Payment intent created, awaiting payment
+  PROCESSING  // Payment being processed
+  COMPLETED   // Payment successful, credits added
+  FAILED      // Payment failed
+  CANCELLED   // Payment cancelled by user
+  REFUNDED    // Payment refunded
 }

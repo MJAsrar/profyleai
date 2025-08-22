@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { getAuthenticatedUser, createAuthError } from "@/lib/auth-utils"
 import { createResumeSchema } from "@/lib/validations/resume"
+import { withCreditCheck } from "@/lib/middleware/credit-middleware"
 import { z } from "zod"
 
 /**
@@ -56,12 +57,15 @@ export async function GET(req: NextRequest) {
 /**
  * POST /api/resumes - Create a new resume
  */
-export async function POST(req: NextRequest) {
+export const POST = withCreditCheck('RESUME_BUILDER')(async (req, context) => {
   try {
-    // Check authentication
-    const user = await getAuthenticatedUser(req)
+    // Get user from middleware context  
+    const user = req.user
     if (!user) {
-      return createAuthError()
+      return NextResponse.json(
+        { error: "Authentication required" },
+        { status: 401 }
+      )
     }
 
     console.log(`📝 Creating new resume for user ${user.id}`)
@@ -137,4 +141,4 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     )
   }
-}
+})

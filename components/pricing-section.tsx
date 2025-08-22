@@ -2,90 +2,106 @@
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Check, GraduationCap, Building2 } from "lucide-react"
+import { Check, GraduationCap, Building2, Coins } from "lucide-react"
 import Link from "next/link"
 import { useState } from "react"
+import { CreditPurchaseModal } from "@/components/credits/credit-purchase-modal"
 
 export function PricingSection() {
   const [isYearly, setIsYearly] = useState(false)
+  const [showPurchaseModal, setShowPurchaseModal] = useState(false)
+  const [selectedPackage, setSelectedPackage] = useState<string>("")
+
+  const handlePurchaseClick = (packageId: string) => {
+    setSelectedPackage(packageId)
+    setShowPurchaseModal(true)
+  }
   const plans = [
     {
-      name: "Free",
-      monthlyPrice: "$0",
-      yearlyPrice: "$0",
-      yearlyTotal: "$0",
-      description: "Perfect for getting started",
+      id: "starter",
+      name: "Starter",
+      monthlyPrice: "$5",
+      yearlyPrice: "$5",
+      yearlyTotal: "$5",
+      description: "Perfect for trying our services",
       features: [
-        "2 resume templates", 
-        "Resume builder", 
-        "PDF export", 
-        "1 tailored resume", 
-        "1 tailored cover letter"
+        "50 credits (≈ $5.00 value)", 
+        "1 Video Interview session", 
+        "10 Text Interview sessions",
+        "16 Resume Builder uses",
+        "25 Resume Tailoring sessions",
+        "25 Cover Letter generations"
       ],
-      cta: "Get Started",
+      cta: "Get 50 Credits",
       popular: false,
+      credits: 50,
+      oneTime: true,
     },
     {
-      name: "Pro",
-      monthlyPrice: "$7.99",
-      yearlyPrice: "$6.99",
-      yearlyTotal: "$83.88",
-      originalYearlyTotal: "$95.88",
-      description: "Best for job seekers",
+      id: "premium", 
+      name: "Premium",
+      monthlyPrice: "$25",
+      yearlyPrice: "$25", 
+      yearlyTotal: "$25",
+      description: "Most popular choice with bonus",
       features: [
-        "All resume templates",
-        "Unlimited tailored resumes",
-        "Unlimited tailored cover letters",
-        "AI-enhanced content",
-
-        "Interview prep",
-        "ATS optimization",
-        "Priority support",
+        "275 credits (≈ $27.50 value)",
+        "5+ Video Interview sessions",
+        "55 Text Interview sessions", 
+        "90+ Resume Builder uses",
+        "135+ Resume Tailoring sessions",
+        "135+ Cover Letter generations",
+        "10% bonus credits included"
       ],
-      cta: "Start Free Trial",
+      cta: "Get 275 Credits",
       popular: true,
+      credits: 275,
+      oneTime: true,
+      savings: "10% bonus",
     },
     {
-      name: "Student",
-      monthlyPrice: "$4.99",
-      yearlyPrice: "$4.19", 
-      yearlyTotal: "$50.28",
-      originalYearlyTotal: "$59.88",
-      description: "Special pricing for students",
+      id: "pro",
+      name: "Pro",
+      monthlyPrice: "$50",
+      yearlyPrice: "$50",
+      yearlyTotal: "$50", 
+      description: "For power users and professionals",
       features: [
-        "All Pro features",
-        "Unlimited tailored resumes",
-        "Unlimited tailored cover letters", 
-        "AI-enhanced content",
-
-        "Interview prep",
-        "Student ID verification required",
+        "575 credits (≈ $57.50 value)",
+        "11+ Video Interview sessions",
+        "115 Text Interview sessions",
+        "190+ Resume Builder uses", 
+        "285+ Resume Tailoring sessions",
+        "285+ Cover Letter generations",
+        "15% bonus credits included"
       ],
-      cta: "Verify & Start",
+      cta: "Get 575 Credits",
       popular: false,
-      icon: GraduationCap,
-      badge: "Student Only",
+      credits: 575,
+      oneTime: true,
+      savings: "15% bonus",
     },
     {
-      name: "Business",
-      monthlyPrice: "$29.99",
-      yearlyPrice: "$24.99",
-      yearlyTotal: "$299.88", 
-      originalYearlyTotal: "$359.88",
-      description: "For organizations & career counselors",
+      id: "enterprise",
+      name: "Enterprise",
+      monthlyPrice: "$100",
+      yearlyPrice: "$100",
+      yearlyTotal: "$100",
+      description: "Maximum value for teams",
       features: [
-        "Everything in Pro",
-        "Team collaboration",
-        "Bulk user management",
-        "Custom branding",
-        "Analytics dashboard",
-        "API access",
-        "White-label options",
-        "Dedicated support",
+        "1200 credits (≈ $120.00 value)",
+        "24+ Video Interview sessions",
+        "240 Text Interview sessions",
+        "400+ Resume Builder uses",
+        "600+ Resume Tailoring sessions", 
+        "600+ Cover Letter generations",
+        "20% bonus credits included"
       ],
-      cta: "Contact Sales",
+      cta: "Get 1200 Credits",
       popular: false,
-      icon: Building2,
+      credits: 1200,
+      oneTime: true,
+      savings: "20% bonus",
     },
   ]
 
@@ -93,35 +109,35 @@ export function PricingSection() {
     <section id="pricing" className="py-20 bg-muted/50">
       <div className="content-container">
         <div className="text-center mb-16">
-          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Simple, transparent pricing</h2>
+          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Credit-Based Pricing</h2>
           <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
-            Choose the plan that's right for you. Upgrade or downgrade at any time.
+            Pay only for what you use. Buy credits once, use them anytime. No recurring subscriptions.
           </p>
           
-          {/* Billing Toggle */}
-          <div className="flex items-center justify-center mt-8 gap-4">
-            <span className={`text-sm font-medium ${!isYearly ? 'text-foreground' : 'text-muted-foreground'}`}>
-              Monthly
-            </span>
-            <button
-              onClick={() => setIsYearly(!isYearly)}
-              className="relative inline-flex h-6 w-11 items-center rounded-full bg-muted transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 data-[checked]:bg-primary"
-              data-checked={isYearly}
-            >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  isYearly ? 'translate-x-6' : 'translate-x-1'
-                }`}
-              />
-            </button>
-            <span className={`text-sm font-medium ${isYearly ? 'text-foreground' : 'text-muted-foreground'}`}>
-              Yearly
-            </span>
-            {isYearly && (
-              <span className="text-sm font-medium text-green-600 bg-green-100 dark:bg-green-950/20 dark:text-green-200 px-2 py-1 rounded-full">
-                Save up to 16%
-              </span>
-            )}
+          {/* Credit Info */}
+          <div className="mt-8 max-w-3xl mx-auto">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+              <div className="bg-white dark:bg-gray-800 p-3 rounded-lg border">
+                <div className="font-medium">Video Interview</div>
+                <div className="text-primary font-bold">50 credits</div>
+                <div className="text-muted-foreground text-xs">$5.00 value</div>
+              </div>
+              <div className="bg-white dark:bg-gray-800 p-3 rounded-lg border">
+                <div className="font-medium">Text Interview</div>
+                <div className="text-primary font-bold">5 credits</div>
+                <div className="text-muted-foreground text-xs">$0.50 value</div>
+              </div>
+              <div className="bg-white dark:bg-gray-800 p-3 rounded-lg border">
+                <div className="font-medium">Resume Builder</div>
+                <div className="text-primary font-bold">3 credits</div>
+                <div className="text-muted-foreground text-xs">$0.30 value</div>
+              </div>
+              <div className="bg-white dark:bg-gray-800 p-3 rounded-lg border">
+                <div className="font-medium">Tailoring & Cover Letters</div>
+                <div className="text-primary font-bold">2 credits</div>
+                <div className="text-muted-foreground text-xs">$0.20 value</div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -136,43 +152,28 @@ export function PricingSection() {
                   </span>
                 </div>
               )}
-              {plan.badge && !plan.popular && (
-                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                  <span className={`px-3 py-1 text-sm font-medium rounded-full ${
-                    plan.name === 'Student' 
-                      ? 'bg-green-600 text-white' 
-                      : 'bg-blue-600 text-white'
-                  }`}>
-                    {plan.badge}
-                  </span>
-                </div>
-              )}
               <CardHeader className="text-center">
                 <div className="flex items-center justify-center gap-2 mb-2">
-                  {plan.icon && <plan.icon className="h-6 w-6 text-primary" />}
                   <CardTitle className="text-2xl">{plan.name}</CardTitle>
                 </div>
                 <CardDescription>{plan.description}</CardDescription>
                 <div className="mt-4">
                   <span className="text-4xl font-bold">
-                    {isYearly ? plan.yearlyPrice : plan.monthlyPrice}
+                    {plan.monthlyPrice}
                   </span>
-                  {(isYearly ? plan.yearlyPrice : plan.monthlyPrice) !== "$0" && (
-                    <span className="text-muted-foreground">
-                      /month
-                    </span>
-                  )}
-                  {isYearly && plan.monthlyPrice !== "$0" && (
-                    <div className="text-sm text-muted-foreground mt-2 space-y-1">
-                      <div className="line-through">{plan.monthlyPrice}/month</div>
-                      <div>Billed annually at {plan.yearlyTotal}</div>
-                      {plan.originalYearlyTotal && (
-                        <div className="text-green-600 font-medium">
-                          Save ${(parseFloat(plan.originalYearlyTotal.replace('$', '')) - parseFloat(plan.yearlyTotal.replace('$', ''))).toFixed(2)}
-                        </div>
-                      )}
+                  <span className="text-muted-foreground text-lg ml-1">
+                    one-time
+                  </span>
+                  <div className="mt-2">
+                    <div className="text-primary font-semibold">
+                      {plan.credits} credits
                     </div>
-                  )}
+                    {plan.savings && (
+                      <div className="text-green-600 font-medium text-sm">
+                        {plan.savings}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
@@ -186,17 +187,27 @@ export function PricingSection() {
                 </ul>
               </CardContent>
               <CardFooter>
-                <Link href="/signup" className="w-full">
-                  <Button className="w-full" variant={plan.popular ? "default" : "outline"}>
-                    {plan.cta}
-                  </Button>
-                </Link>
+                <Button 
+                  className="w-full" 
+                  variant={plan.popular ? "default" : "outline"}
+                  onClick={() => handlePurchaseClick(plan.id)}
+                >
+                  <Coins className="h-4 w-4 mr-2" />
+                  {plan.cta}
+                </Button>
               </CardFooter>
             </Card>
           ))}
           </div>
         </div>
       </div>
+
+      {/* Credit Purchase Modal */}
+      <CreditPurchaseModal
+        isOpen={showPurchaseModal}
+        onClose={() => setShowPurchaseModal(false)}
+        preselectedPackage={selectedPackage}
+      />
     </section>
   )
 }

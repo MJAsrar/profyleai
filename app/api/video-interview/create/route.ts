@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getAuthenticatedUser, createAuthError } from '@/lib/auth-utils'
 import { prisma } from '@/lib/prisma'
 import { InterviewJobData } from '@/lib/services/interview-service'
+import { withCreditCheck } from '@/lib/middleware/credit-middleware'
 import { z } from 'zod'
 
 // Validation schema
@@ -28,12 +29,16 @@ const createVideoInterviewSchema = z.object({
   type: z.enum(['practice', 'mock', 'assessment']).default('practice')
 })
 
-export async function POST(request: NextRequest) {
+// Wrap the handler with credit check middleware
+export const POST = withCreditCheck('VIDEO_INTERVIEW')(async (request, context) => {
   try {
-    // Check authentication
-    const user = await getAuthenticatedUser(request)
+    // Get user from credit middleware context
+    const user = request.user
     if (!user) {
-      return createAuthError()
+      return NextResponse.json(
+        { error: "Authentication required" },
+        { status: 401 }
+      )
     }
 
     const body = await request.json()
@@ -113,4 +118,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     )
   }
-}
+})

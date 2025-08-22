@@ -42,6 +42,8 @@ import {
   AlertCircle,
 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
+import { useCreditCheck } from "@/hooks/use-credit-check"
+import { InsufficientCreditsModal } from "@/components/credits/insufficient-credits-modal"
 import { 
   PracticeQuestion, 
   AnswerFeedback, 
@@ -81,7 +83,15 @@ interface InterviewPrepData {
 export function InterviewPrep() {
   const { toast } = useToast()
   
-
+  // Credit check hook
+  const {
+    checkCredits,
+    isChecking,
+    showInsufficientCreditsModal,
+    setShowInsufficientCreditsModal,
+    requiredAction,
+    currentBalance,
+  } = useCreditCheck()
   
   // Main state
   const [currentView, setCurrentView] = useState<'list' | 'new' | 'existing'>('list')
@@ -219,27 +229,37 @@ export function InterviewPrep() {
     setMockSummary(null)
   }
 
-  const startNewPrep = () => {
-    setSelectedPrep(null)
-    setCurrentInterviewPrepId(null)
-    setJobData({
-      companyName: '',
-      jobTitle: '',
-      jobDescription: '',
-      industry: '',
-      experienceLevel: 'mid'
-    })
-    setQuestions([])
-    setCompanyResearch(null)
-    setBehavioralCoaching(null)
-    setCurrentView('new')
-    
-    // Reset other states
-    setCurrentQuestionIndex(0)
-    setCurrentAnswer('')
-    setAnswerFeedback(null)
-    setMockSession(null)
-    setMockSummary(null)
+  const startNewPrep = async () => {
+    // Check credits before starting new interview prep
+    try {
+      const result = await checkCredits('TEXT_INTERVIEW')
+      if (result.hasEnoughCredits) {
+        setSelectedPrep(null)
+        setCurrentInterviewPrepId(null)
+        setJobData({
+          companyName: '',
+          jobTitle: '',
+          jobDescription: '',
+          industry: '',
+          experienceLevel: 'mid'
+        })
+        setQuestions([])
+        setCompanyResearch(null)
+        setBehavioralCoaching(null)
+        setCurrentView('new')
+        
+        // Reset other states
+        setCurrentQuestionIndex(0)
+        setCurrentAnswer('')
+        setAnswerFeedback(null)
+        setMockSession(null)
+        setMockSummary(null)
+      } else {
+        setShowInsufficientCreditsModal(true)
+      }
+    } catch (error) {
+      // Error is handled by the hook
+    }
   }
 
   const formatTime = (seconds: number) => {
@@ -1913,6 +1933,38 @@ export function InterviewPrep() {
           </Card>
         </TabsContent>
       </Tabs>
+      )}
+      
+      {/* Insufficient Credits Modal */}
+      {requiredAction && (
+        <InsufficientCreditsModal
+          isOpen={showInsufficientCreditsModal}
+          onClose={() => setShowInsufficientCreditsModal(false)}
+          action={requiredAction}
+          currentBalance={currentBalance}
+          onPurchaseSuccess={() => {
+            setShowInsufficientCreditsModal(false)
+            // After purchase, proceed with starting new prep
+            setSelectedPrep(null)
+            setCurrentInterviewPrepId(null)
+            setJobData({
+              companyName: '',
+              jobTitle: '',
+              jobDescription: '',
+              industry: '',
+              experienceLevel: 'mid'
+            })
+            setQuestions([])
+            setCompanyResearch(null)
+            setBehavioralCoaching(null)
+            setCurrentView('new')
+            setCurrentQuestionIndex(0)
+            setCurrentAnswer('')
+            setAnswerFeedback(null)
+            setMockSession(null)
+            setMockSummary(null)
+          }}
+        />
       )}
     </div>
   )

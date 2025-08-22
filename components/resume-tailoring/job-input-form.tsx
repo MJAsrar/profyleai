@@ -9,6 +9,8 @@ import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Target, Building2, FileText, Sparkles } from "lucide-react"
 import { BaseResumeSelector } from "./base-resume-selector"
+import { useCreditCheck } from "@/hooks/use-credit-check"
+import { InsufficientCreditsModal } from "@/components/credits/insufficient-credits-modal"
 
 interface JobData {
   jobTitle: string
@@ -35,6 +37,16 @@ export function JobInputForm({
     baseResumeId: initialData?.baseResumeId || ""
   }))
   const [isValid, setIsValid] = useState(false)
+  
+  // Credit check hook
+  const {
+    checkCredits,
+    isChecking,
+    showInsufficientCreditsModal,
+    setShowInsufficientCreditsModal,
+    requiredAction,
+    currentBalance,
+  } = useCreditCheck()
 
   // Sync with initialData only when in preview mode and data has meaningful content
   useEffect(() => {
@@ -67,10 +79,20 @@ export function JobInputForm({
     setIsValid(isValidForm)
   }, [formData])
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (isValid) {
-      onSubmit(formData)
+    if (!isValid) return
+    
+    // Check credits before proceeding with tailoring
+    try {
+      const result = await checkCredits('RESUME_TAILORING')
+      if (result.hasEnoughCredits) {
+        onSubmit(formData)
+      } else {
+        setShowInsufficientCreditsModal(true)
+      }
+    } catch (error) {
+      // Error is handled by the hook
     }
   }
 
@@ -200,13 +222,16 @@ export function JobInputForm({
 
           <Button 
             type="submit" 
-            disabled={!isValid}
+            disabled={!isValid || isChecking}
             className="w-full h-12 text-base font-medium btn-gradient"
             size="lg"
           >
             <Target className="h-5 w-5 mr-2" />
-            {showPreview ? "Update Tailored Resume" : "Tailor My Resume"}
+            {isChecking ? "Checking Credits..." : (showPreview ? "Update Tailored Resume" : "Tailor My Resume")}
           </Button>
+          <p className="text-xs text-center text-muted-foreground">
+            Costs 2 credits
+          </p>
         </form>
 
         {!isValid && (
@@ -223,6 +248,21 @@ export function JobInputForm({
           </div>
         )}
       </CardContent>
+      
+      {/* Insufficient Credits Modal */}
+      {requiredAction && (
+        <InsufficientCreditsModal
+          isOpen={showInsufficientCreditsModal}
+          onClose={() => setShowInsufficientCreditsModal(false)}
+          action={requiredAction}
+          currentBalance={currentBalance}
+          onPurchaseSuccess={() => {
+            setShowInsufficientCreditsModal(false)
+            // After purchase, proceed with the action
+            onSubmit(formData)
+          }}
+        />
+      )}
     </Card>
   )
 }

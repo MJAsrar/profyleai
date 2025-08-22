@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { ChevronLeft, ChevronRight, Sparkles, User, AlertCircle, CheckCircle, Loader2 } from "lucide-react"
 import { useCoverLetterStore } from "@/lib/cover-letter-store"
+import { useCreditCheck } from "@/hooks/use-credit-check"
+import { InsufficientCreditsModal } from "@/components/credits/insufficient-credits-modal"
 import { COVER_LETTER_TONES } from "@/lib/services/gemini-service"
 
 const steps = [
@@ -33,10 +35,34 @@ export function CoverLetterForm() {
     lastGenerated,
     clearError,
   } = useCoverLetterStore()
+  
+  // Credit check hook
+  const {
+    checkCredits,
+    isChecking,
+    showInsufficientCreditsModal,
+    setShowInsufficientCreditsModal,
+    requiredAction,
+    currentBalance,
+  } = useCreditCheck()
 
-  const nextStep = () => {
+  const nextStep = async () => {
     if (currentStep < steps.length - 1) {
-      setCurrentStep(currentStep + 1)
+      // Check credits before moving to the content generation step (step 2)
+      if (currentStep === 1) {
+        try {
+          const result = await checkCredits('COVER_LETTER')
+          if (result.hasEnoughCredits) {
+            setCurrentStep(currentStep + 1)
+          } else {
+            setShowInsufficientCreditsModal(true)
+          }
+        } catch (error) {
+          // Error is handled by the hook
+        }
+      } else {
+        setCurrentStep(currentStep + 1)
+      }
     }
   }
 
@@ -305,12 +331,36 @@ export function CoverLetterForm() {
             <ChevronLeft className="mr-2 h-4 w-4" />
             Previous
           </Button>
-          <Button onClick={nextStep} disabled={currentStep === steps.length - 1}>
-            Next
-            <ChevronRight className="ml-2 h-4 w-4" />
+          <Button onClick={nextStep} disabled={currentStep === steps.length - 1 || isChecking}>
+            {isChecking ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Checking Credits...
+              </>
+            ) : (
+              <>
+                Next
+                <ChevronRight className="ml-2 h-4 w-4" />
+              </>
+            )}
           </Button>
         </div>
       </CardContent>
+      
+      {/* Insufficient Credits Modal */}
+      {requiredAction && (
+        <InsufficientCreditsModal
+          isOpen={showInsufficientCreditsModal}
+          onClose={() => setShowInsufficientCreditsModal(false)}
+          action={requiredAction}
+          currentBalance={currentBalance}
+          onPurchaseSuccess={() => {
+            setShowInsufficientCreditsModal(false)
+            // After purchase, proceed to next step
+            setCurrentStep(currentStep + 1)
+          }}
+        />
+      )}
     </Card>
   )
 }

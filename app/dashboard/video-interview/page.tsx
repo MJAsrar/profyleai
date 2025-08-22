@@ -24,6 +24,8 @@ import {
   User,
   Eye
 } from 'lucide-react'
+import { useCreditCheck } from '@/hooks/use-credit-check'
+import { InsufficientCreditsModal } from '@/components/credits/insufficient-credits-modal'
 
 interface VideoInterviewData {
   id: string
@@ -40,6 +42,16 @@ interface VideoInterviewData {
 export default function VideoInterviewPage() {
   const [previousInterviews, setPreviousInterviews] = useState<VideoInterviewData[]>([])
   const [isLoadingHistory, setIsLoadingHistory] = useState(true)
+  
+  // Credit check hook
+  const {
+    checkCredits,
+    isChecking,
+    showInsufficientCreditsModal,
+    setShowInsufficientCreditsModal,
+    requiredAction,
+    currentBalance,
+  } = useCreditCheck()
 
   // Load previous interviews on mount
   useEffect(() => {
@@ -61,8 +73,18 @@ export default function VideoInterviewPage() {
     }
   }
 
-  const handleStartNewInterview = () => {
-    window.location.href = '/dashboard/video-interview/enhanced'
+  const handleStartNewInterview = async () => {
+    // Check credits before starting new video interview
+    try {
+      const result = await checkCredits('VIDEO_INTERVIEW')
+      if (result.hasEnoughCredits) {
+        window.location.href = '/dashboard/video-interview/enhanced'
+      } else {
+        setShowInsufficientCreditsModal(true)
+      }
+    } catch (error) {
+      // Error is handled by the hook
+    }
   }
 
   const getStatusBadge = (status: string) => {
@@ -144,13 +166,26 @@ export default function VideoInterviewPage() {
             <div className="flex flex-col sm:flex-row gap-3">
               <Button 
                 onClick={handleStartNewInterview}
+                disabled={isChecking}
                 className="btn-gradient shadow-medium flex-1 sm:flex-initial text-base font-semibold py-3 px-8"
                 size="lg"
               >
-                <Video className="h-5 w-5 mr-2" />
-                Start AI Interview
-                <ArrowRight className="h-4 w-4 ml-2" />
+                {isChecking ? (
+                  <>
+                    <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                    Checking Credits...
+                  </>
+                ) : (
+                  <>
+                    <Video className="h-5 w-5 mr-2" />
+                    Start AI Interview
+                    <ArrowRight className="h-4 w-4 ml-2" />
+                  </>
+                )}
               </Button>
+              <p className="text-xs text-center text-muted-foreground">
+                Costs 50 credits
+              </p>
               <Button 
                 variant="outline" 
                 className="border-border/50 hover:bg-muted/50"
@@ -197,11 +232,21 @@ export default function VideoInterviewPage() {
                     </div>
                     <Button 
                       onClick={handleStartNewInterview} 
+                      disabled={isChecking}
                       variant="outline"
                       className="border-primary/20 hover:bg-primary/5"
                     >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Start Your First Interview
+                      {isChecking ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Checking Credits...
+                        </>
+                      ) : (
+                        <>
+                          <Plus className="h-4 w-4 mr-2" />
+                          Start Your First Interview
+                        </>
+                      )}
                     </Button>
                   </div>
                 ) : (
@@ -328,6 +373,21 @@ export default function VideoInterviewPage() {
           </div>
         </div>
       </div>
+      
+      {/* Insufficient Credits Modal */}
+      {requiredAction && (
+        <InsufficientCreditsModal
+          isOpen={showInsufficientCreditsModal}
+          onClose={() => setShowInsufficientCreditsModal(false)}
+          action={requiredAction}
+          currentBalance={currentBalance}
+          onPurchaseSuccess={() => {
+            setShowInsufficientCreditsModal(false)
+            // After purchase, proceed with starting video interview
+            window.location.href = '/dashboard/video-interview/enhanced'
+          }}
+        />
+      )}
     </div>
   )
 }

@@ -15,6 +15,8 @@ import {
   AlertCircle,
   ArrowLeft
 } from "lucide-react"
+import { useCreditCheck } from "@/hooks/use-credit-check"
+import { InsufficientCreditsModal } from "@/components/credits/insufficient-credits-modal"
 
 interface Resume {
   id: string
@@ -40,6 +42,16 @@ export function ResumeSelection({ onCreateNew, onSelectResume, onBack }: ResumeS
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selectedOption, setSelectedOption] = useState<'create' | 'edit' | null>(null)
+  
+  // Credit check hook
+  const {
+    checkCredits,
+    isChecking,
+    showInsufficientCreditsModal,
+    setShowInsufficientCreditsModal,
+    requiredAction,
+    currentBalance,
+  } = useCreditCheck()
 
   const fetchResumes = async () => {
     try {
@@ -72,9 +84,19 @@ export function ResumeSelection({ onCreateNew, onSelectResume, onBack }: ResumeS
     })
   }
 
-  const handleOptionSelect = (option: 'create' | 'edit') => {
+  const handleOptionSelect = async (option: 'create' | 'edit') => {
     if (option === 'create') {
-      onCreateNew()
+      // Check credits before creating new resume
+      try {
+        const result = await checkCredits('RESUME_BUILDER')
+        if (result.hasEnoughCredits) {
+          onCreateNew()
+        } else {
+          setShowInsufficientCreditsModal(true)
+        }
+      } catch (error) {
+        // Error is handled by the hook
+      }
     } else {
       setSelectedOption('edit')
     }
@@ -108,10 +130,15 @@ export function ResumeSelection({ onCreateNew, onSelectResume, onBack }: ResumeS
               <p className="text-muted-foreground mb-4">
                 Start building a fresh resume from scratch with our guided templates
               </p>
-              <Button className="w-full">
-                <Plus className="h-4 w-4 mr-2" />
-                Start Fresh
-              </Button>
+              <div className="space-y-2">
+                <Button className="w-full">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Start Fresh
+                </Button>
+                <p className="text-xs text-muted-foreground">
+                  Costs 3 credits
+                </p>
+              </div>
             </CardContent>
           </Card>
 
@@ -239,6 +266,21 @@ export function ResumeSelection({ onCreateNew, onSelectResume, onBack }: ResumeS
             </Card>
           ))}
         </div>
+      )}
+      
+      {/* Insufficient Credits Modal */}
+      {requiredAction && (
+        <InsufficientCreditsModal
+          isOpen={showInsufficientCreditsModal}
+          onClose={() => setShowInsufficientCreditsModal(false)}
+          action={requiredAction}
+          currentBalance={currentBalance}
+          onPurchaseSuccess={() => {
+            setShowInsufficientCreditsModal(false)
+            // After purchase, proceed with the action
+            onCreateNew()
+          }}
+        />
       )}
     </div>
   )

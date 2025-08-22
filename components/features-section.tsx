@@ -1,11 +1,19 @@
 import Link from "next/link"
-import { FileText, MessageSquare, Users, Download, Sparkles, Target, CheckCircle2 } from "lucide-react"
+import { FileText, MessageSquare, Users, Download, Sparkles, Target, CheckCircle2, Video } from "lucide-react"
 
 export function FeaturesSection() {
   const features = [
     {
+      icon: Video,
+      title: "AI Video Interviews",
+      description: "Practice with realistic AI interviewers that adapt to your specific role and experience level.",
+      link: "/dashboard/video-interview",
+      linkText: "Try Interview",
+      featured: true
+    },
+    {
       icon: Target,
-      title: "Resume Tailoring",
+      title: "Smart Resume Tailoring",
       description: "Automatically customize your resume for each job application using AI analysis of job descriptions.",
       link: "/signup",
       linkText: "Start Tailoring",
@@ -28,7 +36,6 @@ export function FeaturesSection() {
       title: "Cover Letter Generator",
       description: "Generate personalized cover letters that match your resume and target job.",
     },
-
     {
       icon: Sparkles,
       title: "AI Enhancement",
@@ -40,9 +47,9 @@ export function FeaturesSection() {
     <section id="features" className="py-20 bg-muted/50">
       <div className="content-container">
         <div className="text-center mb-16">
-          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Everything you need to land your dream job</h2>
+          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Everything you need to ace your next interview</h2>
           <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
-            Our AI-powered platform tailors your resume for each application, dramatically increasing your chances of getting interviews.
+            Practice with AI interviewers, tailor your resume for each application, and get personalized coaching to land your dream job.
           </p>
         </div>
 

@@ -1,6 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Target, Zap, CheckCircle2, ArrowRight, Sparkles, FileText, Trophy } from "lucide-react"
+import { Target, Zap, CheckCircle2, ArrowRight, Sparkles, FileText, Trophy, Video } from "lucide-react"
 import Link from "next/link"
 
 export function ResumeTailoringSection() {
@@ -159,19 +159,25 @@ export function ResumeTailoringSection() {
           {/* CTA */}
           <div className="text-center">
             <Card className="p-8 bg-gradient-to-r from-primary/10 to-secondary/10 border-primary/20">
-              <h3 className="text-2xl font-bold mb-4">Ready to Get More Interviews?</h3>
+              <h3 className="text-2xl font-bold mb-4">Ready to Ace Your Next Interview?</h3>
               <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
-                Join thousands of job seekers who have increased their interview rates by tailoring their resumes with AI
+                Tailor your resume and practice with AI interviewers to dramatically increase your success rate
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link href="/signup">
                   <Button size="lg" className="w-full sm:w-auto">
                     <Sparkles className="mr-2 h-4 w-4" />
-                    Start Tailoring Free
+                    Start Free Trial
+                  </Button>
+                </Link>
+                <Link href="/dashboard/video-interview">
+                  <Button variant="outline" size="lg" className="w-full sm:w-auto">
+                    <Video className="mr-2 h-4 w-4" />
+                    Try AI Interview
                   </Button>
                 </Link>
                 <Link href="/templates">
-                  <Button variant="outline" size="lg" className="w-full sm:w-auto">
+                  <Button variant="ghost" size="lg" className="w-full sm:w-auto">
                     <FileText className="mr-2 h-4 w-4" />
                     View Templates
                   </Button>

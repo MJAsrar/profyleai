@@ -187,9 +187,9 @@ export function CreditBalance({
           </CardHeader>
         )}
 
-        <CardContent className={showDetails ? "space-y-4" : "space-y-2 pt-2 pb-2"}>
+        <CardContent className={showDetails ? "space-y-4" : "space-y-1 pt-1 pb-1"}>
           {/* Current Balance */}
-          <div className="space-y-1">
+          <div className={showDetails ? "space-y-1" : "space-y-0"}>
             <div className="flex items-center justify-between">
               {!showDetails && (
                 <div className="flex items-center gap-1">
@@ -205,29 +205,33 @@ export function CreditBalance({
                 </span>
               )}
               <div className="flex items-center gap-1">
-                <Badge variant={getBalanceBadgeVariant()} className="text-xs">
-                  {creditSummary.currentBalance <= CREDIT_THRESHOLDS.CRITICAL_BALANCE
-                    ? 'Critical'
-                    : creditSummary.currentBalance <= CREDIT_THRESHOLDS.LOW_BALANCE
-                    ? 'Low'
-                    : 'Good'}
-                </Badge>
+                {showDetails && (
+                  <Badge variant={getBalanceBadgeVariant()} className="text-xs">
+                    {creditSummary.currentBalance <= CREDIT_THRESHOLDS.CRITICAL_BALANCE
+                      ? 'Critical'
+                      : creditSummary.currentBalance <= CREDIT_THRESHOLDS.LOW_BALANCE
+                      ? 'Low'
+                      : 'Good'}
+                  </Badge>
+                )}
                 {!showDetails && (
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={handleRefresh}
                     disabled={refreshing}
-                    className="h-6 w-6 p-0 ml-1"
+                    className="h-6 w-6 p-0"
                   >
                     <RefreshCw className={`h-3 w-3 ${refreshing ? 'animate-spin' : ''}`} />
                   </Button>
                 )}
               </div>
             </div>
-            <p className="text-xs text-muted-foreground">
-              ≈ ${(creditSummary.currentBalance * 0.1).toFixed(2)} value
-            </p>
+            {showDetails && (
+              <p className="text-xs text-muted-foreground">
+                ≈ ${(creditSummary.currentBalance * 0.1).toFixed(2)} value
+              </p>
+            )}
           </div>
 
           {showDetails && (

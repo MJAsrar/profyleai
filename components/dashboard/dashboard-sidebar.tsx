@@ -105,9 +105,9 @@ export function DashboardSidebar() {
 
       <SidebarContent className="gap-0">
         {/* Credit Balance */}
-        <SidebarGroup>
+        <SidebarGroup className="py-1">
           <SidebarGroupContent>
-            <div className="px-2 pb-1">
+            <div className="px-2">
               <CreditBalance 
                 showDetails={false}
                 showPurchaseButton={true}

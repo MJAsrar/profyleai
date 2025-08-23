@@ -165,9 +165,9 @@ export function ResumeTailoringSection() {
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link href="/signup">
-                  <Button size="lg" className="w-full sm:w-auto">
+                  <Button size="lg" className="w-full sm:w-auto bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-lg">
                     <Sparkles className="mr-2 h-4 w-4" />
-                    Start Free Trial
+                    Start Free - No Credit Card
                   </Button>
                 </Link>
                 <Link href="/dashboard/video-interview">

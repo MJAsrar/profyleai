@@ -17,8 +17,8 @@ export function HeroSection() {
             <div className="relative rounded-full px-4 py-2 text-sm leading-6 text-muted-foreground ring-1 ring-muted border hover-glow shadow-lg shadow-green-500/20">
               <div className="flex items-center gap-2">
                 <Sparkles className="h-4 w-4 text-green-500" />
-                Complete AI-powered career platform {""}
-                <span className="font-semibold text-primary">for job seekers</span>
+                ✨ Free to start • No credit card required {""}
+                <span className="font-semibold text-primary">• 50+ credits included</span>
               </div>
             </div>
           </div>
@@ -39,20 +39,46 @@ export function HeroSection() {
             and get the personalized coaching you need to land your next role.
           </p>
 
+          {/* Value Props */}
+          <div className="flex flex-wrap justify-center gap-4 text-sm text-muted-foreground max-w-4xl mx-auto animate-fade-in-up">
+            <div className="flex items-center gap-2 bg-background/50 px-3 py-2 rounded-full border">
+              <CheckCircle2 className="h-4 w-4 text-green-500" />
+              <span>3x more interviews</span>
+            </div>
+            <div className="flex items-center gap-2 bg-background/50 px-3 py-2 rounded-full border">
+              <CheckCircle2 className="h-4 w-4 text-green-500" />
+              <span>85% success rate</span>
+            </div>
+            <div className="flex items-center gap-2 bg-background/50 px-3 py-2 rounded-full border">
+              <CheckCircle2 className="h-4 w-4 text-green-500" />
+              <span>50,000+ users</span>
+            </div>
+            <div className="flex items-center gap-2 bg-background/50 px-3 py-2 rounded-full border">
+              <CheckCircle2 className="h-4 w-4 text-green-500" />
+              <span>ATS-optimized</span>
+            </div>
+          </div>
+
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 animate-fade-in-up">
             <Link href="/signup">
-              <Button size="lg" className="text-base touch-target hover-lift w-full sm:w-auto bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70">
-                Start Your Journey
+              <Button size="lg" className="text-base touch-target hover-lift w-full sm:w-auto bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg shadow-primary/20">
+                <Sparkles className="mr-2 h-4 w-4" />
+                Start Free Today
                 <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
               </Button>
             </Link>
             <Link href="/dashboard/video-interview">
               <Button variant="outline" size="lg" className="text-base bg-transparent hover-glow touch-target w-full sm:w-auto">
                 <Video className="mr-2 h-4 w-4" />
-                Try AI Interview
+                Try AI Interview Free
               </Button>
             </Link>
+          </div>
+
+          {/* Trust indicators */}
+          <div className="text-center text-xs text-muted-foreground animate-fade-in-up">
+            <p>✓ No credit card required • ✓ 50 free credits • ✓ Cancel anytime</p>
           </div>
 
           {/* Feature highlights - Grid layout */}

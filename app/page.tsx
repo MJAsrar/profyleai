@@ -3,7 +3,7 @@ import { HeroSection } from "@/components/hero-section"
 import { FeaturesSection } from "@/components/features-section"
 import { ResumeTailoringSection } from "@/components/resume-tailoring-section"
 import { TemplateCarousel } from "@/components/template-carousel"
-
+import { ConversionBanner } from "@/components/conversion-banner"
 import { PricingSection } from "@/components/pricing-section"
 import { TestimonialsSection } from "@/components/testimonials-section"
 import { Footer } from "@/components/footer"
@@ -35,6 +35,9 @@ export default function HomePage() {
           </MotionWrapper>
           <MotionWrapper animation="fade-in-up" delay={400}>
             <ResumeTailoringSection />
+          </MotionWrapper>
+          <MotionWrapper animation="fade-in-up" delay={450}>
+            <ConversionBanner />
           </MotionWrapper>
           <MotionWrapper animation="fade-in-up" delay={500}>
             <PricingSection />

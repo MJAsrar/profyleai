@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Check, GraduationCap, Building2, Coins } from "lucide-react"
+import { Check, GraduationCap, Building2, Coins, Sparkles } from "lucide-react"
 import Link from "next/link"
 import { useState } from "react"
 import { CreditPurchaseModal } from "@/components/credits/credit-purchase-modal"
@@ -17,6 +17,28 @@ export function PricingSection() {
     setShowPurchaseModal(true)
   }
   const plans = [
+    {
+      id: "free",
+      name: "Free",
+      monthlyPrice: "$0",
+      yearlyPrice: "$0",
+      yearlyTotal: "$0",
+      description: "Perfect for getting started",
+      features: [
+        "50 free credits included", 
+        "1 Video Interview session", 
+        "10 Text Interview sessions",
+        "16 Resume Builder uses",
+        "25 Resume Tailoring sessions",
+        "25 Cover Letter generations",
+        "No credit card required"
+      ],
+      cta: "Start Free Today",
+      popular: false,
+      credits: 50,
+      oneTime: true,
+      free: true,
+    },
     {
       id: "starter",
       name: "Starter",
@@ -109,9 +131,9 @@ export function PricingSection() {
     <section id="pricing" className="py-20 bg-muted/50">
       <div className="content-container">
         <div className="text-center mb-16">
-          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Credit-Based Pricing</h2>
+          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Start Free, Pay As You Grow</h2>
           <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
-            Pay only for what you use. Buy credits once, use them anytime. No recurring subscriptions.
+            Begin with 50 free credits - no credit card required. Pay only for what you use. No recurring subscriptions.
           </p>
           
           {/* Credit Info */}
@@ -142,13 +164,20 @@ export function PricingSection() {
         </div>
 
         <div className="w-full">
-          <div className="grid grid-cols-1 gap-6 sm:gap-8 md:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-6 sm:gap-8 md:grid-cols-2 lg:grid-cols-5">
           {plans.map((plan) => (
-            <Card key={plan.name} className={`relative hover:shadow-md transition-shadow ${plan.popular ? "border-primary shadow-lg scale-105" : ""}`}>
+            <Card key={plan.name} className={`relative hover:shadow-md transition-shadow ${plan.popular ? "border-primary shadow-lg scale-105" : ""} ${plan.free ? "border-green-500/50 bg-gradient-to-br from-green-50/50 to-green-100/50 dark:from-green-900/20 dark:to-green-800/20" : ""}`}>
               {plan.popular && (
                 <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
                   <span className="bg-primary text-primary-foreground px-3 py-1 text-sm font-medium rounded-full">
                     Most Popular
+                  </span>
+                </div>
+              )}
+              {plan.free && (
+                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                  <span className="bg-green-500 text-white px-3 py-1 text-sm font-medium rounded-full">
+                    FREE START
                   </span>
                 </div>
               )}
@@ -187,14 +216,25 @@ export function PricingSection() {
                 </ul>
               </CardContent>
               <CardFooter>
-                <Button 
-                  className="w-full" 
-                  variant={plan.popular ? "default" : "outline"}
-                  onClick={() => handlePurchaseClick(plan.id)}
-                >
-                  <Coins className="h-4 w-4 mr-2" />
-                  {plan.cta}
-                </Button>
+                {plan.free ? (
+                  <Link href="/signup" className="w-full">
+                    <Button 
+                      className="w-full bg-green-500 hover:bg-green-600 text-white" 
+                    >
+                      <Sparkles className="h-4 w-4 mr-2" />
+                      {plan.cta}
+                    </Button>
+                  </Link>
+                ) : (
+                  <Button 
+                    className="w-full" 
+                    variant={plan.popular ? "default" : "outline"}
+                    onClick={() => handlePurchaseClick(plan.id)}
+                  >
+                    <Coins className="h-4 w-4 mr-2" />
+                    {plan.cta}
+                  </Button>
+                )}
               </CardFooter>
             </Card>
           ))}

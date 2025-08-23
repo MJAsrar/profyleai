@@ -1,8 +1,10 @@
 "use client"
 
+import Link from "next/link"
 import { Card, CardContent } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Star } from "lucide-react"
+import { Star, Sparkles, ArrowRight } from "lucide-react"
 
 interface Testimonial {
   id: string
@@ -72,10 +74,11 @@ export function TestimonialsSection() {
         <div className="w-full">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-              Loved by job seekers worldwide
+              Loved by 50,000+ job seekers worldwide
             </h2>
             <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
-              Join thousands of professionals who have transformed their careers with Profyle
+              Join professionals from Google, Microsoft, Meta, and Amazon who've transformed their careers with Profyle. 
+              <span className="font-semibold text-primary">Start free today</span> and see results within minutes.
             </p>
           </div>
           
@@ -120,7 +123,7 @@ export function TestimonialsSection() {
           </div>
           
           {/* Stats */}
-          <div className="mt-16 grid grid-cols-1 sm:grid-cols-3 gap-8 text-center">
+          <div className="mt-16 grid grid-cols-1 sm:grid-cols-4 gap-8 text-center">
             <div>
               <div className="text-3xl font-bold text-primary">50,000+</div>
               <div className="text-sm text-muted-foreground mt-1">Resumes Created</div>
@@ -133,6 +136,28 @@ export function TestimonialsSection() {
               <div className="text-3xl font-bold text-primary">4.9/5</div>
               <div className="text-sm text-muted-foreground mt-1">User Rating</div>
             </div>
+            <div>
+              <div className="text-3xl font-bold text-green-500">3x</div>
+              <div className="text-sm text-muted-foreground mt-1">More Interviews</div>
+            </div>
+          </div>
+
+          {/* Final CTA */}
+          <div className="mt-16 text-center">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 rounded-full text-sm font-medium mb-6">
+              <Sparkles className="h-4 w-4" />
+              Limited Time: Start with 50 FREE credits
+            </div>
+            <Link href="/signup">
+              <Button size="lg" className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-lg shadow-green-500/30">
+                <Sparkles className="mr-2 h-5 w-5" />
+                Join 50,000+ Users - Start Free
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+            </Link>
+            <p className="text-xs text-muted-foreground mt-3">
+              No credit card required • Setup in 30 seconds • Cancel anytime
+            </p>
           </div>
         </div>
       </div>

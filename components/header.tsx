@@ -167,12 +167,12 @@ export function Header() {
                 </Button>
               </Link>
               <Link href="/signup">
-                <Button className="relative overflow-hidden group bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary transition-all duration-300">
+                <Button className="relative overflow-hidden group bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white transition-all duration-300 shadow-md">
                   <span className="relative z-10 flex items-center">
                     <Sparkles className="mr-2 h-4 w-4" />
-                    Get Started
+                    Start Free
                   </span>
-                  <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-secondary/10 translate-x-full group-hover:translate-x-0 transition-transform duration-300" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-green-400/20 to-green-600/20 translate-x-full group-hover:translate-x-0 transition-transform duration-300" />
                 </Button>
               </Link>
             </>
@@ -264,9 +264,9 @@ export function Header() {
                         </Button>
                       </Link>
                       <Link href="/signup" onClick={() => setIsOpen(false)}>
-                        <Button className="w-full h-12 text-sm bg-gradient-to-r from-primary to-primary/90">
+                        <Button className="w-full h-12 text-sm bg-gradient-to-r from-green-500 to-green-600 text-white">
                           <Sparkles className="mr-2 h-4 w-4" />
-                          Get Started
+                          Start Free
                         </Button>
                       </Link>
                     </>

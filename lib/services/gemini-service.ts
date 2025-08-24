@@ -1037,18 +1037,33 @@ export async function generateCoverLetterWithGemini(
 
     console.log('📥 Received cover letter response from Gemini:', responseText.substring(0, 200) + '...')
 
-    // Parse JSON response
+    // Parse JSON response with improved error handling
     let parsedResponse: any
     try {
-      // Clean the response text (remove any markdown formatting)
-      const cleanedResponse = responseText
+      let cleanedResponse = responseText
         .replace(/```json\n?/g, '')
         .replace(/```\n?/g, '')
         .trim()
       
+      // Remove or escape control characters that break JSON parsing
+      cleanedResponse = cleanedResponse.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, ' ')
+      
+      // Fix common JSON issues
+      cleanedResponse = cleanedResponse.replace(/,(\s*[}\]])/g, '$1')
+      
+      // Extract JSON object if there's extra text
+      const jsonStart = cleanedResponse.indexOf('{')
+      const jsonEnd = cleanedResponse.lastIndexOf('}')
+      
+      if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
+        cleanedResponse = cleanedResponse.substring(jsonStart, jsonEnd + 1)
+      }
+      
       parsedResponse = JSON.parse(cleanedResponse)
     } catch (parseError) {
       console.error('❌ Failed to parse cover letter response:', parseError)
+      console.error('Response length:', responseText.length)
+      console.error('Raw response preview:', responseText.substring(0, 500) + '...')
       return {
         success: false,
         error: "Invalid response format from AI service"

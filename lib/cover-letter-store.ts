@@ -154,11 +154,29 @@ export const useCoverLetterStore = create<CoverLetterStore>()(
           })
 
           if (!response.ok) {
-            const errorData = await response.json()
+            let errorData: any = { error: `HTTP error! status: ${response.status}` }
+            try {
+              const responseText = await response.text()
+              if (responseText) {
+                errorData = JSON.parse(responseText)
+              }
+            } catch (parseError) {
+              console.error('Failed to parse error response:', parseError)
+            }
             throw new Error(errorData.error || `HTTP error! status: ${response.status}`)
           }
 
-          const result = await response.json()
+          let result: any
+          try {
+            const responseText = await response.text()
+            if (!responseText) {
+              throw new Error('Empty response from server')
+            }
+            result = JSON.parse(responseText)
+          } catch (parseError) {
+            console.error('Failed to parse success response:', parseError)
+            throw new Error('Invalid response format from server')
+          }
 
           if (result.success && result.data) {
         set((state) => ({

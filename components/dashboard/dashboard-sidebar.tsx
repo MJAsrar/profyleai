@@ -13,13 +13,13 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar"
-import { FileText, Eye, MessageSquare, Users, Settings, Sparkles, User, Target, FolderOpen, Video, Home } from "lucide-react"
+import { FileText, Eye, MessageSquare, Users, Settings, Sparkles, User, Target, FolderOpen, Video, Coins } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useSession, signOut } from "next-auth/react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { CreditBalance } from "@/components/credits/credit-balance"
 import { CREDIT_COSTS } from "@/lib/types/credits"
+import { useState, useEffect } from "react"
 
 const resumeTools = [
   {
@@ -75,13 +75,6 @@ const additionalTools = [
     credits: CREDIT_COSTS.VIDEO_INTERVIEW
   },
   {
-    title: "Home",
-    url: "/",
-    icon: Home,
-    description: "Back to homepage",
-    credits: null // Free action
-  },
-  {
     title: "Settings",
     url: "/dashboard/settings",
     icon: Settings,
@@ -93,6 +86,37 @@ const additionalTools = [
 export function DashboardSidebar() {
   const pathname = usePathname()
   const { data: session } = useSession()
+  const [creditBalance, setCreditBalance] = useState<number | null>(null)
+
+  const fetchCreditBalance = async () => {
+    if (!session?.user?.id) return
+    
+    try {
+      const response = await fetch('/api/credits/balance')
+      if (response.ok) {
+        const result = await response.json()
+        setCreditBalance(result.data.currentBalance)
+      }
+    } catch (error) {
+      console.error('Error fetching credit balance:', error)
+    }
+  }
+
+  useEffect(() => {
+    fetchCreditBalance()
+  }, [session?.user?.id])
+
+  // Listen for credit updates
+  useEffect(() => {
+    const handleCreditUpdate = () => {
+      fetchCreditBalance()
+    }
+
+    window.addEventListener('credit-updated', handleCreditUpdate)
+    return () => {
+      window.removeEventListener('credit-updated', handleCreditUpdate)
+    }
+  }, [])
 
   return (
     <Sidebar>
@@ -100,9 +124,9 @@ export function DashboardSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild className="py-4 px-2 hover:bg-sidebar-accent/50">
-              <Link href="/dashboard">
+              <Link href="/">
                 <div className="flex items-center justify-center w-full">
-                  <img src="/logo.png" alt="Profyle AI Resume Builder Dashboard" className="h-8 w-auto max-w-[160px]" />
+                  <img src="/logo.png" alt="Profyle AI Resume Builder - Home" className="h-8 w-auto max-w-[160px]" />
                 </div>
               </Link>
             </SidebarMenuButton>
@@ -111,20 +135,7 @@ export function DashboardSidebar() {
       </SidebarHeader>
 
       <SidebarContent className="gap-0">
-        {/* Credit Balance */}
-        <SidebarGroup className="py-1">
-          <SidebarGroupContent>
-            <div className="px-2">
-              <CreditBalance 
-                showDetails={false}
-                showPurchaseButton={true}
-                autoRefresh={true}
-                refreshInterval={15000}
-                className="border-0 shadow-none bg-sidebar-accent/20"
-              />
-            </div>
-          </SidebarGroupContent>
-        </SidebarGroup>
+
 
         {/* Core Resume Tools */}
         <SidebarGroup>
@@ -157,6 +168,29 @@ export function DashboardSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Credits */}
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu className="gap-1">
+              <SidebarMenuItem>
+                <div className="px-3 py-2 rounded-md bg-sidebar-accent/20">
+                  <div className="flex items-center gap-3">
+                    <Coins className="h-4 w-4 text-yellow-500" />
+                    <div className="flex flex-col flex-1">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium">Credits</span>
+                        <span className="text-sm font-mono text-yellow-600">
+                          {creditBalance !== null ? creditBalance : '...'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

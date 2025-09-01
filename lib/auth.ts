@@ -78,6 +78,62 @@ export const authOptions: NextAuthOptions = {
   },
   callbacks: {
     async signIn({ user, account, profile }) {
+      // Handle account linking for OAuth providers
+      if (account?.provider === "google" && user.email) {
+        try {
+          // Check if a user with this email already exists
+          const existingUser = await prisma.user.findUnique({
+            where: { email: user.email },
+            include: { accounts: true }
+          })
+
+          if (existingUser) {
+            // Check if this Google account is already linked
+            const existingGoogleAccount = existingUser.accounts.find(
+              acc => acc.provider === "google" && acc.providerAccountId === account.providerAccountId
+            )
+
+            if (!existingGoogleAccount) {
+              // Link the Google account to the existing user
+              await prisma.account.create({
+                data: {
+                  userId: existingUser.id,
+                  type: account.type,
+                  provider: account.provider,
+                  providerAccountId: account.providerAccountId,
+                  refresh_token: account.refresh_token,
+                  access_token: account.access_token,
+                  expires_at: account.expires_at,
+                  token_type: account.token_type,
+                  scope: account.scope,
+                  id_token: account.id_token,
+                  session_state: account.session_state,
+                }
+              })
+
+              console.log(`Linked Google account to existing user: ${existingUser.email}`)
+            }
+
+            // Update the user object to use the existing user's ID
+            user.id = existingUser.id
+            
+            // Update user info if Google provides more recent data
+            if (profile?.name && profile.name !== existingUser.name) {
+              await prisma.user.update({
+                where: { id: existingUser.id },
+                data: { 
+                  name: profile.name,
+                  image: profile.picture || existingUser.image
+                }
+              })
+            }
+          }
+        } catch (error) {
+          console.error("Error during account linking:", error)
+          // Don't block sign-in if linking fails
+        }
+      }
+
       // Allow all sign-ins
       return true
     },
@@ -109,32 +165,41 @@ export const authOptions: NextAuthOptions = {
   events: {
     async createUser({ user }) {
       // Give new users (including Google sign-ups) their initial credits
+      // Only if this is truly a new user (not an account linking scenario)
       try {
-        await prisma.user.update({
-          where: { id: user.id },
-          data: {
-            credits: 10,
-            totalCreditsEarned: 10,
-            totalCreditsSpent: 0,
-            lastCreditUpdate: new Date(),
-          }
+        // Check if user already has credits (might be from account linking)
+        const existingUser = await prisma.user.findUnique({
+          where: { id: user.id }
         })
 
-        // Create initial credit transaction
-        await prisma.creditTransaction.create({
-          data: {
-            userId: user.id,
-            type: "EARNED_SIGNUP",
-            amount: 10,
-            description: "Welcome Bonus",
-            balanceBefore: 0,
-            balanceAfter: 10,
-            metadata: {
-              timestamp: new Date().toISOString(),
-              signupMethod: user.email?.includes("google") ? "google" : "oauth",
+        // Only initialize credits if the user doesn't already have them
+        if (existingUser && existingUser.credits === 0 && existingUser.totalCreditsEarned === 0) {
+          await prisma.user.update({
+            where: { id: user.id },
+            data: {
+              credits: 10,
+              totalCreditsEarned: 10,
+              totalCreditsSpent: 0,
+              lastCreditUpdate: new Date(),
             }
-          }
-        })
+          })
+
+          // Create initial credit transaction
+          await prisma.creditTransaction.create({
+            data: {
+              userId: user.id,
+              type: "EARNED_SIGNUP",
+              amount: 10,
+              description: "Welcome Bonus",
+              balanceBefore: 0,
+              balanceAfter: 10,
+              metadata: {
+                timestamp: new Date().toISOString(),
+                signupMethod: user.email?.includes("google") ? "google" : "oauth",
+              }
+            }
+          })
+        }
       } catch (error) {
         console.error("Failed to initialize credits for new user:", error)
       }

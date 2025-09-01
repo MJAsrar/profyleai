@@ -1,10 +1,14 @@
+"use client"
+
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { ArrowRight, Sparkles, FileText, Zap, Target, CheckCircle2, Chrome, Video, MessageSquare } from "lucide-react"
 import { PageContainer, Section } from "@/components/ui/page-container"
 import { StaggeredContainer } from "@/components/ui/motion-wrapper"
+import { useSession } from "next-auth/react"
 
 export function HeroSection() {
+  const { data: session } = useSession()
   return (
     <Section spacing="sm" className="relative overflow-hidden pt-2">
       {/* Background gradient */}
@@ -61,10 +65,10 @@ export function HeroSection() {
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 animate-fade-in-up">
-            <Link href="/signup">
+            <Link href={session ? "/dashboard" : "/signup"}>
               <Button size="lg" className="text-base touch-target hover-lift w-full sm:w-auto bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg shadow-primary/20">
                 <Sparkles className="mr-2 h-4 w-4" />
-                Start Free Today
+                {session ? "Go to Dashboard" : "Start Free Today"}
                 <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
               </Button>
             </Link>

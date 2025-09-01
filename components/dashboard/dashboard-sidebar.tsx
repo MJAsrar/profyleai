@@ -13,7 +13,7 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar"
-import { FileText, Eye, MessageSquare, Users, Settings, Sparkles, User, Target, FolderOpen, Video } from "lucide-react"
+import { FileText, Eye, MessageSquare, Users, Settings, Sparkles, User, Target, FolderOpen, Video, Home } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useSession, signOut } from "next-auth/react"
@@ -73,6 +73,13 @@ const additionalTools = [
     icon: Video,
     description: "AI video interview practice",
     credits: CREDIT_COSTS.VIDEO_INTERVIEW
+  },
+  {
+    title: "Home",
+    url: "/",
+    icon: Home,
+    description: "Back to homepage",
+    credits: null // Free action
   },
   {
     title: "Settings",

@@ -157,7 +157,7 @@ export function ResumePreview() {
           <Button 
             onClick={handleExportPDF} 
             size="sm"
-            disabled={isExporting || completionPercentage < 50}
+            disabled={isExporting}
             className="btn-gradient"
           >
             {isExporting ? (

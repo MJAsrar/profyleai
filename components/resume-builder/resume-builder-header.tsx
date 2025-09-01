@@ -203,7 +203,7 @@ export function ResumeBuilderHeader({ onChangeTemplate, onBack }: ResumeBuilderH
         <Button 
           size="sm" 
           onClick={handleExportPDF}
-          disabled={isExporting || completionPercentage < 50}
+          disabled={isExporting}
           className="px-2 sm:px-3"
         >
           {isExporting ? (

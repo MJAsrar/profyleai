@@ -919,8 +919,8 @@ export function ElevenLabsInterviewRoom({
                       </div>
                     )}
 
-                                         <div className="flex items-center justify-center h-full relative z-10 p-8">
-                       <div className="scale-[2] sm:scale-[2.2] lg:scale-[2.5] xl:scale-[2.8] transform transition-transform duration-300">
+                                         <div className="flex items-center justify-center h-full relative z-10 p-6">
+                       <div className="scale-[1.8] sm:scale-[2] lg:scale-[2.2] xl:scale-[2.4] transform transition-transform duration-300">
                          <AiAvatar
                            isActive={connectionStatus === "connected" || connectionStatus === "speaking"}
                            isSpeaking={isAgentSpeaking}

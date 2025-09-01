@@ -1,10 +1,17 @@
 import { NextAuthOptions } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
+import GoogleProvider from "next-auth/providers/google"
+import { PrismaAdapter } from "@next-auth/prisma-adapter"
 import { prisma } from "./prisma"
 import bcrypt from "bcryptjs"
 
 export const authOptions: NextAuthOptions = {
+  adapter: PrismaAdapter(prisma),
   providers: [
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    }),
     CredentialsProvider({
       name: "credentials",
       credentials: {
@@ -49,10 +56,10 @@ export const authOptions: NextAuthOptions = {
     })
   ],
   session: {
-    strategy: "jwt",
+    strategy: "database",
     maxAge: 30 * 24 * 60 * 60, // 30 days
     updateAge: 24 * 60 * 60, // Update session every 24 hours
-  }, //hi
+  },
   cookies: {
     sessionToken: {
       name: `next-auth.session-token`,
@@ -70,14 +77,22 @@ export const authOptions: NextAuthOptions = {
     error: "/login"
   },
   callbacks: {
-    async jwt({ token, user }) {
+    async signIn({ user, account, profile }) {
+      // Allow all sign-ins
+      return true
+    },
+    async jwt({ token, user, account }) {
       if (user) {
         token.id = user.id
       }
       return token
     },
-    async session({ session, token }) {
-      if (token) {
+    async session({ session, token, user }) {
+      // When using database sessions (with adapter), user object is available
+      if (user) {
+        session.user.id = user.id
+      } else if (token) {
+        // Fallback for JWT sessions
         session.user.id = token.id as string
       }
       return session
@@ -91,6 +106,38 @@ export const authOptions: NextAuthOptions = {
     }
   },
   events: {
+    async createUser({ user }) {
+      // Give new users (including Google sign-ups) their initial credits
+      try {
+        await prisma.user.update({
+          where: { id: user.id },
+          data: {
+            credits: 10,
+            totalCreditsEarned: 10,
+            totalCreditsSpent: 0,
+            lastCreditUpdate: new Date(),
+          }
+        })
+
+        // Create initial credit transaction
+        await prisma.creditTransaction.create({
+          data: {
+            userId: user.id,
+            type: "EARNED_SIGNUP",
+            amount: 10,
+            description: "Welcome Bonus",
+            balanceBefore: 0,
+            balanceAfter: 10,
+            metadata: {
+              timestamp: new Date().toISOString(),
+              signupMethod: user.email?.includes("google") ? "google" : "oauth",
+            }
+          }
+        })
+      } catch (error) {
+        console.error("Failed to initialize credits for new user:", error)
+      }
+    },
     async signOut(message) {
       console.log("User signed out:", message)
     },

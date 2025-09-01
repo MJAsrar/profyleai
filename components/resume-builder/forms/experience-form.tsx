@@ -29,18 +29,17 @@ export function ExperienceForm() {
   })
 
   const handleAddExperience = () => {
-    if (newExperience.company && newExperience.position) {
-      addExperience(newExperience)
-      setNewExperience({
-        company: "",
-        position: "",
-        startDate: "",
-        endDate: "",
-        current: false,
-        description: "",
-      })
-      setShowAddForm(false)
-    }
+    // Allow adding experience even with empty fields
+    addExperience(newExperience)
+    setNewExperience({
+      company: "",
+      position: "",
+      startDate: "",
+      endDate: "",
+      current: false,
+      description: "",
+    })
+    setShowAddForm(false)
   }
 
   const handleEditExperience = (exp: any) => {
@@ -49,7 +48,8 @@ export function ExperienceForm() {
   }
 
   const handleSaveEdit = () => {
-    if (editData && editingId && editData.company && editData.position) {
+    if (editData && editingId) {
+      // Allow saving even with empty fields
       updateExperience(editingId, editData)
       setEditingId(null)
       setEditData(null)
@@ -147,7 +147,7 @@ export function ExperienceForm() {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="company">Company *</Label>
+                <Label htmlFor="company">Company</Label>
                 <Input
                   id="company"
                   value={newExperience.company}
@@ -156,7 +156,7 @@ export function ExperienceForm() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="position">Position *</Label>
+                <Label htmlFor="position">Position</Label>
                 <Input
                   id="position"
                   value={newExperience.position}

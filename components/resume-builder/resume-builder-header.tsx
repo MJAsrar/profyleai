@@ -56,8 +56,13 @@ export function ResumeBuilderHeader({ onChangeTemplate, onBack }: ResumeBuilderH
         await saveResume()
       }
 
+      // Allow export even without saving - just ensure we have an ID by saving first
       if (!resumeData.id) {
-        throw new Error('Resume must be saved before exporting')
+        await saveResume()
+      }
+
+      if (!resumeData.id) {
+        throw new Error('Unable to save resume before exporting')
       }
 
       console.log('Downloading resume PDF:', resumeData.id)

@@ -12,7 +12,7 @@ export function PersonalInfoForm() {
     <div className="space-y-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="fullName">Full Name *</Label>
+          <Label htmlFor="fullName">Full Name</Label>
           <Input
             id="fullName"
             value={personalInfo.fullName}
@@ -33,7 +33,7 @@ export function PersonalInfoForm() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="email">Email *</Label>
+          <Label htmlFor="email">Email</Label>
           <Input
             id="email"
             type="email"
@@ -43,7 +43,7 @@ export function PersonalInfoForm() {
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="phone">Phone *</Label>
+          <Label htmlFor="phone">Phone</Label>
           <Input
             id="phone"
             value={personalInfo.phone}

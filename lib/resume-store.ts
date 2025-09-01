@@ -1000,18 +1000,22 @@ export const useResumeStore = create<ResumeStore>()(
         const data = get().resumeData
         const errors: string[] = []
 
-        // Check required fields
-        if (!data.templateId || data.templateId.trim() === "") {
-          errors.push("Please select a template")
-        }
+        // No required fields for saving - allow saving at any stage
+        // Users can save completely empty resumes if they want
+        
+        // Only validate if template is selected but invalid
+        // if (data.templateId && data.templateId.trim() === "") {
+        //   errors.push("Please select a template")
+        // }
 
-        if (!data.personalInfo.fullName || data.personalInfo.fullName.trim().length < 2) {
-          errors.push("Please enter your full name (at least 2 characters)")
-        }
+        // Remove required field validation - allow empty name and email
+        // if (!data.personalInfo.fullName || data.personalInfo.fullName.trim().length < 2) {
+        //   errors.push("Please enter your full name (at least 2 characters)")
+        // }
 
-        if (!data.personalInfo.email || !data.personalInfo.email.includes("@")) {
-          errors.push("Please enter a valid email address")
-        }
+        // if (!data.personalInfo.email || !data.personalInfo.email.includes("@")) {
+        //   errors.push("Please enter a valid email address")
+        // }
 
         // Validate URLs if they're provided
         const urlFields = [

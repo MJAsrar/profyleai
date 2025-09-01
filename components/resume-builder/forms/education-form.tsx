@@ -23,18 +23,17 @@ export function EducationForm() {
   })
 
   const handleAddEducation = () => {
-    if (newEducation.institution && newEducation.degree) {
-      addEducation(newEducation)
-      setNewEducation({
-        institution: "",
-        degree: "",
-        field: "",
-        startDate: "",
-        endDate: "",
-        gpa: "",
-      })
-      setShowAddForm(false)
-    }
+    // Allow adding education even with empty fields
+    addEducation(newEducation)
+    setNewEducation({
+      institution: "",
+      degree: "",
+      field: "",
+      startDate: "",
+      endDate: "",
+      gpa: "",
+    })
+    setShowAddForm(false)
   }
 
   const handleEditEducation = (edu: any) => {
@@ -43,7 +42,8 @@ export function EducationForm() {
   }
 
   const handleSaveEdit = () => {
-    if (editData && editingId && editData.institution && editData.degree) {
+    if (editData && editingId) {
+      // Allow saving even with empty fields
       updateEducation(editingId, editData)
       setEditingId(null)
       setEditData(null)

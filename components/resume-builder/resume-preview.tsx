@@ -68,10 +68,11 @@ export function ResumePreview() {
   }
 
   const handleExportPDF = async () => {
-    if (!selectedTemplate || completionPercentage < 50) {
+    // Allow export with any level of completion - even completely empty resumes
+    if (!selectedTemplate) {
       toast({
-        title: "Resume incomplete",
-        description: "Please complete at least 50% of your resume before exporting.",
+        title: "No template selected",
+        description: "Please select a template before exporting.",
         variant: "destructive",
       })
       return

@@ -56,7 +56,7 @@ export const authOptions: NextAuthOptions = {
     })
   ],
   session: {
-    strategy: "database",
+    strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 days
     updateAge: 24 * 60 * 60, // Update session every 24 hours
   },
@@ -84,16 +84,17 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user, account }) {
       if (user) {
         token.id = user.id
+        token.email = user.email
+        token.name = user.name
       }
       return token
     },
     async session({ session, token, user }) {
-      // When using database sessions (with adapter), user object is available
-      if (user) {
-        session.user.id = user.id
-      } else if (token) {
-        // Fallback for JWT sessions
+      // With JWT sessions, use token data
+      if (token) {
         session.user.id = token.id as string
+        session.user.email = token.email as string
+        session.user.name = token.name as string
       }
       return session
     },

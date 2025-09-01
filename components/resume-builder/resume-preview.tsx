@@ -5,9 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { useToast } from "@/hooks/use-toast"
+
 import { 
-  Download, 
   Eye, 
   ZoomIn, 
   ZoomOut, 
@@ -17,20 +16,17 @@ import {
   CheckCircle2
 } from "lucide-react"
 import { useResumeStore } from "@/lib/resume-store"
-import { exportResumeToPDFMake, generatePDFFilename } from "@/lib/pdf-make-utils"
+
 import { EnhancedResumeRenderer } from "./enhanced-resume-renderer"
 import { useFontConfig } from "@/lib/font-config-store"
-import { useSpacingConfig } from "@/lib/spacing-config-store"
 
 export function ResumePreview() {
   const { resumeData, selectedTemplate, getCompletionPercentage, hasUnsavedChanges, isSaving } = useResumeStore()
-  const { toast } = useToast()
   const fontConfig = useFontConfig()
-  const spacingConfig = useSpacingConfig()
   const previewRef = useRef<HTMLDivElement>(null)
   
   const [zoom, setZoom] = useState(0.75)
-  const [isExporting, setIsExporting] = useState(false)
+
   const [lastUpdated, setLastUpdated] = useState(new Date())
   const [isPreviewLoading, setIsPreviewLoading] = useState(false)
 
@@ -48,15 +44,11 @@ export function ResumePreview() {
     }
 
     updatePreview()
-  }, [resumeData, selectedTemplate, fontConfig, spacingConfig])
+  }, [resumeData, selectedTemplate, fontConfig])
 
   // Force refresh preview (useful for debugging)
   const handleRefresh = () => {
     setLastUpdated(new Date())
-    toast({
-      title: "Preview refreshed",
-      description: "The resume preview has been updated.",
-    })
   }
 
   const handleZoomIn = () => {
@@ -67,43 +59,7 @@ export function ResumePreview() {
     setZoom(prev => Math.max(prev - 0.05, 0.3))
   }
 
-  const handleExportPDF = async () => {
-    // Allow export with any level of completion - even completely empty resumes
-    if (!selectedTemplate) {
-      toast({
-        title: "No template selected",
-        description: "Please select a template before exporting.",
-        variant: "destructive",
-      })
-      return
-    }
 
-    setIsExporting(true)
-
-    try {
-      const filename = generatePDFFilename(resumeData.personalInfo.fullName || "resume")
-      
-      await exportResumeToPDFMake(resumeData, {
-        filename,
-        templateId: selectedTemplate?.id,
-        fontConfig: fontConfig,
-        spacingConfig: spacingConfig
-      })
-      
-      toast({
-        title: "PDF exported successfully! ✨",
-        description: `High-quality PDF generated. File: ${filename}`,
-      })
-    } catch (error) {
-      toast({
-        title: "Export failed",
-        description: "Failed to export PDF. Please try again.",
-        variant: "destructive",
-      })
-    } finally {
-      setIsExporting(false)
-    }
-  }
 
 
 
@@ -154,19 +110,6 @@ export function ResumePreview() {
               </div>
             </div>
           </div>
-          <Button 
-            onClick={handleExportPDF} 
-            size="sm"
-            disabled={isExporting}
-            className="btn-gradient"
-          >
-            {isExporting ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <Download className="mr-2 h-4 w-4" />
-            )}
-            {isExporting ? "Exporting..." : "Export PDF"}
-          </Button>
         </div>
 
         {/* Zoom Controls */}

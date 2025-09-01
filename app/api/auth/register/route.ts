@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
     // Create user and initial credit transaction in a single transaction
     try {
       const result = await prisma.$transaction(async (tx) => {
-        // Create user (credits default to 50 from schema)
+        // Create user (credits default to 10 from schema)
         const user = await tx.user.create({
           data: {
             name,
@@ -47,10 +47,10 @@ export async function POST(req: NextRequest) {
           data: {
             userId: user.id,
             type: CreditTransactionType.EARNED_SIGNUP,
-            amount: 50, // Signup bonus
+            amount: 10, // Signup bonus
             description: "Welcome Bonus",
             balanceBefore: 0,
-            balanceAfter: 50,
+            balanceAfter: 10,
             metadata: {
               timestamp: new Date().toISOString(),
               signupMethod: "email",
@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
         { 
           user: userWithoutPassword, 
           message: "User created successfully",
-          credits: 50 // Let the frontend know about initial credits
+          credits: 10 // Let the frontend know about initial credits
         },
         { status: 201 }
       )
@@ -87,8 +87,8 @@ export async function POST(req: NextRequest) {
               email,
               password: hashedPassword,
               subscriptionTier: "FREE",
-              credits: 50,
-              totalCreditsEarned: 50,
+              credits: 10,
+              totalCreditsEarned: 10,
               totalCreditsSpent: 0,
               lastCreditUpdate: new Date(),
               createdAt: new Date(),
@@ -125,7 +125,7 @@ export async function POST(req: NextRequest) {
           return NextResponse.json(
             { 
               message: "User created successfully (fallback method)",
-              credits: 50
+              credits: 10
             },
             { status: 201 }
           )

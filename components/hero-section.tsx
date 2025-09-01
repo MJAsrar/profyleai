@@ -22,7 +22,7 @@ export function HeroSection() {
               <div className="flex items-center gap-2">
                 <Sparkles className="h-4 w-4 text-green-500" />
                 ✨ Free to start • No credit card required {""}
-                <span className="font-semibold text-primary">• 50+ credits included</span>
+                <span className="font-semibold text-primary">• 10 credits included</span>
               </div>
             </div>
           </div>
@@ -82,7 +82,7 @@ export function HeroSection() {
 
           {/* Trust indicators */}
           <div className="text-center text-xs text-muted-foreground animate-fade-in-up">
-            <p>✓ No credit card required • ✓ 50 free credits • ✓ Cancel anytime</p>
+            <p>✓ No credit card required • ✓ 10 free credits • ✓ Cancel anytime</p>
           </div>
 
           {/* Feature highlights - Grid layout */}

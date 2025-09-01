@@ -49,7 +49,7 @@ export function FeaturesSection() {
         <div className="text-center mb-16">
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-200 rounded-full text-sm font-medium mb-6">
             <Sparkles className="h-4 w-4" />
-            🚀 Free launch special - 50 credits included
+            🚀 Free launch special - 10 credits included
           </div>
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Everything you need to ace your next interview</h2>
           <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">

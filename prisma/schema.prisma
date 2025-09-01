@@ -48,8 +48,8 @@ model User {
   subscriptionTier SubscriptionTier @default(FREE)
   
   // Credit system fields
-  credits           Int      @default(50)   // Current credit balance
-  totalCreditsEarned Int     @default(50)   // Lifetime credits earned (includes signup bonus)
+  credits           Int      @default(10)   // Current credit balance
+  totalCreditsEarned Int     @default(10)   // Lifetime credits earned (includes signup bonus)
   totalCreditsSpent  Int     @default(0)    // Lifetime credits spent
   lastCreditUpdate  DateTime @default(now()) // Last time credits were modified
   

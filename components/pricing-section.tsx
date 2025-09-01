@@ -25,17 +25,16 @@ export function PricingSection() {
       yearlyTotal: "$0",
       description: "Perfect for getting started",
       features: [
-        "50 free credits included", 
-        "1 Video Interview session", 
-        "10 Text Interview sessions",
-        "16 Resume Builder uses",
-        "25 Resume Tailoring sessions",
-        "25 Cover Letter generations",
+        "10 free credits included", 
+        "2 Text Interview sessions",
+        "3 Resume Builder uses",
+        "5 Resume Tailoring sessions",
+        "5 Cover Letter generations",
         "No credit card required"
       ],
       cta: "Start Free Today",
       popular: false,
-      credits: 50,
+      credits: 10,
       oneTime: true,
       free: true,
     },
@@ -133,7 +132,7 @@ export function PricingSection() {
         <div className="text-center mb-16">
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Start Free, Pay As You Grow</h2>
           <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
-            Begin with 50 free credits - no credit card required. Pay only for what you use. No recurring subscriptions.
+            Begin with 10 free credits - no credit card required. Pay only for what you use. No recurring subscriptions.
           </p>
           
           {/* Credit Info */}

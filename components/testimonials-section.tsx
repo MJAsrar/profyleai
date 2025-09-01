@@ -146,7 +146,7 @@ export function TestimonialsSection() {
           <div className="mt-16 text-center">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 rounded-full text-sm font-medium mb-6">
               <Sparkles className="h-4 w-4" />
-              Limited Time: Start with 50 FREE credits
+              Limited Time: Start with 10 FREE credits
             </div>
             <Link href="/signup">
               <Button size="lg" className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white shadow-lg shadow-green-500/30">

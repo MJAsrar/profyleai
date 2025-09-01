@@ -14,7 +14,7 @@ export function ConversionBanner() {
             {/* Urgency indicator */}
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-200 rounded-full text-sm font-medium mb-6">
               <Clock className="h-4 w-4" />
-              Limited Time: Get 50 Credits FREE
+              Limited Time: Get 10 Credits FREE
             </div>
 
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
@@ -70,7 +70,7 @@ export function ConversionBanner() {
               </Link>
               
               <div className="text-sm text-muted-foreground">
-                ✓ 50 free credits • ✓ Setup in 30 seconds • ✓ No commitments
+                ✓ 10 free credits • ✓ Setup in 30 seconds • ✓ No commitments
               </div>
             </div>
 

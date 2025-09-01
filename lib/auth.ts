@@ -123,7 +123,7 @@ export const authOptions: NextAuthOptions = {
                 where: { id: existingUser.id },
                 data: { 
                   name: profile.name,
-                  image: profile.picture || existingUser.image
+                  image: profile.image || existingUser.image
                 }
               })
             }

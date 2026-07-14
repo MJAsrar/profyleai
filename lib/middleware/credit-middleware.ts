@@ -7,8 +7,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
+import { getAuthenticatedUser } from "@/lib/auth-utils"
 import { creditService } from "@/lib/services/credit-service"
 import {
   CreditAction,
@@ -72,11 +71,15 @@ type CreditMiddlewareResult = {
 /**
  * Higher-order function that creates credit validation middleware for API routes
  * 
+ * Credits are deducted ATOMICALLY BEFORE the handler runs, and refunded if the
+ * handler fails or returns a non-2xx. Charging after the fact (the previous design)
+ * meant a failed deduction still returned the paid artifact for free, and concurrent
+ * requests could all pass the pre-check and each get a free result.
+ *
  * Usage:
  * ```typescript
  * export const POST = withCreditCheck('VIDEO_INTERVIEW')(async (req, context) => {
- *   // Your route logic here - credits are automatically validated
- *   // and deducted after successful operation
+ *   // Your route logic here - credits are already reserved
  * })
  * ```
  */
@@ -112,41 +115,53 @@ export function withCreditCheck(
             action
           )
         }
-        
-        // Execute the actual route handler
-        const response = await handler(creditRequest, context)
-        
-        // If operation was successful (2xx status) and user had enough credits, deduct them
-        if (
-          response.status >= 200 && 
-          response.status < 300 && 
-          middlewareResult.creditContext.hasEnoughCredits
-        ) {
-          try {
-            // Extract reference ID from response if available
-            const responseData = await response.clone().json().catch(() => ({}))
-            const referenceId = responseData.id || responseData.sessionId || responseData.resumeId
-            
-            // Spend credits after successful operation
-            const transaction = await creditService.spendCredits(
-              middlewareResult.user.id,
-              action,
-              referenceId,
-              options.metadata
-            )
 
-            // Add credit update header to trigger frontend refresh
-            response.headers.set('X-Credit-Balance-Updated', transaction.balanceAfter.toString())
-            response.headers.set('X-Credits-Spent', Math.abs(transaction.amount).toString())
-            
-          } catch (error) {
-            console.error('Failed to deduct credits after successful operation:', error)
-            // Continue with response - don't fail the operation due to credit deduction issues
-          }
+        // Nothing to charge (validation-only mode) — just run the handler.
+        if (!middlewareResult.creditContext.hasEnoughCredits) {
+          return await handler(creditRequest, context)
         }
-        
+
+        // ---- Reserve: deduct atomically BEFORE doing any paid work ----
+        // If this throws (insufficient balance / lost race), we never run the handler,
+        // so the caller cannot obtain the paid artifact without paying for it.
+        let transaction
+        try {
+          transaction = await creditService.spendCredits(
+            middlewareResult.user.id,
+            action,
+            undefined,
+            options.metadata
+          )
+        } catch (error) {
+          console.error('Credit reservation failed; refusing to run paid operation:', error)
+          return createInsufficientCreditsResponse(
+            middlewareResult.creditContext.balance,
+            middlewareResult.creditContext.cost,
+            action
+          )
+        }
+
+        // ---- Settle: run the handler, refunding if it does not deliver ----
+        let response: NextResponse
+        try {
+          response = await handler(creditRequest, context)
+        } catch (error) {
+          await refundQuietly(middlewareResult.user.id, transaction.id, 'Operation threw before completing')
+          throw error
+        }
+
+        if (response.status < 200 || response.status >= 300) {
+          // The operation failed — the user must not be charged for it.
+          await refundQuietly(middlewareResult.user.id, transaction.id, `Operation failed with status ${response.status}`)
+          return response
+        }
+
+        // Success: surface the new balance so the client can refresh.
+        response.headers.set('X-Credit-Balance-Updated', transaction.balanceAfter.toString())
+        response.headers.set('X-Credits-Spent', Math.abs(transaction.amount).toString())
+
         return response
-        
+
       } catch (error) {
         console.error('Credit middleware error:', error)
         return NextResponse.json(
@@ -158,6 +173,26 @@ export function withCreditCheck(
         )
       }
     }
+  }
+}
+
+/**
+ * Refund a reservation when the paid operation did not deliver.
+ *
+ * A refund failure must not mask the original outcome, so it is logged loudly
+ * rather than thrown. This is the one place a swallow is correct: the user has
+ * already been told the operation failed, and the ledger row is recoverable.
+ */
+async function refundQuietly(userId: string, transactionId: string, reason: string): Promise<void> {
+  try {
+    await creditService.refundCredits(userId, transactionId, reason)
+    console.log(`Refunded credits for failed operation (tx ${transactionId}): ${reason}`)
+  } catch (error) {
+    // Loud: this leaves the user charged for work they did not receive.
+    console.error(
+      `CREDIT REFUND FAILED — user ${userId} was charged for a failed operation (tx ${transactionId}). Reason: ${reason}`,
+      error
+    )
   }
 }
 
@@ -202,13 +237,15 @@ async function validateCreditsMiddleware(
     }
   }
   
-  // Get user session
-  const session = await getServerSession(authOptions)
-  if (!session?.user?.id) {
+  // Authenticate via session OR extension API token (same rule as every other route).
+  // This previously accepted only a web session, which silently locked the extension
+  // out of every credit-gated endpoint.
+  const authedUser = await getAuthenticatedUser(req)
+  if (!authedUser?.id) {
     return {
       success: false,
       response: NextResponse.json(
-        { 
+        {
           error: 'unauthorized',
           message: 'Authentication required'
         },
@@ -216,11 +253,11 @@ async function validateCreditsMiddleware(
       )
     }
   }
-  
+
   const user = {
-    id: session.user.id,
-    email: session.user.email ?? undefined,
-    name: session.user.name ?? undefined,
+    id: authedUser.id,
+    email: authedUser.email ?? undefined,
+    name: authedUser.name ?? undefined,
   }
   
   try {

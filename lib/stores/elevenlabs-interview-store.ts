@@ -155,13 +155,22 @@ export const useElevenLabsInterviewStore = create<ElevenLabsInterviewStore>()(
         try {
           console.log('🚀 Initializing ElevenLabs interview...')
 
-          // Only the public agent id is needed client-side. The secret API key is
-          // never exposed to the browser (it was previously shipped in the bundle).
-          const agentId = process.env.NEXT_PUBLIC_ELEVENLABS_AGENT_ID
+          // Ask OUR server for a short-lived signed URL. The server verifies that this
+          // user owns the session and charges the credits before minting it, so the
+          // voice session can no longer be started for free with a public agent id.
+          const tokenRes = await fetch(`/api/video-interview/${sessionId}/token`, {
+            method: 'POST',
+          })
+          const tokenBody = await tokenRes.json().catch(() => ({}))
 
-          if (!agentId) {
-            throw new Error('ElevenLabs Agent ID not configured')
+          if (!tokenRes.ok || !tokenBody?.data?.signedUrl) {
+            if (tokenRes.status === 402) {
+              throw new Error('Not enough credits to start this interview')
+            }
+            throw new Error(tokenBody?.error || 'Could not start the voice session')
           }
+
+          const signedUrl: string = tokenBody.data.signedUrl
 
           // Create service with callbacks
           const callbacks = {
@@ -276,7 +285,7 @@ export const useElevenLabsInterviewStore = create<ElevenLabsInterviewStore>()(
             }
           }
 
-          const service = createElevenLabsInterviewService(agentId, callbacks)
+          const service = createElevenLabsInterviewService(signedUrl, callbacks)
 
           // Update state
           set((draft) => {
@@ -288,7 +297,7 @@ export const useElevenLabsInterviewStore = create<ElevenLabsInterviewStore>()(
             draft.questions = questions
             draft.interviewService = service
             draft.sessionStartTime = new Date()
-            draft.agentId = agentId
+            draft.agentId = null // resolved server-side; never exposed to the client
           })
 
           // Initialize the service

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { GoogleGenAI } from "@google/genai"
+import { getAuthenticatedUser, createAuthError } from '@/lib/auth-utils'
+import { rateLimit, rateLimitKey, rateLimitResponse } from '@/lib/rate-limit'
 
 // Initialize Gemini client - same as tailoring service
 function getGeminiClient() {
@@ -12,9 +14,13 @@ function getGeminiClient() {
   return null
 }
 
+// Hard cap on page content sent to the model. Without this, a single request can
+// drive unbounded token spend. Longer pages are truncated, not rejected.
+const MAX_PAGE_CONTENT_CHARS = 50_000
+
 // Validation schema for the request
 const extractJobDataSchema = z.object({
-  rawPageContent: z.string().min(10),
+  rawPageContent: z.string().min(10).max(200_000),
   url: z.string().url()
 })
 
@@ -36,14 +42,30 @@ interface ExtractedJobInfo {
  */
 export async function POST(req: NextRequest) {
   try {
+    // Require authentication: this endpoint spends the operator's Gemini quota.
+    // Previously it was public, making it an unbounded cost/DoS vector.
+    const user = await getAuthenticatedUser(req)
+    if (!user) {
+      return createAuthError()
+    }
+
+    // Throttle per user so a single account cannot drain the AI budget.
+    const limit = rateLimit(rateLimitKey(req, 'extract-job-data', user.id), 20, 60_000)
+    if (!limit.ok) {
+      return rateLimitResponse(limit)
+    }
+
     const body = await req.json()
     const validatedData = extractJobDataSchema.parse(body)
+
+    // Truncate rather than reject, so long postings still work but cost is bounded.
+    const pageContent = validatedData.rawPageContent.slice(0, MAX_PAGE_CONTENT_CHARS)
 
     console.log(`🔍 Extracting job data from page: ${validatedData.url}`)
 
     // Use Gemini to extract job information from raw page content
     const extractedJobInfo = await extractJobInfoWithGemini(
-      validatedData.rawPageContent,
+      pageContent,
       validatedData.url
     )
 

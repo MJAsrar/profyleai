@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthenticatedUser, createAuthError } from '@/lib/auth-utils'
 import { prisma } from '@/lib/prisma'
-import { InterviewJobData } from '@/lib/services/interview-service'
-import { withCreditCheck } from '@/lib/middleware/credit-middleware'
+import { rateLimit, rateLimitKey, rateLimitResponse } from '@/lib/rate-limit'
 import { z } from 'zod'
 
 // Validation schema
@@ -29,16 +28,24 @@ const createVideoInterviewSchema = z.object({
   type: z.enum(['practice', 'mock', 'assessment']).default('practice')
 })
 
-// Wrap the handler with credit check middleware
-export const POST = withCreditCheck('VIDEO_INTERVIEW')(async (request, context) => {
+/**
+ * POST /api/video-interview/create
+ *
+ * Creates the interview record only. Credits are NOT charged here — they are charged
+ * when the realtime session token is issued (see [sessionId]/token), so a session the
+ * user never actually starts is never billed.
+ */
+export async function POST(request: NextRequest) {
   try {
-    // Get user from credit middleware context
-    const user = request.user
+    const user = await getAuthenticatedUser(request)
     if (!user) {
-      return NextResponse.json(
-        { error: "Authentication required" },
-        { status: 401 }
-      )
+      return createAuthError()
+    }
+
+    // Creating records is free now, so bound it to stop record spam.
+    const limit = rateLimit(rateLimitKey(request, 'vi-create', user.id), 20, 60_000)
+    if (!limit.ok) {
+      return rateLimitResponse(limit) as NextResponse
     }
 
     const body = await request.json()
@@ -111,11 +118,11 @@ export const POST = withCreditCheck('VIDEO_INTERVIEW')(async (request, context) 
   } catch (error) {
     console.error('❌ Error creating video interview:', error)
     return NextResponse.json(
-      { 
-        success: false, 
-        error: 'Failed to create video interview session' 
+      {
+        success: false,
+        error: 'Failed to create video interview session'
       },
       { status: 500 }
     )
   }
-})
+}

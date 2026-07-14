@@ -146,34 +146,39 @@ export class CreditService implements ICreditService {
     }
     
     return this.executeTransaction(async (tx) => {
-      // Get current user state within transaction
-      const user = await tx.user.findUnique({
-        where: { id: userId },
-        select: { credits: true, totalCreditsSpent: true }
-      })
-      
-      if (!user) {
-        throw this.createError(CreditErrorType.USER_NOT_FOUND, `User ${userId} not found`)
-      }
-      
-      // Double-check credits within transaction to prevent race conditions
-      if (user.credits < amount) {
-        throw this.createInsufficientCreditsError(user.credits, amount)
-      }
-      
-      const newBalance = user.credits - amount
-      const newTotalSpent = user.totalCreditsSpent + amount
-      
-      // Update user credits atomically
-      await tx.user.update({
-        where: { id: userId },
+      // Atomic conditional decrement: only succeeds if the balance still covers the
+      // cost. This is what makes concurrent spends safe — a read-then-write could let
+      // two in-flight requests each see a sufficient balance and both proceed.
+      const claimed = await tx.user.updateMany({
+        where: { id: userId, credits: { gte: amount } },
         data: {
-          credits: newBalance,
-          totalCreditsSpent: newTotalSpent,
+          credits: { decrement: amount },
+          totalCreditsSpent: { increment: amount },
           lastCreditUpdate: new Date(),
         }
       })
-      
+
+      if (claimed.count === 0) {
+        // Either the user vanished or the balance is insufficient — distinguish for a
+        // useful error.
+        const user = await tx.user.findUnique({
+          where: { id: userId },
+          select: { credits: true }
+        })
+        if (!user) {
+          throw this.createError(CreditErrorType.USER_NOT_FOUND, `User ${userId} not found`)
+        }
+        throw this.createInsufficientCreditsError(user.credits, amount)
+      }
+
+      // Read back the post-decrement balance so the ledger row is exact.
+      const updated = await tx.user.findUnique({
+        where: { id: userId },
+        select: { credits: true }
+      })
+      const newBalance = updated!.credits
+      const balanceBefore = newBalance + amount
+
       // Create transaction record
       const transaction = await tx.creditTransaction.create({
         data: {
@@ -183,12 +188,12 @@ export class CreditService implements ICreditService {
           description,
           referenceId,
           referenceType: this.getReferenceType(action),
-          balanceBefore: user.credits,
+          balanceBefore,
           balanceAfter: newBalance,
           metadata: this.enrichMetadata(metadata, { action }),
         }
       })
-      
+
       return this.mapTransactionToDetails(transaction)
     })
   }
@@ -490,6 +495,80 @@ export class CreditService implements ICreditService {
     })
   }
   
+  /**
+   * Remove credits that were granted for a payment that has since been refunded or
+   * charged back, and mark the purchase REFUNDED.
+   *
+   * Without this, a customer could buy credits, spend or keep them, then refund the
+   * payment and keep the credits — free money, repeatably.
+   *
+   * The balance is clamped at zero: if the user already spent the credits we do not
+   * push them negative, we just take back what remains and record the full clawback
+   * amount in the ledger so the shortfall is visible.
+   *
+   * Idempotent: a purchase that is already REFUNDED is a no-op.
+   */
+  async clawbackPurchase(purchaseId: string, reason: string): Promise<void> {
+    return this.executeTransaction(async (tx) => {
+      // Claim the purchase atomically so duplicate refund events cannot double-claw.
+      const claimed = await tx.creditPurchase.updateMany({
+        where: { id: purchaseId, status: CreditPurchaseStatus.COMPLETED },
+        data: { status: CreditPurchaseStatus.REFUNDED },
+      })
+
+      if (claimed.count === 0) {
+        // Not completed (or already refunded) — nothing to take back.
+        return
+      }
+
+      const purchase = await tx.creditPurchase.findUnique({
+        where: { id: purchaseId },
+        select: { userId: true, creditsAmount: true, packageType: true },
+      })
+      if (!purchase) return
+
+      const user = await tx.user.findUnique({
+        where: { id: purchase.userId },
+        select: { credits: true },
+      })
+      if (!user) return
+
+      // Take back as much as is actually there; never drive the balance negative.
+      const removable = Math.min(user.credits, purchase.creditsAmount)
+      const newBalance = user.credits - removable
+
+      await tx.user.update({
+        where: { id: purchase.userId },
+        data: {
+          credits: newBalance,
+          totalCreditsEarned: { decrement: purchase.creditsAmount },
+          lastCreditUpdate: new Date(),
+        },
+      })
+
+      await tx.creditTransaction.create({
+        data: {
+          userId: purchase.userId,
+          type: CreditTransactionType.CLAWBACK_REFUND,
+          amount: -purchase.creditsAmount, // full amount reversed, even if partly unrecoverable
+          description: 'Credits reversed — payment refunded',
+          referenceId: purchaseId,
+          referenceType: 'purchase',
+          balanceBefore: user.credits,
+          balanceAfter: newBalance,
+          metadata: this.enrichMetadata(
+            { reason, packageType: purchase.packageType, unrecovered: purchase.creditsAmount - removable },
+            { action: 'clawback' }
+          ),
+        },
+      })
+
+      console.log(
+        `Clawed back ${removable}/${purchase.creditsAmount} credits from user ${purchase.userId} (purchase ${purchaseId}): ${reason}`
+      )
+    })
+  }
+
   // =============================================================================
   // TRANSACTION HISTORY
   // =============================================================================

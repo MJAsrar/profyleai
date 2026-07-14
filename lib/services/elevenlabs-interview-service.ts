@@ -6,9 +6,10 @@ import { PracticeQuestion } from './interview-service'
 // ===== TYPES =====
 
 export interface ElevenLabsConfig {
-  // The realtime connection uses only the public agentId. No secret key is needed
-  // (or wanted) in the browser; a private agent should use a server-minted signed URL.
-  agentId: string
+  // The browser never holds an API key. It connects with a short-lived signed URL
+  // minted server-side (see /api/video-interview/[sessionId]/token), which is what
+  // ties the expensive voice session to an authenticated, paid-for interview.
+  signedUrl: string
 }
 
 export interface InterviewSession {
@@ -68,7 +69,7 @@ export class ElevenLabsInterviewService {
       this.session = {
         sessionId,
         conversationId: `conv_${Date.now()}`,
-        agentId: this.config.agentId,
+        agentId: '', // resolved server-side; the client only holds a signed URL
         status: 'connecting'
       }
 
@@ -121,7 +122,9 @@ export class ElevenLabsInterviewService {
 
       // Start conversation with dynamic variables and real-time message handler
       this.conversation = await Conversation.startSession({
-        agentId: this.config.agentId,
+        // Short-lived signed URL minted by our server after verifying ownership and
+        // charging credits. The agent id / API key never reach the browser.
+        signedUrl: this.config.signedUrl,
         connectionType: 'websocket',
         
         // Pass all our context as dynamic variables
@@ -829,8 +832,8 @@ export class ElevenLabsInterviewService {
 // ===== FACTORY FUNCTION =====
 
 export function createElevenLabsInterviewService(
-  agentId: string,
+  signedUrl: string,
   callbacks: ElevenLabsCallbacks
 ): ElevenLabsInterviewService {
-  return new ElevenLabsInterviewService({ agentId }, callbacks)
+  return new ElevenLabsInterviewService({ signedUrl }, callbacks)
 }

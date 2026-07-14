@@ -275,10 +275,21 @@ export async function processWebhookEvent(event: Stripe.Event): Promise<WebhookR
       
       case 'payment_intent.canceled':
         return await handlePaymentCanceled(event.data.object as Stripe.PaymentIntent)
-      
+
+      // Money went back to the customer — take the credits back too.
+      case 'charge.refunded':
+        return await handleChargeReversed(
+          event.data.object as Stripe.Charge,
+          'Payment refunded'
+        )
+
+      case 'charge.dispute.created':
+        return await handleDisputeCreated(event.data.object as Stripe.Dispute)
+
       default:
         return {
           processed: false,
+          retryable: false,
           message: `Unhandled event type: ${event.type}`
         }
     }
@@ -296,6 +307,67 @@ export async function processWebhookEvent(event: Stripe.Event): Promise<WebhookR
 // =============================================================================
 // WEBHOOK EVENT HANDLERS
 // =============================================================================
+
+/**
+ * A charge was refunded — reverse the credits it bought.
+ * Without this, a customer can buy credits, then refund the payment and keep them.
+ */
+async function handleChargeReversed(charge: Stripe.Charge, reason: string): Promise<WebhookResult> {
+  const paymentIntentId =
+    typeof charge.payment_intent === 'string' ? charge.payment_intent : charge.payment_intent?.id
+
+  if (!paymentIntentId) {
+    return { processed: false, retryable: false, message: 'Charge has no payment_intent to match' }
+  }
+
+  return reverseCreditsForPayment(paymentIntentId, reason)
+}
+
+/** A dispute/chargeback was opened — reverse the credits immediately. */
+async function handleDisputeCreated(dispute: Stripe.Dispute): Promise<WebhookResult> {
+  const paymentIntentId =
+    typeof dispute.payment_intent === 'string' ? dispute.payment_intent : dispute.payment_intent?.id
+
+  if (!paymentIntentId) {
+    return { processed: false, retryable: false, message: 'Dispute has no payment_intent to match' }
+  }
+
+  return reverseCreditsForPayment(paymentIntentId, 'Payment disputed (chargeback)')
+}
+
+/** Find the purchase behind a payment and claw its credits back. */
+async function reverseCreditsForPayment(paymentIntentId: string, reason: string): Promise<WebhookResult> {
+  try {
+    const { prisma } = await import('@/lib/prisma')
+    const { creditService } = await import('@/lib/services/credit-service')
+
+    // The purchase may be keyed by either field depending on the checkout path used.
+    const purchase = await prisma.creditPurchase.findFirst({
+      where: {
+        OR: [{ paymentId: paymentIntentId }, { paymentIntentId: paymentIntentId }],
+      },
+      select: { id: true },
+    })
+
+    if (!purchase) {
+      // Nothing of ours to reverse (e.g. a payment unrelated to credits).
+      return { processed: false, retryable: false, message: `No credit purchase for payment ${paymentIntentId}` }
+    }
+
+    // Idempotent: a purchase already REFUNDED is a no-op inside clawbackPurchase.
+    await creditService.clawbackPurchase(purchase.id, reason)
+
+    return { processed: true, message: `Reversed credits for purchase ${purchase.id}: ${reason}` }
+  } catch (error) {
+    console.error('Failed to reverse credits for payment:', error)
+    // Transient — let Stripe retry so we don't silently leave credits with a refunder.
+    return {
+      processed: false,
+      retryable: true,
+      message: `Failed to reverse credits: ${error instanceof Error ? error.message : 'Unknown error'}`,
+    }
+  }
+}
 
 /**
  * Handle completed checkout session

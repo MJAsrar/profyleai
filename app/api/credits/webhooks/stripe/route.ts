@@ -6,6 +6,7 @@
 
 import { NextRequest, NextResponse } from "next/server"
 import { verifyWebhookSignature, processWebhookEvent } from "@/lib/services/stripe-service"
+import { prisma } from "@/lib/prisma"
 
 export async function POST(req: NextRequest) {
   try {
@@ -34,8 +35,31 @@ export async function POST(req: NextRequest) {
     // Verify webhook signature and construct event
     const event = verifyWebhookSignature(payload, signature, webhookSecret)
 
+    // Idempotency: Stripe delivers at-least-once and retries on 5xx (which we now
+    // return for transient failures), so the same event can arrive more than once.
+    // Claim it durably before applying any side effect.
+    try {
+      await prisma.processedStripeEvent.create({
+        data: { eventId: event.id, type: event.type },
+      })
+    } catch (error) {
+      // Unique constraint on eventId => already handled. Acknowledge and do nothing.
+      if ((error as { code?: string })?.code === 'P2002') {
+        console.log(`Duplicate webhook event ignored: ${event.id} (${event.type})`)
+        return NextResponse.json({ received: true, duplicate: true }, { status: 200 })
+      }
+      throw error
+    }
+
     // Process the webhook event
     const result = await processWebhookEvent(event)
+
+    // If it failed in a retryable way, drop the claim so Stripe's retry can try again.
+    if (!result.processed && result.retryable) {
+      await prisma.processedStripeEvent
+        .deleteMany({ where: { eventId: event.id } })
+        .catch(() => {})
+    }
 
     if (result.processed) {
       console.log(`Successfully processed webhook event: ${event.type}`)

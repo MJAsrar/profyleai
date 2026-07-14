@@ -19,7 +19,52 @@ const config: Config = {
       },
     },
   	extend: {
+  		fontFamily: {
+  			// Newsreader — display/headings, the brand voice
+  			display: ['var(--font-display)', 'Georgia', 'serif'],
+  			// Hanken Grotesk — all UI text and body
+  			sans: ['var(--font-sans)', 'system-ui', 'sans-serif'],
+  			// JetBrains Mono — labels, kickers, credit counts, metadata
+  			mono: ['var(--font-mono)', 'ui-monospace', 'monospace'],
+  		},
   		colors: {
+  			// Raw design tokens, for surfaces the shadcn bridge doesn't cover
+  			paper: 'var(--paper)',
+  			'paper-cool': 'var(--paper-cool)',
+  			'card-warm': 'var(--card-warm)',
+  			'section-tint': 'var(--section-tint)',
+  			ink: {
+  				DEFAULT: 'var(--ink)',
+  				2: 'var(--ink-2)',
+  				muted: 'var(--ink-muted)',
+  				faint: 'var(--ink-faint)',
+  				'faint-2': 'var(--ink-faint-2)',
+  			},
+  			brand: {
+  				DEFAULT: 'var(--brand)',
+  				hover: 'var(--brand-hover)',
+  				deep: 'var(--brand-deep)',
+  				tint: 'var(--brand-tint)',
+  				'on-dark': 'var(--brand-on-dark)',
+  			},
+  			clay: {
+  				DEFAULT: 'var(--clay)',
+  				tint: 'var(--clay-tint)',
+  			},
+  			danger: {
+  				DEFAULT: 'var(--danger)',
+  				tint: 'var(--danger-tint)',
+  			},
+  			indigo: {
+  				DEFAULT: 'var(--indigo)',
+  				tint: 'var(--indigo-tint)',
+  			},
+  			olive: {
+  				DEFAULT: 'var(--olive)',
+  				tint: 'var(--olive-tint)',
+  			},
+  			'voice-room': 'var(--voice-room)',
+
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
   			card: {
@@ -74,7 +119,19 @@ const config: Config = {
   		borderRadius: {
   			lg: 'var(--radius)',
   			md: 'calc(var(--radius) - 2px)',
-  			sm: 'calc(var(--radius) - 4px)'
+  			sm: 'calc(var(--radius) - 4px)',
+  			// Design scale: inputs 9–11, cards 14–16, large cards/modals 18–22
+  			input: '10px',
+  			card: '15px',
+  			panel: '20px',
+  		},
+  		boxShadow: {
+  			card: 'var(--shadow-card)',
+  			'card-hover': 'var(--shadow-card-hover)',
+  			doc: 'var(--shadow-doc)',
+  			modal: 'var(--shadow-modal)',
+  			toast: 'var(--shadow-toast)',
+  			focus: '0 0 0 3px rgba(46, 106, 74, 0.12)',
   		},
   		keyframes: {
   			'accordion-down': {

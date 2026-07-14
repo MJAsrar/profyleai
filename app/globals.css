@@ -265,75 +265,149 @@
   }
 }
 
+/* =============================================================================
+   ProfyleAI design system — warm paper + evergreen
+   -----------------------------------------------------------------------------
+   The palette is a warm near-neutral "paper" ground with a single evergreen
+   accent. Avoid pure black/white.
+
+   shadcn's variables are HSL triplets, so the design's hex tokens are mapped
+   into them below — that way every existing shadcn component inherits the brand
+   instead of rendering the old grayscale (--primary used to be pure black).
+   Raw hex tokens are also exposed for direct use in bespoke surfaces.
+   ============================================================================= */
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 3.9%;
-    --primary: 0 0% 9%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 0 0% 96.1%;
-    --secondary-foreground: 0 0% 9%;
-    --muted: 0 0% 96.1%;
-    --muted-foreground: 0 0% 45.1%;
-    --accent: 0 0% 96.1%;
-    --accent-foreground: 0 0% 9%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 89.8%;
-    --input: 0 0% 89.8%;
-    --ring: 0 0% 3.9%;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
-    --radius: 0.5rem;
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* ---- raw design tokens (use directly for bespoke surfaces) ---- */
+    --paper: #f6f3ec;
+    --paper-cool: #f4f4f1;
+    --card-warm: #fffdf8;
+    --card-plain: #ffffff;
+    --section-tint: #eef2ea;
+
+    --ink: #211f1c;
+    --ink-2: #3a352e;
+    --ink-muted: #5c564d;
+    --ink-muted-2: #6f685f;
+    --ink-faint: #8a837a;
+    --ink-faint-2: #a79f93;
+
+    --hairline: rgba(33, 31, 28, 0.08);
+    --hairline-strong: rgba(33, 31, 28, 0.12);
+    --hairline-stronger: rgba(33, 31, 28, 0.16);
+
+    --brand: #2e6a4a;
+    --brand-hover: #26583d;
+    --brand-deep: #22322a;
+    --brand-tint: #e7efe8;
+    --brand-on-dark: #8fc7a3;
+
+    --clay: #a1633c;
+    --clay-tint: #f3ebe4;
+    --danger: #b4472f;
+    --danger-tint: #f7e6e0;
+    --indigo: #363ca0;
+    --indigo-tint: #e9ebf3;
+    --olive: #4a6b34;
+    --olive-tint: #eef0e9;
+
+    --voice-room: #16211b;
+
+    /* elevation */
+    --shadow-card: 0 20px 46px -34px rgba(30, 25, 20, 0.28);
+    --shadow-card-hover: 0 16px 40px -30px rgba(30, 25, 20, 0.4);
+    --shadow-doc: 0 24px 60px -30px rgba(30, 25, 20, 0.4);
+    --shadow-modal: 0 40px 100px -30px rgba(0, 0, 0, 0.6);
+    --shadow-toast: 0 12px 30px -22px rgba(30, 25, 20, 0.4);
+
+    /* ---- shadcn bridge (HSL triplets) ---- */
+    --background: 42 36% 95%;          /* paper */
+    --foreground: 36 8% 12%;           /* ink */
+    --card: 43 100% 99%;               /* warm white */
+    --card-foreground: 36 8% 12%;
+    --popover: 43 100% 99%;
+    --popover-foreground: 36 8% 12%;
+
+    --primary: 148 39% 30%;            /* EVERGREEN — was pure black */
+    --primary-foreground: 42 36% 95%;
+
+    --secondary: 90 24% 93%;           /* section tint */
+    --secondary-foreground: 150 19% 16%;
+
+    --muted: 90 24% 93%;
+    --muted-foreground: 36 9% 33%;     /* ink-muted */
+
+    --accent: 128 20% 92%;             /* brand tint */
+    --accent-foreground: 148 39% 30%;
+
+    --destructive: 11 59% 45%;         /* clay-red, not fire-engine red */
+    --destructive-foreground: 42 36% 95%;
+
+    --border: 36 14% 88%;              /* hairline over paper */
+    --input: 36 14% 88%;
+    --ring: 148 39% 30%;
+
+    --chart-1: 148 39% 30%;
+    --chart-2: 96 35% 31%;
+    --chart-3: 23 46% 43%;
+    --chart-4: 237 50% 42%;
+    --chart-5: 141 33% 67%;
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 43 100% 99%;
+    --sidebar-foreground: 36 9% 33%;
+    --sidebar-primary: 148 39% 30%;
+    --sidebar-primary-foreground: 42 36% 95%;
+    --sidebar-accent: 128 20% 92%;
+    --sidebar-accent-foreground: 150 19% 16%;
+    --sidebar-border: 36 14% 88%;
+    --sidebar-ring: 148 39% 30%;
   }
+
   .dark {
-    --background: 0 0% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 9%;
-    --secondary: 0 0% 14.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
-    --accent: 0 0% 14.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 0 0% 83.1%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Deep evergreen night, matching the voice room — not a generic gray dark. */
+    --paper: #16211b;
+    --card-warm: #1b2721;
+    --card-plain: #1b2721;
+    --section-tint: #1f2c25;
+    --ink: #eae7e0;
+    --hairline: rgba(240, 236, 228, 0.10);
+
+    --background: 147 20% 11%;
+    --foreground: 40 15% 90%;
+    --card: 150 18% 13%;
+    --card-foreground: 40 15% 90%;
+    --popover: 150 18% 13%;
+    --popover-foreground: 40 15% 90%;
+
+    --primary: 141 33% 67%;            /* accent-on-dark */
+    --primary-foreground: 150 19% 12%;
+
+    --secondary: 150 14% 18%;
+    --secondary-foreground: 40 15% 90%;
+
+    --muted: 150 14% 18%;
+    --muted-foreground: 36 10% 62%;
+
+    --accent: 150 16% 20%;
+    --accent-foreground: 141 33% 67%;
+
+    --destructive: 11 50% 52%;
+    --destructive-foreground: 40 15% 92%;
+
+    --border: 150 12% 20%;
+    --input: 150 12% 20%;
+    --ring: 141 33% 67%;
+
+    --sidebar-background: 150 18% 13%;
+    --sidebar-foreground: 36 10% 70%;
+    --sidebar-primary: 141 33% 67%;
+    --sidebar-primary-foreground: 150 19% 12%;
+    --sidebar-accent: 150 16% 20%;
+    --sidebar-accent-foreground: 141 33% 67%;
+    --sidebar-border: 150 12% 20%;
+    --sidebar-ring: 141 33% 67%;
   }
 }
 
@@ -341,54 +415,105 @@
   * {
     @apply border-border;
   }
-  
+
   html {
     @apply antialiased;
   }
-  
+
   body {
     @apply bg-background text-foreground overflow-x-hidden;
+    font-family: var(--font-sans), system-ui, sans-serif;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
-  
-  /* Improved typography defaults */
+
+  /* Headings are the serif brand voice (Newsreader), set tight. */
   h1, h2, h3, h4, h5, h6 {
-    @apply font-semibold tracking-tight;
+    font-family: var(--font-display), Georgia, serif;
+    font-weight: 500;
+    letter-spacing: -0.015em;
+    line-height: 1.08;
   }
-  
-  h1 {
-    @apply text-3xl md:text-4xl;
+
+  h1 { @apply text-4xl md:text-5xl; }
+  h2 { @apply text-3xl md:text-4xl; }
+  h3 { @apply text-2xl md:text-3xl; }
+  h4 { @apply text-xl md:text-2xl; }
+
+  p { @apply leading-relaxed; }
+
+  /*
+   * Touch targets only where a coarse pointer is actually used.
+   * This used to apply a 44x44 minimum to EVERY button unconditionally, which
+   * bloated icon-only controls and dense desktop toolbars.
+   */
+  @media (pointer: coarse) {
+    button, [role="button"], a[role="button"] {
+      min-height: 44px;
+      min-width: 44px;
+    }
   }
-  
-  h2 {
-    @apply text-2xl md:text-3xl;
+
+  /* Visible keyboard focus everywhere, without forcing a size. */
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible,
+  [role="button"]:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(46, 106, 74, 0.12);
+    border-color: var(--brand);
   }
-  
-  h3 {
-    @apply text-xl md:text-2xl;
+
+  /* Respect users who don't want motion. The app previously had no such rule. */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
-  
-  h4 {
-    @apply text-lg md:text-xl;
+}
+
+@layer components {
+  /* Mono eyebrow/kicker — the system's signature label treatment. */
+  .eyebrow {
+    font-family: var(--font-mono), ui-monospace, monospace;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--brand);
   }
-  
-  p {
-    @apply leading-relaxed;
+
+  /* Mono metadata (timestamps, counts, credit tags). */
+  .meta {
+    font-family: var(--font-mono), ui-monospace, monospace;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    color: var(--ink-faint);
   }
-  
-  /* Better default button styles */
-  button {
-    @apply focus-ring touch-target;
+
+  /* Geometric monogram chip — this system uses these instead of illustrative icons. */
+  .monogram {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 11px;
+    font-family: var(--font-mono), ui-monospace, monospace;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    background: var(--brand-tint);
+    color: var(--brand);
+    flex-shrink: 0;
   }
-  
-  /* Improved form elements */
-  input, textarea, select {
-    @apply focus-ring;
-  }
-  
-  /* Better link styles */
-  a {
-    @apply focus-ring;
+
+  .hairline {
+    border-color: var(--hairline);
   }
 }
 

@@ -632,21 +632,61 @@ export class CreditService implements ICreditService {
   // =============================================================================
   
   /**
-   * Execute database operations within a transaction
+   * Execute database operations within a transaction, retrying write conflicts.
+   *
+   * MongoDB aborts one side of two concurrent transactions that touch the same
+   * document (Prisma surfaces this as P2034). For credit operations that contention
+   * is expected — every spend by a given user writes that user's row. Without a
+   * retry, a perfectly valid spend fails and the user is wrongly told they have
+   * insufficient credits. A write conflict means "try again", not "reject".
+   *
+   * Business errors (insufficient credits, duplicate purchase) are deliberately NOT
+   * retried and propagate as-is — retrying them would just fail again, and callers
+   * need to distinguish them from infrastructure failures.
    */
   private async executeTransaction<T>(
-    operation: (tx: any) => Promise<T>
+    operation: (tx: any) => Promise<T>,
+    maxRetries: number = 3
   ): Promise<T> {
-    try {
-      return await prisma.$transaction(operation, {
-        maxWait: 5000,
-        timeout: 10000,
-      })
-    } catch (error) {
-      throw this.createError(CreditErrorType.TRANSACTION_FAILED, 'Database transaction failed', { originalError: error })
+    for (let attempt = 0; ; attempt++) {
+      try {
+        return await prisma.$transaction(operation, {
+          maxWait: 5000,
+          timeout: 10000,
+        })
+      } catch (error) {
+        // A deliberate business outcome — surface it unchanged.
+        if (this.isCreditError(error)) {
+          throw error
+        }
+
+        if (this.isWriteConflict(error) && attempt < maxRetries) {
+          // Jittered backoff so racing callers don't collide again in lockstep.
+          const delay = 25 * 2 ** attempt + Math.floor(Math.random() * 25)
+          await new Promise((resolve) => setTimeout(resolve, delay))
+          continue
+        }
+
+        throw this.createError(CreditErrorType.TRANSACTION_FAILED, 'Database transaction failed', { originalError: error })
+      }
     }
   }
-  
+
+  /** True if this is one of our own typed credit errors (not an infrastructure fault). */
+  private isCreditError(error: unknown): boolean {
+    const type = (error as { type?: string })?.type
+    return !!type && Object.values(CreditErrorType).includes(type as CreditErrorType)
+  }
+
+  /** True if MongoDB aborted the transaction because of concurrent writes. */
+  private isWriteConflict(error: unknown): boolean {
+    const err = error as { code?: string; message?: string }
+    return (
+      err?.code === 'P2034' ||
+      /write conflict|transienttransactionerror|please retry your transaction/i.test(err?.message ?? '')
+    )
+  }
+
   /**
    * Add credits within an existing transaction
    */

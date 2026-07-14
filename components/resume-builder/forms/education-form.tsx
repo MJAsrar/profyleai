@@ -10,7 +10,10 @@ import { useResumeStore } from "@/lib/resume-store"
 import type { EducationItem } from "@/lib/validations/resume"
 
 export function EducationForm() {
-  const { resumeData, addEducation, updateEducation, removeEducation } = useResumeStore()
+  const education = useResumeStore((s) => s.resumeData.education)
+  const addEducation = useResumeStore((s) => s.addEducation)
+  const updateEducation = useResumeStore((s) => s.updateEducation)
+  const removeEducation = useResumeStore((s) => s.removeEducation)
   const [showAddForm, setShowAddForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editData, setEditData] = useState<any>(null)
@@ -59,7 +62,7 @@ export function EducationForm() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">Education</h3>
+        <p className="max-w-[42ch] text-[13px] leading-relaxed text-ink-muted">Most recent first. If your degree is older than your career, keep it short.</p>
         <Button onClick={() => setShowAddForm(true)} disabled={showAddForm}>
           <Plus className="mr-2 h-4 w-4" />
           Add Education
@@ -146,7 +149,7 @@ export function EducationForm() {
       )}
 
       <div className="space-y-4">
-        {resumeData.education.map((edu) => (
+        {education.map((edu) => (
           <Card key={edu.id}>
             <CardContent className="pt-6">
               {editingId === edu.id ? (

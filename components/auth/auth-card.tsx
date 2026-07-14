@@ -40,6 +40,25 @@ function scorePassword(pw: string): { score: number; label: string; color: strin
   return { score, ...levels[score] }
 }
 
+/**
+ * A field's error message, in a slot that holds its height whether or not there's an error.
+ *
+ * This is not cosmetic. These fields validate on blur, so the error line used to appear or
+ * vanish exactly as the pointer left the field — which is to say, between the mousedown and
+ * the mouseup of the very next click. Everything below shifted by a line, so the browser saw
+ * press and release on two different elements and fired the click on their common ancestor
+ * (the <form>) instead. The terms checkbox sits directly below these fields: it could be
+ * ticked with the keyboard but not with a mouse, which quietly wedged the whole signup form.
+ * Reserving the space means nothing moves, so the click lands where it was aimed.
+ */
+function FieldError({ message }: { message?: string }) {
+  return (
+    <p className="mt-1.5 min-h-[16px] text-[12px] leading-4 text-danger" aria-live="polite">
+      {message}
+    </p>
+  )
+}
+
 export function AuthCard({ initialMode = "login" }: { initialMode?: Mode }) {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -184,9 +203,7 @@ export function AuthCard({ initialMode = "login" }: { initialMode?: Mode }) {
                 aria-invalid={!!fieldErrors.name}
                 autoComplete="name"
               />
-              {fieldErrors.name && (
-                <p className="mt-1.5 text-[12px] text-danger">{fieldErrors.name}</p>
-              )}
+              <FieldError message={fieldErrors.name} />
             </div>
           )}
 
@@ -201,9 +218,7 @@ export function AuthCard({ initialMode = "login" }: { initialMode?: Mode }) {
               aria-invalid={!!fieldErrors.email}
               autoComplete="email"
             />
-            {fieldErrors.email && (
-              <p className="mt-1.5 text-[12px] text-danger">{fieldErrors.email}</p>
-            )}
+            <FieldError message={fieldErrors.email} />
           </div>
 
           <div>
@@ -228,9 +243,7 @@ export function AuthCard({ initialMode = "login" }: { initialMode?: Mode }) {
               autoComplete={isSignup ? "new-password" : "current-password"}
             />
 
-            {fieldErrors.password && (
-              <p className="mt-1.5 text-[12px] text-danger">{fieldErrors.password}</p>
-            )}
+            <FieldError message={fieldErrors.password} />
 
             {/* Live strength meter */}
             {isSignup && password && (
@@ -267,9 +280,7 @@ export function AuthCard({ initialMode = "login" }: { initialMode?: Mode }) {
                 aria-invalid={!!fieldErrors.confirm}
                 autoComplete="new-password"
               />
-              {fieldErrors.confirm && (
-                <p className="mt-1.5 text-[12px] text-danger">{fieldErrors.confirm}</p>
-              )}
+              <FieldError message={fieldErrors.confirm} />
             </div>
           )}
         </div>

@@ -1,309 +1,308 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
-import { ResumeBuilderHeader } from "@/components/resume-builder/resume-builder-header"
+import { toast } from "sonner"
+
+import { ToolTopBar } from "@/components/layout/tool-top-bar"
+import { SectionsRail } from "@/components/resume-builder/sections-rail"
+import { LivePreview } from "@/components/resume-builder/live-preview"
+import { StyleBar } from "@/components/resume-builder/style-bar"
 import { ResumeSelection } from "@/components/resume-builder/resume-selection"
 import { TemplateSelector } from "@/components/resume-builder/template-selector"
-import { ResumeForm } from "@/components/resume-builder/resume-form"
-import { ResumePreview } from "@/components/resume-builder/resume-preview"
-import { StylingControls } from "@/components/resume-builder/styling-controls"
-import { PageContainer } from "@/components/ui/page-container"
-import { MotionWrapper } from "@/components/ui/motion-wrapper"
+
+import { PersonalInfoForm } from "@/components/resume-builder/forms/personal-info-form"
+import { SummaryForm } from "@/components/resume-builder/forms/summary-form"
+import { ExperienceForm } from "@/components/resume-builder/forms/experience-form"
+import { EducationForm } from "@/components/resume-builder/forms/education-form"
+import { SkillsForm } from "@/components/resume-builder/forms/skills-form"
+import { ProjectsForm } from "@/components/resume-builder/forms/projects-form"
+import { CertificationsForm } from "@/components/resume-builder/forms/certifications-form"
+
+import { Button } from "@/components/ui/button"
+import { Card } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { ListSkeleton } from "@/components/ui/states"
 
 import { useResumeStore, useAutoSave } from "@/lib/resume-store"
+import {
+  RESUME_SECTIONS,
+  nextIncompleteSection,
+  type SectionKey,
+} from "@/lib/resume-sections"
+
+const SECTION_FORMS: Record<SectionKey, React.ComponentType> = {
+  personal: PersonalInfoForm,
+  summary: SummaryForm,
+  experience: ExperienceForm,
+  education: EducationForm,
+  skills: SkillsForm,
+  projects: ProjectsForm,
+  certifications: CertificationsForm,
+}
 
 export default function ResumeBuilderPage() {
-  const [showTemplateSelector, setShowTemplateSelector] = useState(false)
-  const [showResumeSelection, setShowResumeSelection] = useState(false)
-  const [isInitialized, setIsInitialized] = useState(false)
-  const [templatesLoaded, setTemplatesLoaded] = useState(false)
-  const [isFormCompleted, setIsFormCompleted] = useState(false)
-  
-  const { 
-    resumeData, 
-    selectedTemplate, 
-    templates,
-    loadCurrentResume, 
-    loadTailoredResume, 
-    loadResume,
-    loadTemplates, 
-    createNewResume,
-    resetToDefaults,
-    saveResume,
-    isLoading 
-  } = useResumeStore()
-  
-  const searchParams = useSearchParams()
   const router = useRouter()
-  const tailoredResumeId = searchParams.get('tailoredResumeId')
-  const resumeId = searchParams.get('resumeId')
-  
-  // Enable auto-save functionality
+  const searchParams = useSearchParams()
+  const tailoredResumeId = searchParams.get("tailoredResumeId")
+  const resumeId = searchParams.get("resumeId")
+
+  // Narrow selectors. A bare `useResumeStore()` here would re-render this whole page —
+  // rail, editor, preview and all — on every keystroke in any field.
+  const title = useResumeStore((s) => s.resumeData.title)
+  const selectedTemplate = useResumeStore((s) => s.selectedTemplate)
+  const templates = useResumeStore((s) => s.templates)
+  const isLoading = useResumeStore((s) => s.isLoading)
+  const isSaving = useResumeStore((s) => s.isSaving)
+
+  const updateTitle = useResumeStore((s) => s.updateTitle)
+  const loadTemplates = useResumeStore((s) => s.loadTemplates)
+  const loadResume = useResumeStore((s) => s.loadResume)
+  const loadTailoredResume = useResumeStore((s) => s.loadTailoredResume)
+  const resetToDefaults = useResumeStore((s) => s.resetToDefaults)
+  const saveResume = useResumeStore((s) => s.saveResume)
+
+  const [activeSection, setActiveSection] = useState<SectionKey>("personal")
+  const [templatesLoaded, setTemplatesLoaded] = useState(false)
+  const [isInitialized, setIsInitialized] = useState(false)
+  const [showResumeSelection, setShowResumeSelection] = useState(false)
+  const [showTemplateSelector, setShowTemplateSelector] = useState(false)
+
   useAutoSave()
 
-  // Load templates once on mount
   useEffect(() => {
-    if (!templatesLoaded && templates.length === 0) {
-      console.log('📚 Loading templates...')
-      loadTemplates().then(() => {
-        console.log('✅ Templates loaded successfully')
-        setTemplatesLoaded(true)
-      }).catch((error) => {
-        console.error('Failed to load templates:', error)
-        setTemplatesLoaded(true) // Set to true anyway to prevent infinite retries
-      })
-    } else if (templates.length > 0 && !templatesLoaded) {
-      console.log('📚 Templates already exist, marking as loaded')
+    if (templatesLoaded) return
+    if (templates.length > 0) {
       setTemplatesLoaded(true)
+      return
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [templatesLoaded, templates.length])
+    loadTemplates().finally(() => setTemplatesLoaded(true))
+  }, [templatesLoaded, templates.length, loadTemplates])
 
-  // Reset initialization when URL params change
+  // A new résumé id in the URL means a different document — start over.
   useEffect(() => {
-    console.log('🔄 URL params changed, resetting initialization...', { tailoredResumeId, resumeId })
     setIsInitialized(false)
-    setShowResumeSelection(false)
-    setShowTemplateSelector(false)
   }, [tailoredResumeId, resumeId])
 
-  // Initialize resume based on URL params
   useEffect(() => {
-    if (!templatesLoaded || isInitialized) return // Wait for templates and prevent re-initialization
-    
-    const initializeResume = async () => {
-      console.log('🚀 Initializing resume builder...', { tailoredResumeId, resumeId })
-      
+    if (!templatesLoaded || isInitialized) return
+
+    const init = async () => {
       try {
-        // Check if we should load a specific tailored resume
         if (tailoredResumeId) {
-          console.log('Loading tailored resume:', tailoredResumeId)
-          try {
-            await loadTailoredResume(tailoredResumeId)
-          } catch (error) {
-            console.error('Failed to load tailored resume, falling back to current resume:', error)
-            await loadCurrentResume()
-          }
-        } 
-        // Check if we should load a specific regular resume
-        else if (resumeId) {
-          console.log('Loading resume:', resumeId)
-          try {
-            await loadResume(resumeId)
-          } catch (error) {
-            console.error('Failed to load resume:', error)
-            setShowResumeSelection(true)
-          }
-        }
-        // If no specific resume is requested, show selection
-        else {
+          await loadTailoredResume(tailoredResumeId)
+        } else if (resumeId) {
+          await loadResume(resumeId)
+        } else {
           setShowResumeSelection(true)
         }
-      } catch (error) {
-        console.error('Failed to initialize resume builder:', error)
+      } catch {
+        toast.error("Couldn't open that résumé.")
         setShowResumeSelection(true)
       } finally {
         setIsInitialized(true)
       }
     }
 
-    initializeResume()
+    init()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [templatesLoaded, isInitialized]) // Only depend on templates being loaded and initialization state
+  }, [templatesLoaded, isInitialized])
 
-  const handleCreateNewResume = () => {
-    console.log('🆕 Creating new resume...')
+  const handleCreateNew = useCallback(() => {
     resetToDefaults()
     setShowResumeSelection(false)
     setShowTemplateSelector(true)
-    // Clear URL params - this will trigger re-initialization through the URL params useEffect
-    router.replace('/dashboard/resume-builder', { scroll: false })
-  }
+    setActiveSection("personal")
+    router.replace("/dashboard/resume-builder", { scroll: false })
+  }, [resetToDefaults, router])
 
-  const handleSelectExistingResume = async (selectedResumeId: string) => {
-    try {
-      await loadResume(selectedResumeId)
-      setShowResumeSelection(false)
-      // Update URL to reflect selected resume
-      router.replace(`/dashboard/resume-builder?resumeId=${selectedResumeId}`, { scroll: false })
-    } catch (error) {
-      console.error('Failed to load selected resume:', error)
-    }
-  }
+  const handleSelectExisting = useCallback(
+    async (id: string) => {
+      try {
+        await loadResume(id)
+        setShowResumeSelection(false)
+        setActiveSection("personal")
+        router.replace(`/dashboard/resume-builder?resumeId=${id}`, { scroll: false })
+      } catch {
+        toast.error("Couldn't open that résumé.")
+      }
+    },
+    [loadResume, router]
+  )
 
-  const handleBackToSelection = () => {
-    console.log('⬅️ Going back to resume selection...')
+  const handleBackToSelection = useCallback(() => {
     setShowResumeSelection(true)
     setShowTemplateSelector(false)
-    setIsFormCompleted(false)
     resetToDefaults()
-    // Clear URL params - this will trigger re-initialization through the URL params useEffect
-    router.replace('/dashboard/resume-builder', { scroll: false })
-  }
+    router.replace("/dashboard/resume-builder", { scroll: false })
+  }, [resetToDefaults, router])
 
-  const handleFormComplete = async () => {
-    console.log('✅ Resume form completed!')
+  async function handleSave() {
     try {
-      // Save the resume when form is completed
       await saveResume()
-      console.log('💾 Resume saved successfully!')
-      setIsFormCompleted(true)
-    } catch (error) {
-      console.error('❌ Failed to save resume:', error)
-      // You could show a toast notification here if needed
-      // For now, still mark as completed so user can continue
-      setIsFormCompleted(true)
+      toast.success("Résumé saved.")
+    } catch {
+      toast.error("Save failed. Your work is still here — try again.")
     }
   }
 
-  const handleEditForm = () => {
-    console.log('📝 Reopening form for editing...')
-    setIsFormCompleted(false)
-  }
-
-  // Show loading state while initializing
   if (isLoading || !isInitialized) {
     return (
-      <PageContainer maxWidth="full" padding="lg" className="min-h-screen">
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Loading...</p>
-          </div>
+      <>
+        <ToolTopBar title="Résumé builder" />
+        <div className="mx-auto w-full max-w-[1400px] px-8 py-8">
+          <ListSkeleton rows={6} />
         </div>
-      </PageContainer>
+      </>
     )
   }
 
-  // Show resume selection screen
   if (showResumeSelection) {
     return (
-      <PageContainer maxWidth="full" padding="lg" className="min-h-screen">
-        <MotionWrapper animation="fade-in">
-          <ResumeSelection 
-            onCreateNew={handleCreateNewResume}
-            onSelectResume={handleSelectExistingResume}
+      <>
+        <ToolTopBar title="Résumé builder" />
+        <div className="mx-auto w-full max-w-[1100px] px-8 py-8">
+          <ResumeSelection
+            onCreateNew={handleCreateNew}
+            onSelectResume={handleSelectExisting}
             onBack={handleBackToSelection}
           />
-        </MotionWrapper>
-      </PageContainer>
+        </div>
+      </>
     )
   }
 
-  // Show template selector for new resumes
   if (showTemplateSelector) {
     return (
-      <PageContainer maxWidth="full" padding="lg" className="min-h-screen">
-        <MotionWrapper animation="fade-in">
-          <div className="space-y-6">
-            <div className="flex items-center gap-3">
-              <button onClick={handleBackToSelection} className="text-muted-foreground hover:text-foreground">
-                ← Back to Resume Selection
-              </button>
-            </div>
-            <TemplateSelector 
-              onTemplateSelect={() => {
-                setShowTemplateSelector(false)
-                // The template is already set by the TemplateSelector component
-                // We don't need to create a new resume here since the user can continue editing
-              }}
-            />
+      <>
+        <ToolTopBar title="Pick a template" />
+        <div className="mx-auto w-full max-w-[1100px] px-8 py-8">
+          <Button variant="ghost" size="sm" onClick={handleBackToSelection}>
+            ← Back
+          </Button>
+          <div className="mt-4">
+            <TemplateSelector onTemplateSelect={() => setShowTemplateSelector(false)} />
           </div>
-        </MotionWrapper>
-      </PageContainer>
+        </div>
+      </>
     )
   }
 
-  // Main resume builder interface
+  const ActiveForm = SECTION_FORMS[activeSection]
+  const activeDef = RESUME_SECTIONS.find((s) => s.key === activeSection)!
+  const activeIndex = RESUME_SECTIONS.findIndex((s) => s.key === activeSection)
+  const nextSection = RESUME_SECTIONS[activeIndex + 1]
+
   return (
-    <PageContainer maxWidth="full" padding="lg" className="min-h-screen">
-      <MotionWrapper animation="fade-in-down">
-        <ResumeBuilderHeader 
-          onChangeTemplate={() => setShowTemplateSelector(true)}
-          onBack={handleBackToSelection}
-        />
-      </MotionWrapper>
+    <>
+      <ToolTopBar
+        title="Résumé builder"
+        actions={
+          <>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowTemplateSelector(true)}
+            >
+              {selectedTemplate?.name ?? "Choose template"}
+            </Button>
+            <Button size="sm" onClick={handleSave} disabled={isSaving}>
+              {isSaving ? "Saving…" : "Save"}
+            </Button>
+          </>
+        }
+      />
 
-      <div className="mt-4 sm:mt-6">
-        {/* Mobile Layout: Stacked */}
-        <div className="xl:hidden space-y-4 sm:space-y-6 lg:space-y-8">
-          {!isFormCompleted ? (
-            // Form still active - original layout
-            <>
-              <MotionWrapper animation="slide-in-up" delay={200}>
-                <ResumeForm onFormComplete={handleFormComplete} />
-              </MotionWrapper>
-              <MotionWrapper animation="slide-in-up" delay={300}>
-                <StylingControls 
-                  showEditFormButton={isFormCompleted} 
-                  onEditForm={handleEditForm} 
-                />
-              </MotionWrapper>
-              <MotionWrapper animation="slide-in-up" delay={400}>
-                <ResumePreview />
-              </MotionWrapper>
-            </>
-          ) : (
-            // Form completed - centered layout
-            <div className="flex flex-col items-center space-y-6">
-              <MotionWrapper animation="fade-in" delay={100}>
-                <div className="w-full max-w-4xl">
-                  <StylingControls 
-                    showEditFormButton={isFormCompleted} 
-                    onEditForm={handleEditForm}
-                    centered={true}
-                  />
-                </div>
-              </MotionWrapper>
-              <MotionWrapper animation="slide-in-up" delay={200}>
-                <ResumePreview />
-              </MotionWrapper>
-            </div>
-          )}
-        </div>
+      <div className="mx-auto w-full max-w-[1500px] px-6 py-6">
+        <div className="flex flex-col gap-6 lg:flex-row">
+          <SectionsRail active={activeSection} onSelect={setActiveSection} />
 
-        {/* Desktop Layout: Side by Side */}
-        <div className="hidden xl:block">
-          {!isFormCompleted ? (
-            // Form still active - original side by side layout
-            <div className="grid xl:grid-cols-2 gap-8 min-h-[calc(100vh-12rem)]">
-              <MotionWrapper animation="slide-in-left" delay={300}>
-                <div className="space-y-6">
-                  <ResumeForm onFormComplete={handleFormComplete} />
-                  <StylingControls 
-                    showEditFormButton={isFormCompleted} 
-                    onEditForm={handleEditForm} 
+          {/* ---- Editor ---- */}
+          <div className="min-w-0 flex-1">
+            <Card className="p-6">
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-5">
+                <div className="min-w-0">
+                  <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-faint">
+                    {activeDef.required ? "Required" : "Optional"}
+                  </p>
+                  <h2 className="mt-1 font-display text-[24px] leading-tight text-ink">
+                    {activeDef.label}
+                  </h2>
+                </div>
+
+                <div className="w-full sm:w-[240px]">
+                  <Input
+                    aria-label="Résumé name"
+                    value={title}
+                    onChange={(e) => updateTitle(e.target.value)}
+                    placeholder="Untitled résumé"
                   />
                 </div>
-              </MotionWrapper>
-              <MotionWrapper animation="slide-in-right" delay={500}>
-                <div className="sticky top-6 h-fit">
-                  <ResumePreview />
-                </div>
-              </MotionWrapper>
+              </div>
+
+              <div className="pt-6">
+                <ActiveForm />
+              </div>
+
+              <div className="mt-6 flex items-center justify-between gap-3 border-t border-border pt-5">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  disabled={activeIndex === 0}
+                  onClick={() => setActiveSection(RESUME_SECTIONS[activeIndex - 1].key)}
+                >
+                  ← {RESUME_SECTIONS[activeIndex - 1]?.label ?? "Back"}
+                </Button>
+
+                {nextSection ? (
+                  <Button size="sm" onClick={() => setActiveSection(nextSection.key)}>
+                    {nextSection.label} →
+                  </Button>
+                ) : (
+                  <FinishButton onSave={handleSave} onJump={setActiveSection} />
+                )}
+              </div>
+            </Card>
+
+            <div className="mt-6">
+              <StyleBar />
             </div>
-          ) : (
-            // Form completed - centered layout
-            <div className="flex flex-col items-center space-y-8 min-h-[calc(100vh-12rem)]">
-              <MotionWrapper animation="fade-in" delay={100}>
-                <div className="w-full max-w-4xl">
-                  <StylingControls 
-                    showEditFormButton={isFormCompleted} 
-                    onEditForm={handleEditForm}
-                    centered={true}
-                  />
-                </div>
-              </MotionWrapper>
-              <MotionWrapper animation="slide-in-up" delay={200}>
-                <div className="flex justify-center">
-                  <ResumePreview />
-                </div>
-              </MotionWrapper>
-            </div>
-          )}
+          </div>
+
+          {/* ---- Preview ---- */}
+          <LivePreview className="lg:w-[472px] lg:shrink-0 lg:sticky lg:top-6 lg:max-h-[calc(100vh-6rem)]" />
         </div>
       </div>
-    </PageContainer>
+    </>
+  )
+}
+
+/**
+ * At the end of the sections, the useful thing to say isn't "done" — it's whether
+ * anything required is still missing, and where.
+ */
+function FinishButton({
+  onSave,
+  onJump,
+}: {
+  onSave: () => void
+  onJump: (key: SectionKey) => void
+}) {
+  const resumeData = useResumeStore((s) => s.resumeData)
+  const missing = nextIncompleteSection(resumeData)
+
+  if (missing) {
+    const label = RESUME_SECTIONS.find((s) => s.key === missing)!.label
+    return (
+      <Button size="sm" variant="outline" onClick={() => onJump(missing)}>
+        Finish {label.toLowerCase()}
+      </Button>
+    )
+  }
+
+  return (
+    <Button size="sm" onClick={onSave}>
+      Save résumé
+    </Button>
   )
 }

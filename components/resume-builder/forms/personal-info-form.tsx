@@ -5,8 +5,8 @@ import { Label } from "@/components/ui/label"
 import { useResumeStore } from "@/lib/resume-store"
 
 export function PersonalInfoForm() {
-  const { resumeData, updatePersonalInfo } = useResumeStore()
-  const { personalInfo } = resumeData
+  const personalInfo = useResumeStore((s) => s.resumeData.personalInfo)
+  const updatePersonalInfo = useResumeStore((s) => s.updatePersonalInfo)
 
   return (
     <div className="space-y-4">

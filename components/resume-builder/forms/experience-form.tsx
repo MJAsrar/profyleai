@@ -13,7 +13,13 @@ import { useToast } from "@/hooks/use-toast"
 import type { ExperienceItem } from "@/lib/validations/resume"
 
 export function ExperienceForm() {
-  const { resumeData, addExperience, updateExperience, removeExperience } = useResumeStore()
+  // Narrow selectors — a bare `useResumeStore()` subscribes this form to every field on
+  // the résumé, so typing a phone number re-rendered the entire experience list.
+  const experience = useResumeStore((s) => s.resumeData.experience)
+  const professionalTitle = useResumeStore((s) => s.resumeData.personalInfo?.professionalTitle)
+  const addExperience = useResumeStore((s) => s.addExperience)
+  const updateExperience = useResumeStore((s) => s.updateExperience)
+  const removeExperience = useResumeStore((s) => s.removeExperience)
   const { toast } = useToast()
   const [showAddForm, setShowAddForm] = useState(false)
   const [isOptimizing, setIsOptimizing] = useState(false)
@@ -91,7 +97,7 @@ export function ExperienceForm() {
           context: {
             companyName: company,
             position: position,
-            jobTitle: resumeData.personalInfo?.professionalTitle
+            jobTitle: professionalTitle
           }
         }),
       })
@@ -133,7 +139,7 @@ export function ExperienceForm() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">Work Experience</h3>
+        <p className="max-w-[42ch] text-[13px] leading-relaxed text-ink-muted">Most recent first. Say what changed because you were there — numbers beat adjectives.</p>
         <Button onClick={() => setShowAddForm(true)} disabled={showAddForm}>
           <Plus className="mr-2 h-4 w-4" />
           Add Experience
@@ -235,7 +241,7 @@ export function ExperienceForm() {
       )}
 
       <div className="space-y-4">
-        {resumeData.experience.map((exp) => (
+        {experience.map((exp) => (
           <Card key={exp.id}>
             <CardContent className="pt-6">
               {editingId === exp.id ? (

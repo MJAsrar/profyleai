@@ -14,7 +14,10 @@ import { useResumeStore } from "@/lib/resume-store"
 import { useToast } from "@/hooks/use-toast"
 
 export function CertificationsForm() {
-  const { resumeData, addCertification, updateCertification, removeCertification } = useResumeStore()
+  const certifications = useResumeStore((s) => s.resumeData.certifications)
+  const addCertification = useResumeStore((s) => s.addCertification)
+  const updateCertification = useResumeStore((s) => s.updateCertification)
+  const removeCertification = useResumeStore((s) => s.removeCertification)
   const { toast } = useToast()
   const [showAddForm, setShowAddForm] = useState(false)
   const [isOptimizing, setIsOptimizing] = useState(false)
@@ -162,7 +165,7 @@ export function CertificationsForm() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">Certifications</h3>
+        <p className="max-w-[42ch] text-[13px] leading-relaxed text-ink-muted">Only the ones a hiring manager would recognise. Expired ones can stay if the skill didn&apos;t expire.</p>
         <Button onClick={() => setShowAddForm(true)} disabled={showAddForm}>
           <Plus className="mr-2 h-4 w-4" />
           Add Certification
@@ -287,7 +290,7 @@ export function CertificationsForm() {
       )}
 
       <div className="space-y-4">
-        {(resumeData.certifications || []).map((cert) => (
+        {(certifications || []).map((cert) => (
           <Card key={cert.id}>
             <CardContent className="pt-6">
               {editingId === cert.id ? (

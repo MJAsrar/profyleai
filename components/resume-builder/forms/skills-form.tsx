@@ -12,7 +12,10 @@ import { Plus, Trash2, X, Edit, Save } from "lucide-react"
 import { useResumeStore } from "@/lib/resume-store"
 
 export function SkillsForm() {
-  const { resumeData, addSkillCategory, updateSkillCategory, removeSkillCategory } = useResumeStore()
+  const skills = useResumeStore((s) => s.resumeData.skills)
+  const addSkillCategory = useResumeStore((s) => s.addSkillCategory)
+  const updateSkillCategory = useResumeStore((s) => s.updateSkillCategory)
+  const removeSkillCategory = useResumeStore((s) => s.removeSkillCategory)
   const [showAddForm, setShowAddForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editData, setEditData] = useState<any>(null)
@@ -101,7 +104,7 @@ export function SkillsForm() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">Skills</h3>
+        <p className="max-w-[42ch] text-[13px] leading-relaxed text-ink-muted">Group them the way the job posting does. Skip anything you&apos;d dread being tested on.</p>
         <Button onClick={() => setShowAddForm(true)} disabled={showAddForm}>
           <Plus className="mr-2 h-4 w-4" />
           Add Skill Category
@@ -165,7 +168,7 @@ export function SkillsForm() {
       )}
 
       <div className="space-y-4">
-        {resumeData.skills.map((skillCategory) => (
+        {skills.map((skillCategory) => (
           <Card key={skillCategory.id}>
             <CardContent className="pt-6">
               {editingId === skillCategory.id ? (

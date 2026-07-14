@@ -15,7 +15,10 @@ import { useToast } from "@/hooks/use-toast"
 import type { ProjectItem } from "@/lib/validations/resume"
 
 export function ProjectsForm() {
-  const { resumeData, addProject, updateProject, removeProject } = useResumeStore()
+  const projects = useResumeStore((s) => s.resumeData.projects)
+  const addProject = useResumeStore((s) => s.addProject)
+  const updateProject = useResumeStore((s) => s.updateProject)
+  const removeProject = useResumeStore((s) => s.removeProject)
   const { toast } = useToast()
   const [showAddForm, setShowAddForm] = useState(false)
   const [isOptimizing, setIsOptimizing] = useState(false)
@@ -177,7 +180,7 @@ export function ProjectsForm() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">Projects</h3>
+        <p className="max-w-[42ch] text-[13px] leading-relaxed text-ink-muted">Optional. Worth adding when the work says something your job titles don&apos;t.</p>
         <Button onClick={() => setShowAddForm(true)} disabled={showAddForm}>
           <Plus className="mr-2 h-4 w-4" />
           Add Project
@@ -278,7 +281,7 @@ export function ProjectsForm() {
       )}
 
       <div className="space-y-4">
-        {resumeData.projects.map((project) => (
+        {projects.map((project) => (
           <Card key={project.id}>
             <CardContent className="pt-6">
               {editingId === project.id ? (

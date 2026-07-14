@@ -9,12 +9,14 @@ import { useResumeStore } from "@/lib/resume-store"
 import { useToast } from "@/hooks/use-toast"
 
 export function SummaryForm() {
-  const { resumeData, updateSummary } = useResumeStore()
+  const summary = useResumeStore((s) => s.resumeData.summary)
+  const professionalTitle = useResumeStore((s) => s.resumeData.personalInfo?.professionalTitle)
+  const updateSummary = useResumeStore((s) => s.updateSummary)
   const { toast } = useToast()
   const [isOptimizing, setIsOptimizing] = useState(false)
 
   const optimizeWithAI = async () => {
-    if (!resumeData.summary || resumeData.summary.trim().length === 0) {
+    if (!summary || summary.trim().length === 0) {
       toast({
         title: "No content to optimize",
         description: "Please write some content first, then click optimize to improve it.",
@@ -31,11 +33,11 @@ export function SummaryForm() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          content: resumeData.summary,
+          content: summary,
           contentType: 'summary',
           context: {
             // Add context if available from resume data
-            jobTitle: resumeData.personalInfo?.professionalTitle
+            jobTitle: professionalTitle
           }
         }),
       })
@@ -85,7 +87,7 @@ export function SummaryForm() {
       </div>
       <Textarea
         id="summary"
-        value={resumeData.summary}
+        value={summary}
         onChange={(e) => updateSummary(e.target.value)}
         placeholder="Write a compelling summary that highlights your key achievements and career objectives..."
         className="min-h-[120px]"

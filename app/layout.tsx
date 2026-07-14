@@ -73,10 +73,23 @@ export default function RootLayout({
         />
       </head>
       <body>
+        {/*
+          Light only, and forced.
+
+          The design has one palette. Following the OS into dark mode flipped the token
+          colours (--paper went to #16211b, a near-black evergreen) while the chrome that is
+          pinned to the design's literal hexes — the sidebar, the tool bars — stayed cream.
+          The result was a dark green content area framed by light chrome, with text colours
+          from two different palettes sitting next to each other.
+
+          `forcedTheme` also overrides a "dark" already sitting in someone's localStorage
+          from before, which `defaultTheme` alone would not.
+        */}
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
-          enableSystem
+          forcedTheme="light"
+          defaultTheme="light"
+          enableSystem={false}
           disableTransitionOnChange
         >
           <SessionProviderWrapper>

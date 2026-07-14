@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useTheme } from "next-themes"
 import { signOut, useSession } from "next-auth/react"
 import { toast } from "sonner"
 
@@ -22,7 +21,6 @@ interface AccountData {
 const SECTIONS = [
   { key: "profile", label: "Profile" },
   { key: "credits", label: "Credits" },
-  { key: "appearance", label: "Appearance" },
   { key: "security", label: "Security" },
   { key: "data", label: "Your data" },
 ] as const
@@ -38,6 +36,10 @@ type SectionKey = (typeof SECTIONS)[number]["key"]
  * by nobody, and the preferences API returned a hardcoded object. A switch that switches
  * nothing is worse than no switch: it tells you you've turned something off when you
  * haven't.
+ *
+ * The Appearance section is gone for the same reason. The app is light-only now (the design
+ * has a single palette, and half the chrome is pinned to its literal hexes), so a theme
+ * picker would be three radio buttons that change nothing.
  */
 export function SettingsContent() {
   const [section, setSection] = useState<SectionKey>("profile")
@@ -74,7 +76,6 @@ export function SettingsContent() {
         <div className="min-w-0 flex-1">
           {section === "profile" && <ProfileSection />}
           {section === "credits" && <CreditsSection />}
-          {section === "appearance" && <AppearanceSection />}
           {section === "security" && <SecuritySection />}
           {section === "data" && <DataSection />}
         </div>
@@ -261,59 +262,6 @@ function CreditsSection() {
         currentBalance={balance ?? undefined}
       />
     </>
-  )
-}
-
-/* --------------------------------------------------------------- appearance */
-
-const THEME_OPTIONS = [
-  { value: "light", label: "Light" },
-  { value: "dark", label: "Dark" },
-  { value: "system", label: "Match my system" },
-]
-
-function AppearanceSection() {
-  const { theme, setTheme } = useTheme()
-  const [mounted, setMounted] = useState(false)
-
-  // The active theme is only known on the client. Rendering it during SSR would mark the
-  // wrong option as selected until hydration caught up.
-  useEffect(() => setMounted(true), [])
-
-  return (
-    <Card className="p-6">
-      <h2 className="font-display text-[22px] leading-tight text-ink">Appearance</h2>
-
-      <div className="mt-5 flex flex-col gap-2">
-        {THEME_OPTIONS.map((opt) => {
-          const isSelected = mounted && theme === opt.value
-
-          return (
-            <button
-              key={opt.value}
-              type="button"
-              onClick={() => setTheme(opt.value)}
-              aria-pressed={isSelected}
-              className={cn(
-                "flex items-center gap-3 rounded-input border px-4 py-3 text-left transition-colors",
-                isSelected
-                  ? "border-brand bg-brand-tint"
-                  : "border-border hover:border-brand/40"
-              )}
-            >
-              <span
-                aria-hidden="true"
-                className={cn(
-                  "h-4 w-4 shrink-0 rounded-full border-2",
-                  isSelected ? "border-[5px] border-brand" : "border-border"
-                )}
-              />
-              <span className="text-[15px] text-ink">{opt.label}</span>
-            </button>
-          )
-        })}
-      </div>
-    </Card>
   )
 }
 

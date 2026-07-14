@@ -133,11 +133,11 @@ export function CreditPurchaseModal({
         <Button size="lg" className="mt-4 w-full" onClick={checkout} disabled={isRedirecting}>
           {isRedirecting
             ? "Opening checkout…"
-            : `Buy ${pack.credits} credits — $${pack.price.toFixed(0)}`}
+            : `Continue to checkout · $${pack.price.toFixed(0)}`}
         </Button>
 
         <p className="mt-2 text-center font-mono text-[10px] leading-relaxed tracking-[0.06em] text-ink-faint">
-          Card handled by Stripe. We never see it.
+          🔒 Secure checkout · powered by Stripe
         </p>
       </DialogContent>
     </Dialog>

@@ -71,33 +71,41 @@ export function InsufficientCreditsModal({
         <DialogHeader>
           <DialogTitle>You&apos;re {short} credit{short === 1 ? "" : "s"} short</DialogTitle>
           <DialogDescription>
-            It costs {cost} to {ACTION_LABEL[action]}, and you have {currentBalance}.
+            It costs {cost} credits to {ACTION_LABEL[action]} and you have {currentBalance}.
+            Top up to keep going — your work is saved.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="mt-2 rounded-[10px] bg-section-tint p-4">
-          <dl className="space-y-2 text-[14px]">
-            <div className="flex items-baseline justify-between">
-              <dt className="text-ink-muted">This costs</dt>
-              <dd className="font-mono font-semibold text-ink">{cost}</dd>
-            </div>
-            <div className="flex items-baseline justify-between">
-              <dt className="text-ink-muted">You have</dt>
-              <dd className="font-mono font-semibold text-ink">{currentBalance}</dd>
-            </div>
-            <div className="flex items-baseline justify-between border-t border-border pt-2">
-              <dt className="font-semibold text-ink">Short by</dt>
-              <dd className="font-mono font-bold text-clay">{short}</dd>
-            </div>
-          </dl>
+        <div className="mt-2 rounded-[10px] bg-[#eef2ea] p-4">
+          <div className="mb-2 flex items-baseline justify-between text-[13px]">
+            <span className="font-mono uppercase tracking-[0.1em] text-[#8a837a]">
+              Balance
+            </span>
+            <span className="font-mono font-semibold text-[#211f1c]">
+              {currentBalance} / {cost} needed
+            </span>
+          </div>
+
+          <div
+            className="h-[6px] overflow-hidden rounded-full bg-[rgba(33,31,28,.1)]"
+            role="progressbar"
+            aria-valuenow={currentBalance}
+            aria-valuemin={0}
+            aria-valuemax={cost}
+          >
+            <div
+              className="h-full rounded-full bg-[#2e6a4a]"
+              style={{ width: `${Math.min(100, (currentBalance / cost) * 100)}%` }}
+            />
+          </div>
         </div>
 
         <div className="mt-4 flex flex-col gap-2">
           <Button size="lg" onClick={() => setShowPurchase(true)}>
-            Top up
+            Buy credits
           </Button>
           <Button variant="ghost" onClick={onClose}>
-            Not now
+            Maybe later
           </Button>
         </div>
 

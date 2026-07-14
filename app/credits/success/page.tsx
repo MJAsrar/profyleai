@@ -104,7 +104,7 @@ function SuccessPageContent() {
               {failed
                 ? "We couldn't confirm your purchase"
                 : granted
-                  ? 'Credits added.'
+                  ? `${purchaseDetails?.credits ?? ''} credits added`.trim()
                   : 'Payment received.'}
             </h1>
 
@@ -112,12 +112,40 @@ function SuccessPageContent() {
               {failed
                 ? 'Your payment may still have gone through. Check your balance in a moment — and if the credits never appear, send us your receipt and we will sort it out.'
                 : granted
-                  ? "They're in your account and ready to spend."
+                  ? "We waited until your credits actually landed before showing this — no guessing. You're all set to keep building."
                   : "Your card went through. The credits are still landing — usually a few seconds."}
             </p>
           </div>
 
-          {purchaseDetails && !failed && (
+          {purchaseDetails && !failed && granted && (
+            /* Before → now. Both numbers are real: the balance came back from the server and
+               the delta is the credits this purchase actually granted. */
+            <div className="mt-6 flex items-center justify-center gap-5 rounded-[10px] bg-section-tint px-4 py-5">
+              <div className="text-center">
+                <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-ink-faint">
+                  Before
+                </p>
+                <p className="mt-1 font-display text-[26px] leading-none text-ink-muted">
+                  {(purchaseDetails.balance - purchaseDetails.credits).toLocaleString()}
+                </p>
+              </div>
+
+              <span aria-hidden="true" className="text-[18px] text-brand">
+                →
+              </span>
+
+              <div className="text-center">
+                <p className="font-mono text-[10px] uppercase tracking-[0.12em] text-brand">
+                  Now
+                </p>
+                <p className="mt-1 font-display text-[26px] leading-none text-ink">
+                  {purchaseDetails.balance.toLocaleString()}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {purchaseDetails && !failed && !granted && (
             <dl className="mt-6 space-y-2 rounded-[10px] bg-section-tint p-4 text-left text-[14px]">
               <div className="flex items-baseline justify-between">
                 <dt className="text-ink-muted">{purchaseDetails.packageName}</dt>
@@ -129,14 +157,6 @@ function SuccessPageContent() {
                   +{purchaseDetails.credits.toLocaleString()}
                 </dd>
               </div>
-              {granted && (
-                <div className="flex items-baseline justify-between border-t border-border pt-2">
-                  <dt className="font-semibold text-ink">New balance</dt>
-                  <dd className="font-mono font-bold text-ink">
-                    {purchaseDetails.balance.toLocaleString()}
-                  </dd>
-                </div>
-              )}
             </dl>
           )}
 

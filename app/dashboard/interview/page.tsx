@@ -153,53 +153,64 @@ export default function InterviewPrepPage() {
           />
         ) : (
           <div className="grid gap-6 lg:grid-cols-[290px_1fr_350px]">
-            {/* ---- Question list ---- */}
+            {/* ---- Question list, grouped by category as the design does ---- */}
             <Card className="h-fit overflow-hidden p-0">
               <p className="border-b border-border px-4 py-3 font-mono text-[10px] uppercase tracking-[0.14em] text-ink-faint">
                 {questions.length} questions
               </p>
 
-              <ul className="divide-y divide-border">
-                {questions.map((q, i) => {
-                  const score = scores[q.id]
-                  const isActive = q.id === activeId
+              <div className="py-1">
+                {(["behavioral", "job-specific", "field-related"] as const).map((cat) => {
+                  const inCategory = questions.filter((q) => q.category === cat)
+                  if (inCategory.length === 0) return null
 
                   return (
-                    <li key={q.id}>
-                      <button
-                        type="button"
-                        onClick={() => setActiveId(q.id)}
-                        aria-current={isActive ? "true" : undefined}
-                        className={cn(
-                          "w-full px-4 py-3 text-left transition-colors",
-                          isActive ? "bg-brand-tint" : "hover:bg-section-tint"
-                        )}
-                      >
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-ink-faint">
-                            {CATEGORY_LABEL[q.category]}
-                          </span>
+                    <div key={cat}>
+                      <p className="px-4 pb-1.5 pt-3 font-mono text-[10px] uppercase tracking-[0.12em] text-ink-faint-2">
+                        {CATEGORY_LABEL[cat]}
+                      </p>
 
-                          {score && (
-                            <span className="shrink-0 rounded-full bg-brand-tint px-1.5 py-0.5 font-mono text-[10px] text-brand">
-                              ● {(score.score / 10).toFixed(1)}
-                            </span>
-                          )}
-                        </div>
+                      <ul>
+                        {inCategory.map((q) => {
+                          const score = scores[q.id]
+                          const isActive = q.id === activeId
 
-                        <p
-                          className={cn(
-                            "mt-1 line-clamp-2 text-[13px] leading-snug",
-                            isActive ? "font-semibold text-brand-deep" : "text-ink-2"
-                          )}
-                        >
-                          {i + 1}. {q.question}
-                        </p>
-                      </button>
-                    </li>
+                          return (
+                            <li key={q.id}>
+                              <button
+                                type="button"
+                                onClick={() => setActiveId(q.id)}
+                                aria-current={isActive ? "true" : undefined}
+                                className={cn(
+                                  "flex w-full items-start gap-2 px-4 py-2.5 text-left transition-colors",
+                                  isActive ? "bg-brand-tint" : "hover:bg-section-tint"
+                                )}
+                              >
+                                <span
+                                  className={cn(
+                                    "min-w-0 flex-1 text-[13px] leading-snug",
+                                    isActive
+                                      ? "font-semibold text-brand-deep"
+                                      : "text-ink-2"
+                                  )}
+                                >
+                                  {q.question}
+                                </span>
+
+                                {score && (
+                                  <span className="shrink-0 rounded-full bg-brand-tint px-1.5 py-0.5 font-mono text-[10px] text-brand">
+                                    ● {(score.score / 10).toFixed(1)}
+                                  </span>
+                                )}
+                              </button>
+                            </li>
+                          )
+                        })}
+                      </ul>
+                    </div>
                   )
                 })}
-              </ul>
+              </div>
             </Card>
 
             {/* ---- Answer ---- */}

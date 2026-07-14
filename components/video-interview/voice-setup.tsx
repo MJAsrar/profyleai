@@ -207,15 +207,74 @@ export function VoiceSetup({
 
   const ready = mic === "granted" && Boolean(resumeId)
 
+  /** The design's four-step rail. Each step is derived, never asserted. */
+  const STEPS = [
+    { label: "Job details", done: true },
+    { label: "Résumé", done: Boolean(resumeId) },
+    { label: "Questions", done: Boolean(questions?.length) },
+    { label: "Interview room", done: false },
+  ]
+
   return (
-    <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
+    <>
+      <ol className="mb-6 flex flex-wrap items-center gap-y-3">
+        {STEPS.map((step, i) => {
+          const isCurrent = !step.done && STEPS.slice(0, i).every((s) => s.done)
+
+          return (
+            <li key={step.label} className="flex items-center">
+              {i > 0 && (
+                <span aria-hidden="true" className="mx-2.5 h-[2px] w-[26px] bg-border" />
+              )}
+
+              <span
+                className={cn(
+                  "flex items-center gap-2",
+                  !step.done && !isCurrent && "opacity-50"
+                )}
+              >
+                <span
+                  aria-hidden="true"
+                  className={cn(
+                    "flex h-6 w-6 items-center justify-center rounded-full font-mono text-[11px] font-bold",
+                    step.done
+                      ? "bg-brand text-paper"
+                      : isCurrent
+                        ? "bg-brand-tint text-brand"
+                        : "border-[1.5px] border-border text-ink-faint"
+                  )}
+                >
+                  {step.done ? "✓" : i + 1}
+                </span>
+
+                <span
+                  className={cn(
+                    "text-[13px]",
+                    isCurrent ? "font-semibold text-ink" : "text-ink-muted"
+                  )}
+                >
+                  {step.label}
+                </span>
+              </span>
+            </li>
+          )
+        })}
+      </ol>
+
+      <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
       {/* ---- Left: what we'll ask about ---- */}
       <Card className="p-6">
         <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-faint">
-          Interviewing for
+          Session
         </p>
         <h2 className="mt-1.5 font-display text-[26px] leading-tight text-ink">{job.role}</h2>
         <p className="text-[15px] text-ink-muted">{job.company}</p>
+
+        <p className="mt-4 rounded-[10px] bg-section-tint p-4 text-[13px] leading-relaxed text-ink-2">
+          <strong className="font-semibold text-ink">Your interviewer is Sarah.</strong> She
+          asks follow-ups based on what you actually say, the way a real screen does. Speak
+          naturally — you can pause any time.
+        </p>
 
         <div className="mt-6">
           <FieldLabel htmlFor="resume">Answer as</FieldLabel>
@@ -349,6 +408,7 @@ export function VoiceSetup({
           </p>
         </div>
       </Card>
-    </div>
+      </div>
+    </>
   )
 }

@@ -1,134 +1,85 @@
 "use client"
 
-import { memo, useDeferredValue, useState } from "react"
+import { memo, useDeferredValue } from "react"
 import { EnhancedResumeRenderer } from "./enhanced-resume-renderer"
+import { StyleBar } from "./style-bar"
 import { useResumeStore, type ResumeData, type ResumeTemplate } from "@/lib/resume-store"
 import { useFontConfig } from "@/lib/font-config-store"
 import { cn } from "@/lib/utils"
 
 /**
- * The live preview pane.
+ * The live preview pane, to the design: a 472px sage column, the page floating on it, and
+ * the style controls docked at its foot.
  *
- * Two things used to make this the jankiest surface in the product, and both are fixed here:
+ * Two things used to make this the jankiest surface in the product, and both are fixed:
  *
- *  1. The old preview keyed the renderer on `Date.now()` of the last edit, so React threw
- *     away and rebuilt the entire renderer subtree on every keystroke. The key is now the
+ *  1. The preview keyed the renderer on `Date.now()` of the last edit, so React tore down
+ *     and rebuilt the entire renderer subtree on every keystroke. The key is now the
  *     template id — the only thing whose change actually warrants a remount.
  *
  *  2. Every component called `useResumeStore()` bare, subscribing to the whole store. The
- *     subscriptions here are narrow, and the résumé data is passed through `useDeferredValue`
- *     so the expensive render happens at low priority: the character you typed lands in the
- *     input immediately, and the page catches up a frame later instead of blocking on it.
+ *     subscriptions here are narrow, and the data goes through `useDeferredValue` so the
+ *     expensive render happens at low priority: the character you typed lands in the input
+ *     immediately and the page catches up a frame later, instead of blocking on it.
  */
 
-const ZOOM_STEPS = [0.5, 0.6, 0.75, 0.9, 1] as const
-
-/**
- * Memoised so the renderer only re-runs when the deferred data, template, or scale
- * actually change — not when the parent re-renders for an unrelated reason (zoom
- * button hover, a sibling's state, the style bar opening).
- */
 const PreviewPage = memo(function PreviewPage({
   template,
   data,
-  scale,
 }: {
   template: ResumeTemplate
   data: ResumeData
-  scale: number
 }) {
-  return (
-    <EnhancedResumeRenderer
-      key={template.id}
-      template={template}
-      data={data}
-      scale={scale}
-    />
-  )
+  return <EnhancedResumeRenderer key={template.id} template={template} data={data} />
 })
 
 export function LivePreview({ className }: { className?: string }) {
   const resumeData = useResumeStore((s) => s.resumeData)
   const selectedTemplate = useResumeStore((s) => s.selectedTemplate)
-  const isSaving = useResumeStore((s) => s.isSaving)
-  const hasUnsavedChanges = useResumeStore((s) => s.hasUnsavedChanges)
 
-  // Subscribed to so a font change repaints the page; the renderer reads the config itself.
+  // Subscribed to so a font change repaints; the renderer reads the config itself.
   useFontConfig()
 
-  const [zoom, setZoom] = useState(0.75)
-
-  // The heavy render trails the keystroke instead of blocking it.
   const deferredData = useDeferredValue(resumeData)
   const isCatchingUp = deferredData !== resumeData
 
-  const zoomIndex = ZOOM_STEPS.indexOf(zoom as (typeof ZOOM_STEPS)[number])
-
   return (
-    <aside className={cn("flex flex-col rounded-panel bg-section-tint", className)}>
-      {/* Pane header */}
-      <div className="flex items-center justify-between px-4 py-3">
-        <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-faint">
-          Live preview
-        </p>
-
-        <div className="flex items-center gap-2">
-          <span
-            aria-live="polite"
-            className="font-mono text-[10px] tracking-[0.06em] text-ink-faint"
-          >
-            {isSaving ? "Saving…" : hasUnsavedChanges ? "Unsaved" : "Saved"}
+    <aside
+      className={cn(
+        "flex flex-col border-[rgba(33,31,28,.08)] bg-[#eef2ea] lg:w-[472px] lg:shrink-0 lg:border-l",
+        className
+      )}
+    >
+      <div className="flex flex-1 flex-col items-center overflow-auto px-[26px] pb-2 pt-[26px]">
+        <div className="mb-4 flex w-full items-center justify-between">
+          <span className="font-mono text-[11px] tracking-[0.12em] text-[#8a837a]">
+            LIVE PREVIEW
           </span>
-
-          <div className="flex items-center rounded-[8px] border border-border bg-card">
-            <button
-              type="button"
-              onClick={() => setZoom(ZOOM_STEPS[Math.max(0, zoomIndex - 1)])}
-              disabled={zoomIndex <= 0}
-              aria-label="Zoom out"
-              className="px-2 py-1 font-mono text-[13px] leading-none text-ink-muted hover:text-ink disabled:opacity-40"
-            >
-              −
-            </button>
-            <span className="w-[38px] text-center font-mono text-[10px] text-ink-faint">
-              {Math.round(zoom * 100)}%
-            </span>
-            <button
-              type="button"
-              onClick={() =>
-                setZoom(ZOOM_STEPS[Math.min(ZOOM_STEPS.length - 1, zoomIndex + 1)])
-              }
-              disabled={zoomIndex >= ZOOM_STEPS.length - 1}
-              aria-label="Zoom in"
-              className="px-2 py-1 font-mono text-[13px] leading-none text-ink-muted hover:text-ink disabled:opacity-40"
-            >
-              +
-            </button>
-          </div>
+          <span className="font-mono text-[11px] text-[#8a837a]">
+            {isCatchingUp ? "updating…" : "up to date"}
+          </span>
         </div>
-      </div>
 
-      {/* The page */}
-      <div className="flex-1 overflow-auto px-4 pb-4">
         {selectedTemplate ? (
           <div
             className={cn(
-              "mx-auto w-fit rounded-[4px] bg-white shadow-doc transition-opacity",
-              // A whisper of fade while the deferred render catches up — enough to signal
-              // "working", not enough to flicker on every character.
+              "w-[420px] max-w-full overflow-hidden rounded-[6px] border border-[rgba(33,31,28,.1)] bg-white transition-opacity",
               isCatchingUp && "opacity-90"
             )}
+            style={{ boxShadow: "0 20px 50px -30px rgba(30,25,20,.4)" }}
           >
-            <PreviewPage template={selectedTemplate} data={deferredData} scale={zoom} />
+            <PreviewPage template={selectedTemplate} data={deferredData} />
           </div>
         ) : (
-          <div className="flex h-full min-h-[420px] items-center justify-center rounded-[10px] border border-dashed border-border bg-[var(--card-plain)]/60 p-8 text-center">
-            <p className="max-w-[220px] text-[13px] leading-relaxed text-ink-muted">
-              Pick a template and your résumé will render here as you type.
+          <div className="flex w-[420px] max-w-full flex-1 items-center justify-center rounded-[6px] border border-dashed border-[rgba(33,31,28,.2)] p-8 text-center">
+            <p className="max-w-[220px] text-[13px] leading-relaxed text-[#6f685f]">
+              Pick a template and your résumé renders here as you type.
             </p>
           </div>
         )}
       </div>
+
+      <StyleBar />
     </aside>
   )
 }

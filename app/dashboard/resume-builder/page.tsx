@@ -4,10 +4,10 @@ import { useCallback, useEffect, useState } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { toast } from "sonner"
 
-import { ToolTopBar } from "@/components/layout/tool-top-bar"
+import Link from "next/link"
+import { ToolTopBar, CreditChip } from "@/components/layout/tool-top-bar"
 import { SectionsRail } from "@/components/resume-builder/sections-rail"
 import { LivePreview } from "@/components/resume-builder/live-preview"
-import { StyleBar } from "@/components/resume-builder/style-bar"
 import { ResumeSelection } from "@/components/resume-builder/resume-selection"
 import { TemplateSelector } from "@/components/resume-builder/template-selector"
 
@@ -20,8 +20,6 @@ import { ProjectsForm } from "@/components/resume-builder/forms/projects-form"
 import { CertificationsForm } from "@/components/resume-builder/forms/certifications-form"
 
 import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
 import { ListSkeleton } from "@/components/ui/states"
 
 import { useResumeStore, useAutoSave } from "@/lib/resume-store"
@@ -54,6 +52,7 @@ export default function ResumeBuilderPage() {
   const templates = useResumeStore((s) => s.templates)
   const isLoading = useResumeStore((s) => s.isLoading)
   const isSaving = useResumeStore((s) => s.isSaving)
+  const hasUnsavedChanges = useResumeStore((s) => s.hasUnsavedChanges)
 
   const updateTitle = useResumeStore((s) => s.updateTitle)
   const loadTemplates = useResumeStore((s) => s.loadTemplates)
@@ -194,92 +193,112 @@ export default function ResumeBuilderPage() {
   const nextSection = RESUME_SECTIONS[activeIndex + 1]
 
   return (
-    <>
-      <ToolTopBar
-        title="Résumé builder"
-        actions={
-          <>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowTemplateSelector(true)}
-            >
-              {selectedTemplate?.name ?? "Choose template"}
-            </Button>
-            <Button size="sm" onClick={handleSave} disabled={isSaving}>
-              {isSaving ? "Saving…" : "Save"}
-            </Button>
-          </>
-        }
-      />
+    <div className="flex h-screen flex-col overflow-hidden bg-[#f6f3ec]">
+      {/* ---- Top bar ---- */}
+      <header className="flex h-[62px] shrink-0 items-center justify-between gap-4 border-b border-[rgba(33,31,28,.08)] bg-[#fffdf8] px-[22px]">
+        <div className="flex min-w-0 items-center gap-3.5">
+          <Link
+            href="/dashboard"
+            aria-label="Back to dashboard"
+            className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[9px] text-[18px] text-[#4b463f] transition-colors hover:bg-[#f1ede4]"
+          >
+            <span aria-hidden="true">←</span>
+          </Link>
 
-      <div className="mx-auto w-full max-w-[1500px] px-6 py-6">
-        <div className="flex flex-col gap-6 lg:flex-row">
-          <SectionsRail active={activeSection} onSelect={setActiveSection} />
+          <span
+            aria-hidden="true"
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[8px] bg-[#2e6a4a] font-display text-[18px] font-semibold text-[#f6f3ec]"
+          >
+            P
+          </span>
 
-          {/* ---- Editor ---- */}
-          <div className="min-w-0 flex-1">
-            <Card className="p-6">
-              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-5">
-                <div className="min-w-0">
-                  <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-faint">
-                    {activeDef.required ? "Required" : "Optional"}
-                  </p>
-                  <h2 className="mt-1 font-display text-[24px] leading-tight text-ink">
-                    {activeDef.label}
-                  </h2>
-                </div>
+          <div className="flex min-w-0 items-center gap-2.5">
+            <input
+              aria-label="Résumé name"
+              value={title}
+              onChange={(e) => updateTitle(e.target.value)}
+              placeholder="Untitled résumé"
+              className="min-w-0 max-w-[280px] flex-1 border-0 bg-transparent p-0 text-[15px] font-semibold text-[#211f1c] outline-none placeholder:text-[#a79f93] focus:underline focus:underline-offset-4"
+            />
 
-                <div className="w-full sm:w-[240px]">
-                  <Input
-                    aria-label="Résumé name"
-                    value={title}
-                    onChange={(e) => updateTitle(e.target.value)}
-                    placeholder="Untitled résumé"
-                  />
-                </div>
-              </div>
-
-              <div className="pt-6">
-                <ActiveForm />
-              </div>
-
-              <div className="mt-6 flex items-center justify-between gap-3 border-t border-border pt-5">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  disabled={activeIndex === 0}
-                  onClick={() => setActiveSection(RESUME_SECTIONS[activeIndex - 1].key)}
-                >
-                  ← {RESUME_SECTIONS[activeIndex - 1]?.label ?? "Back"}
-                </Button>
-
-                {nextSection ? (
-                  <Button size="sm" onClick={() => setActiveSection(nextSection.key)}>
-                    {nextSection.label} →
-                  </Button>
-                ) : (
-                  <FinishButton onSave={handleSave} onJump={setActiveSection} />
-                )}
-              </div>
-            </Card>
-
-            <div className="mt-6">
-              <StyleBar />
-            </div>
+            <span className="shrink-0 whitespace-nowrap font-mono text-[11px] text-[#8a837a]">
+              {isSaving ? "· Saving…" : hasUnsavedChanges ? "· Unsaved" : "· Saved"}
+            </span>
           </div>
-
-          {/* ---- Preview ---- */}
-          <LivePreview className="lg:w-[472px] lg:shrink-0 lg:sticky lg:top-6 lg:max-h-[calc(100vh-6rem)]" />
         </div>
+
+        <div className="flex shrink-0 items-center gap-2.5">
+          <button
+            type="button"
+            onClick={() => setShowTemplateSelector(true)}
+            className="flex items-center gap-[7px] rounded-[9px] border border-[rgba(33,31,28,.1)] bg-[#f1ede4] px-3 py-2 text-[13px] font-medium text-[#4b463f] hover:border-[#2e6a4a]"
+          >
+            {selectedTemplate?.name ?? "Template"}{" "}
+            <span aria-hidden="true" className="text-[#8a837a]">
+              ▾
+            </span>
+          </button>
+
+          <CreditChip />
+
+          <Button variant="outline" size="sm" onClick={handleSave} disabled={isSaving}>
+            {isSaving ? "Saving…" : "Save"}
+          </Button>
+
+          <Button asChild size="sm">
+            <Link href="/dashboard/preview">Preview &amp; export</Link>
+          </Button>
+        </div>
+      </header>
+
+      {/* ---- Three panes ---- */}
+      <div className="flex flex-1 flex-col overflow-hidden lg:flex-row">
+        <SectionsRail active={activeSection} onSelect={setActiveSection} />
+
+        {/* Editor */}
+        <div className="flex-1 overflow-auto bg-[#f6f3ec] px-6 py-[30px] sm:px-[34px]">
+          <h2 className="mb-1.5 font-display text-[28px] font-medium text-[#211f1c]">
+            {activeDef.label}
+          </h2>
+
+          <p className="mb-[22px] text-[14px] text-[#8a837a]">
+            {activeDef.required
+              ? "Required — this one carries real weight with a recruiter."
+              : "Optional — worth adding when it says something your job titles don't."}
+          </p>
+
+          <ActiveForm />
+
+          <div className="mt-8 flex items-center justify-between gap-3 border-t border-[rgba(33,31,28,.1)] pt-5">
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={activeIndex === 0}
+              onClick={() => setActiveSection(RESUME_SECTIONS[activeIndex - 1].key)}
+            >
+              ← {RESUME_SECTIONS[activeIndex - 1]?.label ?? "Back"}
+            </Button>
+
+            {nextSection ? (
+              <Button size="sm" onClick={() => setActiveSection(nextSection.key)}>
+                {nextSection.label} →
+              </Button>
+            ) : (
+              <FinishButton onSave={handleSave} onJump={setActiveSection} />
+            )}
+          </div>
+        </div>
+
+        {/* Preview */}
+        <LivePreview />
       </div>
-    </>
+    </div>
   )
 }
 
 /**
- * At the end of the sections, the useful thing to say isn't "done" — it's whether
- * anything required is still missing, and where.
+ * At the end of the sections, the useful thing to say isn't "done" — it's whether anything
+ * required is still missing, and where.
  */
 function FinishButton({
   onSave,

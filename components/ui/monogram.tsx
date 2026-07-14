@@ -23,7 +23,7 @@ const tones: Record<MonogramTone, string> = {
 
 const sizes = {
   sm: "h-8 w-8 rounded-[9px] text-[10px]",
-  md: "h-10 w-10 rounded-[11px] text-[12px]",
+  md: "h-[38px] w-[38px] rounded-[10px] text-[13px]",
   lg: "h-[42px] w-[42px] rounded-[11px] text-[13px]",
 }
 
@@ -62,11 +62,11 @@ export function Monogram({
  */
 export const TOOL_MONOGRAMS = {
   resumeBuilder: { code: "RB", tone: "brand", label: "Résumé builder" },
-  myResumes: { code: "MR", tone: "neutral", label: "My résumés" },
-  tailor: { code: "TL", tone: "olive", label: "Tailor to a job" },
+  myResumes: { code: "MR", tone: "olive", label: "My résumés" },
+  tailor: { code: "TL", tone: "indigo", label: "Tailor to a job" },
   coverLetter: { code: "CL", tone: "clay", label: "Cover letter" },
-  interviewPrep: { code: "IP", tone: "indigo", label: "Interview prep" },
-  voice: { code: "VI", tone: "brand", label: "Voice interview" },
+  interviewPrep: { code: "IP", tone: "clay", label: "Interview prep" },
+  voice: { code: "VI", tone: "indigo", label: "Voice interview" },
 } as const satisfies Record<
   string,
   { code: string; tone: MonogramTone; label: string }

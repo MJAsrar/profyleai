@@ -143,96 +143,95 @@ export function AuthCard({ initialMode = "login" }: { initialMode?: Mode }) {
   }
 
   return (
-    <div className="w-full max-w-[420px]">
-      {/* Tabs */}
-      <div className="flex gap-6 border-b border-border">
+    <div className="w-full">
+      {/* ---- Tabs ---- */}
+      <div className="mb-[30px] flex gap-7 border-b border-[rgba(33,31,28,.12)]">
         {(["signup", "login"] as const).map((m) => (
           <button
             key={m}
             type="button"
             onClick={() => switchMode(m)}
-            className={cn(
-              "relative -mb-px pb-3 text-[14px] font-semibold transition-colors",
-              mode === m
-                ? "text-ink after:absolute after:inset-x-0 after:-bottom-px after:h-[2px] after:bg-brand"
-                : "text-ink-faint hover:text-ink-muted"
-            )}
             aria-pressed={mode === m}
+            className="relative cursor-pointer border-0 bg-none p-0 pb-[14px] text-[16px] font-semibold text-[#211f1c]"
           >
             {m === "signup" ? "Create account" : "Log in"}
+            {mode === m && (
+              <span className="absolute inset-x-0 -bottom-px h-[2px] bg-[#2e6a4a]" />
+            )}
           </button>
         ))}
       </div>
 
-      {/* Google */}
-      <Button
+      {/* ---- Google ---- */}
+      <button
         type="button"
-        variant="outline"
-        className="mt-7 w-full"
         onClick={() => signIn("google", { callbackUrl })}
+        className="mb-5 flex w-full cursor-pointer items-center justify-center gap-2.5 rounded-[11px] border border-[rgba(33,31,28,.16)] bg-white p-[13px] text-[15px] font-semibold text-[#211f1c] hover:border-[rgba(33,31,28,.3)]"
       >
         <span
           aria-hidden="true"
-          className="mr-1 inline-block h-4 w-4 rounded-full"
+          className="h-[18px] w-[18px] rounded-full"
           style={{
             background:
-              "conic-gradient(#ea4335 0turn .25turn, #fbbc05 .25turn .5turn, #34a853 .5turn .75turn, #4285f4 .75turn 1turn)",
+              "conic-gradient(#ea4335 0 25%,#fbbc05 0 50%,#34a853 0 75%,#4285f4 0 100%)",
           }}
         />
         Continue with Google
-      </Button>
+      </button>
 
-      <div className="my-6 flex items-center gap-4">
-        <span className="h-px flex-1 bg-border" />
-        <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-faint">
-          or
-        </span>
-        <span className="h-px flex-1 bg-border" />
+      <div className="mb-[22px] flex items-center gap-[14px]">
+        <span className="h-px flex-1 bg-[rgba(33,31,28,.12)]" />
+        <span className="font-mono text-[11px] tracking-[0.1em] text-[#9a9186]">OR</span>
+        <span className="h-px flex-1 bg-[rgba(33,31,28,.12)]" />
       </div>
 
+      {/* ---- Form ---- */}
       <form onSubmit={handleSubmit} noValidate>
-        <div className="space-y-4">
-          {isSignup && (
-            <div>
-              <FieldLabel htmlFor="name">Full name</FieldLabel>
-              <Input
-                id="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                onBlur={validate}
-                aria-invalid={!!fieldErrors.name}
-                autoComplete="name"
-              />
-              <FieldError message={fieldErrors.name} />
-            </div>
-          )}
-
-          <div>
-            <FieldLabel htmlFor="email">Email</FieldLabel>
+        {isSignup && (
+          <div className="mb-4">
+            <FieldLabel htmlFor="name">Full name</FieldLabel>
             <Input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              id="name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
               onBlur={validate}
-              aria-invalid={!!fieldErrors.email}
-              autoComplete="email"
+              aria-invalid={!!fieldErrors.name}
+              autoComplete="name"
+              placeholder="Alex Rivera"
             />
-            <FieldError message={fieldErrors.email} />
+            <FieldError message={fieldErrors.name} />
+          </div>
+        )}
+
+        <div className="mb-4">
+          <FieldLabel htmlFor="email">Email</FieldLabel>
+          <Input
+            id="email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            onBlur={validate}
+            aria-invalid={!!fieldErrors.email}
+            autoComplete="email"
+            placeholder="you@school.edu"
+          />
+          <FieldError message={fieldErrors.email} />
+        </div>
+
+        <div className="mb-4">
+          <div className="flex items-center justify-between">
+            <FieldLabel htmlFor="password">Password</FieldLabel>
+            {!isSignup && (
+              <Link
+                href="/contact"
+                className="mb-[7px] text-[12px] font-semibold text-[#2e6a4a]"
+              >
+                Forgot?
+              </Link>
+            )}
           </div>
 
-          <div>
-            <div className="flex items-center justify-between">
-              <FieldLabel htmlFor="password">Password</FieldLabel>
-              <button
-                type="button"
-                onClick={() => setShowPassword((s) => !s)}
-                className="mb-1.5 font-mono text-[10px] uppercase tracking-[0.1em] text-ink-faint transition-colors hover:text-brand"
-              >
-                {showPassword ? "Hide" : "Show"}
-              </button>
-            </div>
-
+          <div className="relative">
             <Input
               id="password"
               type={showPassword ? "text" : "password"}
@@ -241,35 +240,44 @@ export function AuthCard({ initialMode = "login" }: { initialMode?: Mode }) {
               onBlur={validate}
               aria-invalid={!!fieldErrors.password}
               autoComplete={isSignup ? "new-password" : "current-password"}
+              placeholder="At least 8 characters"
+              className="pr-[62px]"
             />
-
-            <FieldError message={fieldErrors.password} />
-
-            {/* Live strength meter */}
-            {isSignup && password && (
-              <div className="mt-2.5">
-                <div className="h-1 overflow-hidden rounded-full bg-section-tint">
-                  <div
-                    className="h-full rounded-full transition-[width,background-color] duration-250"
-                    style={{
-                      width: `${(strength.score / 4) * 100}%`,
-                      backgroundColor: strength.color,
-                    }}
-                  />
-                </div>
-                <p
-                  className="mt-1 font-mono text-[10px] uppercase tracking-[0.1em]"
-                  style={{ color: strength.color }}
-                  aria-live="polite"
-                >
-                  {strength.label}
-                </p>
-              </div>
-            )}
+            <button
+              type="button"
+              onClick={() => setShowPassword((s) => !s)}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 cursor-pointer border-0 bg-none px-1.5 py-1 font-mono text-[11px] tracking-[0.06em] text-[#8a837a] hover:text-[#2e6a4a]"
+            >
+              {showPassword ? "Hide" : "Show"}
+            </button>
           </div>
 
-          {isSignup && (
-            <div>
+          {isSignup && password && (
+            <div className="mt-2.5 flex items-center gap-3">
+              <div className="h-[5px] flex-1 overflow-hidden rounded-full bg-[rgba(33,31,28,.1)]">
+                <div
+                  className="h-full rounded-full transition-[width] duration-250"
+                  style={{
+                    width: `${(strength.score / 4) * 100}%`,
+                    background: strength.color,
+                  }}
+                />
+              </div>
+              <span
+                aria-live="polite"
+                className="min-w-[44px] font-mono text-[11px] text-[#8a837a]"
+              >
+                {strength.label}
+              </span>
+            </div>
+          )}
+
+          <FieldError message={fieldErrors.password} />
+        </div>
+
+        {isSignup && (
+          <>
+            <div className="mb-[18px]">
               <FieldLabel htmlFor="confirm">Confirm password</FieldLabel>
               <Input
                 id="confirm"
@@ -279,58 +287,59 @@ export function AuthCard({ initialMode = "login" }: { initialMode?: Mode }) {
                 onBlur={validate}
                 aria-invalid={!!fieldErrors.confirm}
                 autoComplete="new-password"
+                placeholder="Re-enter password"
               />
               <FieldError message={fieldErrors.confirm} />
             </div>
-          )}
-        </div>
 
-        {isSignup ? (
-          <label className="mt-5 flex cursor-pointer items-start gap-2.5">
-            <input
-              type="checkbox"
-              checked={agreed}
-              onChange={(e) => setAgreed(e.target.checked)}
-              className="mt-0.5 h-4 w-4 shrink-0 accent-[var(--brand)]"
-            />
-            <span className="text-[13px] leading-relaxed text-ink-muted">
-              I agree to the{" "}
-              <Link href="/terms" className="text-brand underline-offset-2 hover:underline">
-                Terms
-              </Link>{" "}
-              and{" "}
-              <Link href="/privacy" className="text-brand underline-offset-2 hover:underline">
-                Privacy Policy
-              </Link>
-              .
-            </span>
-          </label>
-        ) : (
-          <div className="mt-4 text-right">
-            <Link
-              href="/contact"
-              className="text-[13px] text-ink-muted underline-offset-2 hover:text-brand hover:underline"
-            >
-              Forgot password?
-            </Link>
-          </div>
+            {/* A real checkbox, visually replaced by the design's square. Keeping the input
+                keeps it reachable by keyboard and announced by screen readers. */}
+            <label className="mb-[22px] flex cursor-pointer items-start gap-2.5">
+              <input
+                type="checkbox"
+                checked={agreed}
+                onChange={(e) => setAgreed(e.target.checked)}
+                className="peer sr-only"
+              />
+              <span
+                aria-hidden="true"
+                className="mt-px flex h-5 w-5 shrink-0 items-center justify-center rounded-[6px] border-[1.5px] border-[#2e6a4a] bg-white text-[12px] text-[#f4efe6] peer-checked:bg-[#2e6a4a] peer-focus-visible:shadow-[0_0_0_3px_rgba(46,106,74,.25)]"
+              >
+                {agreed ? "✓" : ""}
+              </span>
+              <span className="text-[13px] leading-[1.5] text-[#5c564d]">
+                I agree to the{" "}
+                <Link href="/terms" className="font-semibold text-[#2e6a4a]">
+                  Terms of Service
+                </Link>{" "}
+                and{" "}
+                <Link href="/privacy" className="font-semibold text-[#2e6a4a]">
+                  Privacy Policy
+                </Link>
+                .
+              </span>
+            </label>
+          </>
         )}
 
-        <Button
+        <button
           type="submit"
-          size="lg"
-          className="mt-6 w-full"
           disabled={!canSubmit || isSubmitting}
+          className="w-full cursor-pointer rounded-[11px] border-0 bg-[#2e6a4a] p-[15px] text-[16px] font-bold text-[#f4efe6] hover:bg-[#26583d] disabled:cursor-not-allowed disabled:opacity-45"
         >
           {isSubmitting
             ? isSignup
               ? "Creating your account…"
-              : "Signing you in…"
+              : "Logging in…"
             : isSignup
-              ? "Create account — 10 free credits"
+              ? "Create account — get 10 free credits"
               : "Log in"}
-        </Button>
+        </button>
       </form>
+
+      <p className="mt-[18px] text-center font-mono text-[13px] tracking-[0.02em] text-[#8a837a]">
+        Free forever plan · 10 credits on sign-up
+      </p>
     </div>
   )
 }

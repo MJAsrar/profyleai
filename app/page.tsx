@@ -70,7 +70,7 @@ export default function HomePage() {
               </div>
 
               <p className="font-mono text-[12px] tracking-[0.02em] text-[#8a837a]">
-                No card required · Your first résumé is free
+                No card required · 10 free credits to start
               </p>
             </section>
 

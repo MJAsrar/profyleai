@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
-import { Card } from "@/components/ui/card"
 import { CardGridSkeleton, ErrorState } from "@/components/ui/states"
 import { cn } from "@/lib/utils"
 
@@ -13,30 +12,48 @@ interface Template {
   previewUrl?: string | null
 }
 
+/**
+ * The template gallery, to the design.
+ *
+ * The templates and their categories come from /api/templates — the design's five named
+ * layouts (Modern, ATS-optimised, Tech, Minimalist, Traditional) are illustrative, and
+ * inventing filter chips for categories the database doesn't have would produce chips that
+ * filter to nothing. The chips below are built from the categories that actually exist.
+ */
+
 const FILTERS = [
   { value: "all", label: "All" },
   { value: "MODERN", label: "Modern" },
-  { value: "ATS", label: "ATS" },
+  { value: "ATS", label: "ATS-optimised" },
   { value: "CLASSIC", label: "Classic" },
   { value: "CREATIVE", label: "Creative" },
 ] as const
 
-/**
- * Template preview — a striped placeholder slot, per the design's asset notes
- * (no production imagery yet). Renders the template's name so the card still says
- * something rather than showing a broken image.
- */
-function PreviewSlot({ name }: { name: string }) {
+const CATEGORY_NOTE: Record<Template["category"], string> = {
+  MODERN: "CLEAN · TWO-COLUMN",
+  ATS: "PARSER-SAFE · SINGLE COLUMN",
+  CLASSIC: "CLASSIC · SERIF HEADINGS",
+  CREATIVE: "EXPRESSIVE · TYPE-LED",
+}
+
+/** The design's striped preview slot — there is no production imagery to show yet. */
+function PreviewSlot({ isAts }: { isAts: boolean }) {
   return (
     <div
-      className="relative flex aspect-[3/4] items-end overflow-hidden rounded-[10px] border border-border"
+      className="relative flex aspect-[3/4] items-end p-[14px]"
       style={{
         background:
-          "repeating-linear-gradient(135deg, #eef2ea 0 10px, #f6f3ec 10px 20px)",
+          "repeating-linear-gradient(135deg,#e7e1d5 0 11px,#efe9dd 11px 22px)",
       }}
     >
-      <span className="m-3 rounded-full bg-[var(--card-plain)]/85 px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.1em] text-ink-faint">
-        {name}
+      {isAts && (
+        <span className="absolute left-[14px] top-[14px] rounded-[6px] bg-[#2e6a4a] px-2 py-1 font-mono text-[10px] tracking-[0.06em] text-[#eaf3ec]">
+          ATS ✓
+        </span>
+      )}
+
+      <span className="rounded-[6px] bg-[rgba(255,253,248,.8)] px-2 py-1 font-mono text-[11px] text-[#8a7f70]">
+        template preview
       </span>
     </div>
   )
@@ -67,99 +84,93 @@ export function TemplateGallery() {
     return filter === "all" ? templates : templates.filter((t) => t.category === filter)
   }, [templates, filter])
 
+  // Only offer a filter that has something behind it.
+  const chips = FILTERS.filter(
+    (f) =>
+      f.value === "all" ||
+      !templates ||
+      templates.some((t) => t.category === f.value)
+  )
+
   return (
-    <section className="px-6 pb-20">
-      <div className="mx-auto max-w-[1100px]">
-        {/* Filter chips */}
-        <div className="flex flex-wrap justify-center gap-2">
-          {FILTERS.map((f) => {
-            const active = filter === f.value
-            const count =
-              f.value === "all"
-                ? templates?.length ?? 0
-                : templates?.filter((t) => t.category === f.value).length ?? 0
+    <>
+      <div className="flex flex-wrap justify-center gap-2.5 px-6 pb-10 pt-2 sm:px-14">
+        {chips.map((f) => {
+          const active = filter === f.value
 
-            return (
-              <button
-                key={f.value}
-                type="button"
-                onClick={() => setFilter(f.value)}
-                aria-pressed={active}
-                className={cn(
-                  "rounded-full px-3.5 py-1.5 text-[13px] font-medium transition-colors",
-                  active
-                    ? "bg-brand-tint text-brand"
-                    : "border border-border text-ink-muted hover:border-brand hover:text-brand"
-                )}
-              >
-                {f.label}
-                {templates && (
-                  <span className="ml-1.5 font-mono text-[10px] text-ink-faint-2">{count}</span>
-                )}
-              </button>
-            )
-          })}
-        </div>
-
-        <div className="mt-10">
-          {failed ? (
-            <ErrorState
-              title="Couldn't load templates"
-              description="They're there — the request just didn't make it. Try again."
-              onRetry={load}
-            />
-          ) : !templates ? (
-            <CardGridSkeleton count={6} />
-          ) : (
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {visible.map((template) => (
-                <Link key={template.id} href="/signup" className="rounded-card">
-                  <Card interactive className="h-full p-4">
-                    <PreviewSlot name={template.name} />
-
-                    <div className="mt-4 flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <h2 className="truncate font-sans text-[15px] font-bold text-ink">
-                          {template.name}
-                        </h2>
-                        <p className="mt-0.5 font-mono text-[10px] uppercase tracking-[0.1em] text-ink-faint">
-                          {template.category}
-                        </p>
-                      </div>
-
-                      {template.category === "ATS" && (
-                        <span className="shrink-0 rounded-full bg-brand-tint px-2 py-0.5 font-mono text-[10px] tracking-[0.06em] text-brand">
-                          ATS ✓
-                        </span>
-                      )}
-                    </div>
-
-                    <p className="mt-3 text-[13px] font-semibold text-brand">Use this →</p>
-                  </Card>
-                </Link>
-              ))}
-
-              {/* Start from blank */}
-              <Link href="/signup" className="rounded-card">
-                <Card className="flex h-full flex-col items-center justify-center border-dashed bg-transparent p-8 text-center shadow-none transition-colors hover:border-brand">
-                  <span
-                    aria-hidden="true"
-                    className="flex h-10 w-10 items-center justify-center rounded-[11px] border border-dashed border-border text-ink-faint"
-                  >
-                    +
-                  </span>
-                  <h2 className="mt-3.5 font-sans text-[15px] font-bold text-ink">
-                    Start from blank
-                  </h2>
-                  <p className="mt-1 text-[13px] text-ink-muted">
-                    Bring your own structure.
-                  </p>
-                </Card>
-              </Link>
-            </div>
-          )}
-        </div>
+          return (
+            <button
+              key={f.value}
+              type="button"
+              onClick={() => setFilter(f.value)}
+              aria-pressed={active}
+              className={cn(
+                "rounded-full px-4 py-[9px] text-[14px] transition-colors",
+                active
+                  ? "bg-[#2e6a4a] font-semibold text-[#f4efe6]"
+                  : "border border-[rgba(33,31,28,.12)] bg-[#fffdf8] text-[#4b463f] hover:border-[#2e6a4a] hover:text-[#2e6a4a]"
+              )}
+            >
+              {f.label}
+            </button>
+          )
+        })}
       </div>
-    </section>
+
+      <div className="px-6 pb-[76px] sm:px-14">
+        {failed ? (
+          <ErrorState
+            title="Couldn't load templates"
+            description="They're there — the request just didn't make it. Try again."
+            onRetry={load}
+          />
+        ) : !templates ? (
+          <CardGridSkeleton count={6} />
+        ) : (
+          <div className="grid gap-[22px] sm:grid-cols-2 lg:grid-cols-3">
+            {visible.map((template) => (
+              <div
+                key={template.id}
+                className="overflow-hidden rounded-[16px] border border-[rgba(33,31,28,.09)] bg-[#fffdf8] shadow-[0_20px_46px_-34px_rgba(30,25,20,.3)]"
+              >
+                <PreviewSlot isAts={template.category === "ATS"} />
+
+                <div className="flex items-center justify-between gap-3 px-5 py-[18px]">
+                  <div className="min-w-0">
+                    <p className="truncate text-[16px] font-bold text-[#211f1c]">
+                      {template.name}
+                    </p>
+                    <p className="mt-0.5 font-mono text-[11px] text-[#8a837a]">
+                      {CATEGORY_NOTE[template.category] ?? template.category}
+                    </p>
+                  </div>
+
+                  <Link
+                    href="/dashboard/resume-builder"
+                    className="shrink-0 text-[13px] font-semibold text-[#2e6a4a] hover:text-[#26583d]"
+                  >
+                    Use →
+                  </Link>
+                </div>
+              </div>
+            ))}
+
+            {/* Start from blank */}
+            <Link
+              href="/dashboard/resume-builder"
+              className="flex min-h-[240px] flex-col items-center justify-center gap-2.5 rounded-[16px] border-[1.5px] border-dashed border-[rgba(33,31,28,.2)] bg-transparent text-[#6f685f] transition-colors hover:border-[#2e6a4a] hover:text-[#2e6a4a]"
+            >
+              <span
+                aria-hidden="true"
+                className="flex h-11 w-11 items-center justify-center rounded-[12px] bg-[#e7efe8] text-[24px] font-light text-[#2e6a4a]"
+              >
+                +
+              </span>
+              <span className="text-[15px] font-semibold">Start from blank</span>
+            </Link>
+          </div>
+        )}
+      </div>
+    </>
   )
 }

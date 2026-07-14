@@ -1,18 +1,19 @@
 "use client"
 
 import Link from "next/link"
-import { Button, CreditCost } from "@/components/ui/button"
-import { JOURNEY_STEPS, type JourneyProgress, type JourneyStep, type TargetJobSummary } from "@/lib/journey"
+import {
+  JOURNEY_STEPS,
+  type JourneyProgress,
+  type JourneyStep,
+  type TargetJobSummary,
+} from "@/lib/journey"
 import { cn } from "@/lib/utils"
 
 /**
- * "Continue where you left off" — the dark evergreen module that anchors the
- * dashboard.
+ * "Continue where you left off" — the dark module that anchors the dashboard.
  *
- * This is the answer to the old home screen: six identical grey cards and a
- * nameless "Welcome back!", where a brand-new user and a power user saw exactly the
- * same thing. Now the dashboard leads with the specific job you're chasing and the
- * one action that moves it forward.
+ * The stepper is the design's: a checked circle for what's done, a filled paper circle for
+ * where you are, and dimmed outlines for what's ahead, joined by short connectors.
  */
 
 interface ContinueJourneyProps {
@@ -22,94 +23,126 @@ interface ContinueJourneyProps {
   isComplete: boolean
 }
 
-export function ContinueJourney({ job, progress, nextStep, isComplete }: ContinueJourneyProps) {
-  // First run: no job yet. Ask for the one thing everything else depends on.
+export function ContinueJourney({
+  job,
+  progress,
+  nextStep,
+  isComplete,
+}: ContinueJourneyProps) {
+  // First run: no job yet. Ask for the one thing every other step depends on.
   if (!job) {
     return (
-      <section className="rounded-panel bg-brand-deep p-7 text-paper">
-        <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-brand-on-dark">
-          Start here
+      <section className="rounded-[18px] bg-[#22322a] px-[30px] py-7">
+        <p className="mb-2.5 font-mono text-[11px] tracking-[0.12em] text-[#8fc7a3]">
+          START HERE
         </p>
 
-        <h2 className="mt-3 max-w-xl font-display text-[30px] leading-tight text-paper">
+        <h2 className="mb-1 text-[22px] font-bold text-[#f4efe6]">
           Tell us the job you&apos;re chasing.
         </h2>
 
-        <p className="mt-2.5 max-w-lg text-[15px] leading-relaxed text-paper/70">
+        <p className="mb-5 max-w-[520px] text-[14px] text-[#a9b7ad]">
           Enter it once and it carries through every step — your résumé gets tailored to
           it, your cover letter cites it, and your interview questions come from it.
         </p>
 
-        <Button asChild variant="onDark" size="lg" className="mt-6">
-          <Link href="/dashboard/resume-tailoring">Set your target job →</Link>
-        </Button>
+        <Link
+          href="/dashboard/resume-tailoring"
+          className="inline-flex rounded-[12px] bg-[#f4efe6] px-[22px] py-4 text-[15px] font-bold text-[#22322a] hover:bg-white"
+        >
+          Set your target job →
+        </Link>
       </section>
     )
   }
 
   return (
-    <section className="rounded-panel bg-brand-deep p-7 text-paper">
-      <div className="flex flex-wrap items-start justify-between gap-6">
-        <div className="min-w-0">
-          <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-brand-on-dark">
-            {isComplete ? "Ready to apply" : "Continue where you left off"}
-          </p>
+    <section className="flex flex-wrap items-center justify-between gap-[30px] rounded-[18px] bg-[#22322a] px-[30px] py-7">
+      <div className="min-w-0 flex-1">
+        <p className="mb-2.5 font-mono text-[11px] tracking-[0.12em] text-[#8fc7a3]">
+          {isComplete ? "READY TO APPLY" : "CONTINUE WHERE YOU LEFT OFF"}
+        </p>
 
-          <h2 className="mt-2.5 font-display text-[28px] leading-tight text-paper">
-            {job.role}
-            <span className="mx-2 font-normal text-paper/40">·</span>
-            <span className="font-normal text-paper/75">{job.company}</span>
-          </h2>
+        <p className="mb-1 truncate text-[22px] font-bold text-[#f4efe6]">
+          {job.role} · {job.company}
+        </p>
 
-          <p className="mt-2 max-w-lg text-[15px] leading-relaxed text-paper/70">
-            {isComplete
-              ? "Every step is done. Your résumé, cover letter and interview prep are all tuned to this role."
-              : nextStep.blurb}
-          </p>
-        </div>
+        <p className="mb-5 text-[14px] text-[#a9b7ad]">
+          {isComplete
+            ? "Every step is done. Your résumé, cover letter and interview prep are all tuned to this role."
+            : nextStep.blurb}
+        </p>
 
-        {!isComplete && (
-          <Button asChild variant="onDark" size="lg" className="shrink-0">
-            <Link href={nextStep.href}>
-              {nextStep.cta}
-              {nextStep.cost > 0 && (
-                <CreditCost credits={nextStep.cost} className="bg-brand-deep/10 text-brand-deep" />
-              )}
-            </Link>
-          </Button>
-        )}
+        {/* Stepper */}
+        <ol className="flex flex-wrap items-center gap-y-3">
+          {JOURNEY_STEPS.map((step, i) => {
+            const done = progress[step.key]
+            const isCurrent = step.key === nextStep.key && !isComplete
+
+            return (
+              <li key={step.key} className="flex items-center">
+                {i > 0 && (
+                  <span
+                    aria-hidden="true"
+                    className="mx-2.5 h-[2px] w-[26px] bg-[#3c5346]"
+                  />
+                )}
+
+                <span
+                  className={cn(
+                    "flex items-center gap-2",
+                    !done && !isCurrent && "opacity-50"
+                  )}
+                >
+                  <span
+                    aria-hidden="true"
+                    className={cn(
+                      "flex h-6 w-6 items-center justify-center rounded-full text-[12px]",
+                      done && "bg-[#2e6a4a] text-[#f4efe6]",
+                      isCurrent &&
+                        "bg-[#f4efe6] font-mono text-[11px] font-bold text-[#22322a]",
+                      !done &&
+                        !isCurrent &&
+                        "border-[1.5px] border-[#6f8a7a] font-mono text-[11px] text-[#a9b7ad]"
+                    )}
+                  >
+                    {done ? "✓" : i + 1}
+                  </span>
+
+                  <span
+                    className={cn(
+                      "text-[13px]",
+                      isCurrent
+                        ? "font-semibold text-[#f4efe6]"
+                        : done
+                          ? "text-[#cddccf]"
+                          : "text-[#a9b7ad]"
+                    )}
+                  >
+                    {step.shortLabel}
+                  </span>
+
+                  <span className="sr-only">
+                    {done ? "done" : isCurrent ? "next" : "not started"}
+                  </span>
+                </span>
+              </li>
+            )
+          })}
+        </ol>
       </div>
 
-      {/* Mini stepper — five dots, one per step. */}
-      <ol className="mt-7 flex flex-wrap items-center gap-x-1.5 gap-y-2">
-        {JOURNEY_STEPS.map((step, i) => {
-          const done = progress[step.key]
-          const isNext = step.key === nextStep.key && !isComplete
-
-          return (
-            <li key={step.key} className="flex items-center gap-1.5">
-              {i > 0 && <span aria-hidden="true" className="text-paper/25">—</span>}
-
-              <span
-                className={cn(
-                  "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-mono text-[11px] tracking-[0.06em] transition-colors",
-                  done && "text-brand-on-dark",
-                  isNext && "bg-paper/12 font-medium text-paper",
-                  !done && !isNext && "text-paper/40"
-                )}
-              >
-                <span aria-hidden="true" className="text-[9px]">
-                  {done ? "●" : "○"}
-                </span>
-                {step.shortLabel}
-                <span className="sr-only">
-                  {done ? " (done)" : isNext ? " (next)" : " (not started)"}
-                </span>
-              </span>
-            </li>
-          )
-        })}
-      </ol>
+      {!isComplete && (
+        <Link
+          href={nextStep.href}
+          className="inline-flex shrink-0 flex-col items-start gap-[3px] rounded-[12px] bg-[#f4efe6] px-[22px] py-4 hover:bg-white"
+        >
+          <span className="text-[15px] font-bold text-[#22322a]">{nextStep.cta} →</span>
+          <span className="font-mono text-[11px] text-[#4a6b57]">
+            {nextStep.cost > 0 ? `costs ${nextStep.cost} credits` : "free"}
+          </span>
+        </Link>
+      )}
     </section>
   )
 }

@@ -5,30 +5,38 @@ import { TemplateGallery } from "@/components/marketing/template-gallery"
 export const metadata = {
   title: "Templates",
   description:
-    "ATS-safe résumé templates that survive applicant tracking systems — modern, classic, creative and ATS-optimised.",
+    "Résumé templates tuned for applicant tracking systems — pick one and edit it in the builder.",
 }
 
 export default function TemplatesPage() {
   return (
-    <div className="min-h-screen bg-paper">
-      <PublicNav />
+    <div className="min-h-screen bg-[#f6f3ec]">
+      <div className="mx-auto w-full max-w-[1440px] overflow-hidden bg-[#f6f3ec]">
+        <PublicNav />
 
-      <main>
-        <section className="px-6 pb-10 pt-20 text-center">
-          <p className="eyebrow">Templates</p>
-          <h1 className="mx-auto mt-4 max-w-[620px] text-balance font-display text-[44px] leading-[1.06] text-ink">
-            Templates that survive the <em className="not-italic text-brand">robots</em>.
-          </h1>
-          <p className="mx-auto mt-5 max-w-[520px] text-[17px] leading-relaxed text-ink-muted">
-            Every one is parseable by applicant tracking systems — no columns that scramble,
-            no graphics that vanish. Pick one; you can switch any time.
-          </p>
-        </section>
+        <main>
+          <section className="px-6 pb-[34px] pt-[72px] text-center sm:px-14">
+            <p className="mb-5 font-mono text-[13px] tracking-[0.16em] text-[#2e6a4a]">
+              TEMPLATES
+            </p>
 
-        <TemplateGallery />
-      </main>
+            <h1 className="mx-auto mb-[18px] max-w-[760px] font-display text-[38px] font-medium leading-[1.04] tracking-[-0.015em] text-[#211f1c] sm:text-[52px]">
+              Résumé templates recruiters actually open.
+            </h1>
 
-      <SiteFooter />
+            <p className="mx-auto max-w-[560px] text-[18px] leading-[1.55] text-[#5c564d]">
+              Layouts tuned for applicant-tracking systems. Pick one and edit it in the
+              builder — or start from a blank page.
+            </p>
+          </section>
+
+          <TemplateGallery />
+        </main>
+
+        <div className="border-t border-[rgba(33,31,28,.08)]">
+          <SiteFooter />
+        </div>
+      </div>
     </div>
   )
 }

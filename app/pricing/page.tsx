@@ -1,15 +1,24 @@
 import Link from "next/link"
 import { PublicNav } from "@/components/layout/public-nav"
 import { SiteFooter } from "@/components/layout/site-footer"
-import { Button } from "@/components/ui/button"
 import { CREDIT_COSTS, CREDIT_PACKAGES } from "@/lib/types/credits"
 import { generateMetadata } from "@/lib/seo-config"
 import { cn } from "@/lib/utils"
 
-export const metadata = generateMetadata('home')
+export const metadata = generateMetadata("home")
 
-/** What a credit actually buys — so the packs below mean something. */
-const LEGEND = [
+/**
+ * Pricing, to the design.
+ *
+ * The packs are read from CREDIT_PACKAGES — the same constant the purchase API prices
+ * against and Stripe charges — rather than the design's illustrative packs, which don't
+ * exist in this app. The costs come from CREDIT_COSTS for the same reason.
+ *
+ * The design's subhead said "Building résumés is free". It isn't: POST /api/resumes charges
+ * CREDIT_COSTS.RESUME_BUILDER.
+ */
+
+const LEGEND: Array<{ label: string; cost: number }> = [
   { label: "Build a résumé", cost: CREDIT_COSTS.RESUME_BUILDER },
   { label: "Tailor to a job", cost: CREDIT_COSTS.RESUME_TAILORING },
   { label: "Cover letter", cost: CREDIT_COSTS.COVER_LETTER },
@@ -17,144 +26,150 @@ const LEGEND = [
   { label: "Voice interview", cost: CREDIT_COSTS.VIDEO_INTERVIEW },
 ]
 
-/** The pack we point most people at. */
-const POPULAR_ID = "value"
-
 export default function PricingPage() {
   const packages = Object.values(CREDIT_PACKAGES)
 
   return (
-    <div className="min-h-screen bg-paper">
-      <PublicNav />
+    <div className="min-h-screen bg-[#f6f3ec]">
+      <div className="mx-auto w-full max-w-[1440px] overflow-hidden bg-[#f6f3ec]">
+        <PublicNav />
 
-      <main>
-        <section className="px-6 pb-14 pt-20 text-center">
-          <p className="eyebrow">Pricing</p>
-          <h1 className="mx-auto mt-4 max-w-[640px] text-balance font-display text-[44px] leading-[1.06] text-ink">
-            Pay for what you use. <em className="not-italic text-brand">Credits never expire.</em>
-          </h1>
-          <p className="mx-auto mt-5 max-w-[520px] text-[17px] leading-relaxed text-ink-muted">
-            No subscription. Buy a pack, spend it whenever you&apos;re applying — there&apos;s
-            no clock running.
-          </p>
-        </section>
-
-        {/* What a credit buys */}
-        <section className="px-6 pb-14">
-          <div className="mx-auto max-w-[1000px] rounded-panel border border-border bg-card p-6 shadow-card">
-            <p className="text-center font-mono text-[10px] uppercase tracking-[0.14em] text-ink-faint">
-              What a credit buys
+        <main>
+          {/* ---- Hero ---- */}
+          <section className="px-6 pb-[30px] pt-[72px] text-center sm:px-14">
+            <p className="mb-5 font-mono text-[13px] tracking-[0.16em] text-[#2e6a4a]">
+              PRICING
             </p>
 
-            <ul className="mt-5 flex flex-wrap items-center justify-center gap-x-3 gap-y-3">
-              {LEGEND.map((item) => (
-                <li
-                  key={item.label}
-                  className="flex items-center gap-2 rounded-full border border-border bg-[var(--card-plain)] px-3.5 py-2"
-                >
-                  <span className="text-[13px] text-ink-2">{item.label}</span>
-                  {/* No action costs a single credit, so "credits" is always correct. */}
-                  <span className="rounded-full bg-brand-tint px-2 py-0.5 font-mono text-[10px] tracking-[0.06em] text-brand">
-                    {item.cost} credits
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </section>
+            <h1 className="mx-auto mb-[18px] max-w-[640px] font-display text-[38px] font-medium leading-[1.04] tracking-[-0.015em] text-[#211f1c] sm:text-[52px]">
+              Pay for what you use. Credits never expire.
+            </h1>
 
-        {/* Packs */}
-        <section className="px-6 pb-20">
-          <div className="mx-auto grid max-w-[1200px] gap-4 sm:grid-cols-2 lg:grid-cols-5">
-            {packages.map((pkg) => {
-              const popular = pkg.id === POPULAR_ID
-              const perCredit = pkg.price / pkg.credits
+            <p className="mx-auto max-w-[520px] text-[18px] leading-[1.55] text-[#5c564d]">
+              No subscription. You spend credits only when the app actually does something
+              for you — and you start with ten on us.
+            </p>
+          </section>
+
+          {/* ---- What a credit buys ---- */}
+          <section className="px-6 pb-11 pt-[14px] sm:px-14">
+            <div className="flex flex-wrap items-center justify-between gap-4 rounded-[16px] border border-[rgba(33,31,28,.07)] bg-[#eef2ea] px-[26px] py-[22px]">
+              <span className="whitespace-nowrap font-mono text-[12px] tracking-[0.1em] text-[#2e6a4a]">
+                WHAT A CREDIT BUYS
+              </span>
+
+              <div className="flex flex-wrap items-center gap-x-[26px] gap-y-2">
+                {LEGEND.map((item, i) => (
+                  <span key={item.label} className="flex items-center gap-x-[26px]">
+                    {i > 0 && (
+                      <span
+                        aria-hidden="true"
+                        className="hidden h-[5px] w-[5px] rounded-full bg-[#c9c2b6] sm:block"
+                      />
+                    )}
+                    <span className="text-[14px] text-[#3a352e]">
+                      <strong className="font-bold">{item.label}</strong> —{" "}
+                      {item.cost === 0 ? "free" : item.cost}
+                    </span>
+                  </span>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* ---- Packs ---- */}
+          <section className="grid gap-4 px-6 pb-[30px] sm:px-14 md:grid-cols-2 lg:grid-cols-5">
+            {packages.map((pack) => {
+              const popular = pack.popular
+              const perCredit = pack.price / pack.credits
 
               return (
                 <div
-                  key={pkg.id}
+                  key={pack.id}
                   className={cn(
-                    "flex flex-col rounded-card border p-6 shadow-card transition-colors",
+                    "relative flex flex-col rounded-[16px] border px-5 py-6",
                     popular
-                      ? "border-transparent bg-brand-deep text-paper"
-                      : "border-border bg-card hover:border-brand"
+                      ? "border-[#22322a] bg-[#22322a] shadow-[0_24px_50px_-30px_rgba(30,25,20,.5)]"
+                      : "border-[rgba(33,31,28,.1)] bg-[#fffdf8]"
                   )}
                 >
                   {popular && (
-                    <span className="mb-3 inline-flex w-fit rounded-full bg-brand-on-dark/20 px-2.5 py-1 font-mono text-[9px] uppercase tracking-[0.14em] text-brand-on-dark">
-                      Most popular
+                    <span className="absolute -top-[11px] left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-[#2e6a4a] px-2.5 py-1 font-mono text-[10px] tracking-[0.1em] text-[#eaf3ec]">
+                      MOST POPULAR
                     </span>
                   )}
 
-                  <h2
-                    className={cn(
-                      "font-sans text-[15px] font-bold",
-                      popular ? "text-paper" : "text-ink"
-                    )}
-                  >
-                    {pkg.name}
-                  </h2>
-
                   <p
                     className={cn(
-                      "mt-3 font-display text-[36px] leading-none",
-                      popular ? "text-paper" : "text-ink"
+                      "mb-3 text-[15px] font-bold",
+                      popular ? "text-[#f4efe6]" : "text-[#211f1c]"
                     )}
                   >
-                    ${pkg.price}
+                    {pack.name}
                   </p>
 
                   <p
                     className={cn(
-                      "mt-2 font-mono text-[11px] tracking-[0.06em]",
-                      popular ? "text-brand-on-dark" : "text-brand"
+                      "font-display text-[40px] leading-none",
+                      popular ? "text-[#f4efe6]" : "text-[#211f1c]"
                     )}
                   >
-                    {pkg.credits} credits
+                    {pack.credits}
                   </p>
 
                   <p
                     className={cn(
-                      "mt-1 font-mono text-[10px] tracking-[0.06em]",
-                      popular ? "text-paper/50" : "text-ink-faint"
+                      "mb-4 font-mono text-[11px] tracking-[0.05em]",
+                      popular ? "text-[#8fc7a3]" : "text-[#8a837a]"
                     )}
                   >
-                    ≈ {perCredit.toFixed(2)}¢ per credit
+                    CREDITS
+                    {pack.bonusPercentage > 0 && ` · +${pack.bonusPercentage}% BONUS`}
                   </p>
 
-                  <Button
-                    asChild
-                    size="sm"
-                    variant={popular ? "onDark" : "outline"}
-                    className="mt-6 w-full"
+                  <p
+                    className={cn(
+                      "text-[24px] font-bold",
+                      popular ? "text-[#f4efe6]" : "text-[#211f1c]"
+                    )}
                   >
-                    <Link href="/signup">Get {pkg.credits}</Link>
-                  </Button>
+                    ${pack.price.toFixed(0)}
+                  </p>
+
+                  <p
+                    className={cn(
+                      "mb-5 text-[12px]",
+                      popular ? "text-[#a9b7ad]" : "text-[#8a837a]"
+                    )}
+                  >
+                    ≈ ${perCredit.toFixed(2)} / credit
+                  </p>
+
+                  <Link
+                    href="/signup"
+                    className={cn(
+                      "mt-auto rounded-[10px] py-[11px] text-center text-[14px]",
+                      popular
+                        ? "bg-[#f4efe6] font-bold text-[#22322a] hover:bg-white"
+                        : "border border-[#2e6a4a] font-semibold text-[#2e6a4a] hover:bg-[#2e6a4a] hover:text-[#f4efe6]"
+                    )}
+                  >
+                    Buy credits
+                  </Link>
                 </div>
               )
             })}
-          </div>
+          </section>
 
-          <p className="mx-auto mt-8 max-w-[560px] text-center font-mono text-[11px] leading-relaxed tracking-[0.04em] text-ink-faint">
-            Every new account starts with 10 free credits. Credits never expire, and you
-            can buy more at any time.
+          <p className="px-6 pb-[68px] text-center font-mono text-[12px] tracking-[0.04em] text-[#8a837a] sm:px-14">
+            10 free credits on sign-up · credits never expire · secure checkout
           </p>
-        </section>
+        </main>
 
-        {/* CTA */}
-        <section className="bg-brand-deep px-6 py-16">
-          <div className="mx-auto max-w-[640px] text-center">
-            <h2 className="font-display text-[32px] leading-tight text-paper">
-              Try it before you pay anything.
-            </h2>
-            <Button asChild size="lg" variant="onDark" className="mt-6">
-              <Link href="/signup">Start free — 10 credits</Link>
-            </Button>
-          </div>
-        </section>
-      </main>
-
-      <SiteFooter />
+        <div className="border-t border-[rgba(33,31,28,.08)]">
+          <SiteFooter />
+        </div>
+      </div>
     </div>
   )
 }

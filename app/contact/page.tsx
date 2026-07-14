@@ -1,86 +1,97 @@
 import { PublicNav } from "@/components/layout/public-nav"
 import { SiteFooter } from "@/components/layout/site-footer"
-import { ContactForm } from "@/components/marketing/contact-form"
-import { Monogram } from "@/components/ui/monogram"
+import { ContactForm, CONTACT_EMAIL } from "@/components/marketing/contact-form"
 
 export const metadata = {
   title: "Contact",
-  description: "Talk to a human at ProfyleAI — support, billing and privacy questions.",
+  description: "Get in touch with ProfyleAI.",
 }
 
-const INQUIRIES = [
+/**
+ * Contact, to the design.
+ *
+ * The design promised "we reply within one business day" and printed support hours of
+ * Mon–Fri 9–6 ET. Neither is a thing this project can honour, so neither is claimed.
+ */
+const ROUTES = [
   {
-    code: "SU",
-    tone: "brand" as const,
-    label: "Support",
-    desc: "Something's broken, or a generation didn't come out right.",
+    code: "GE",
+    title: "General questions",
+    blurb: "About the product or your account",
   },
   {
     code: "BI",
-    tone: "clay" as const,
-    label: "Billing",
-    desc: "Credits, refunds, or a charge you don't recognise.",
+    title: "Billing & credits",
+    blurb: "Payments, refunds, credit balance",
   },
   {
-    code: "PR",
-    tone: "indigo" as const,
-    label: "Privacy",
-    desc: "Data export, deletion, or a question about what we store.",
+    code: "TE",
+    title: "Technical support",
+    blurb: "Something isn't working right",
   },
 ]
 
 export default function ContactPage() {
   return (
-    <div className="min-h-screen bg-paper">
-      <PublicNav />
+    <div className="min-h-screen bg-[#f6f3ec]">
+      <div className="mx-auto w-full max-w-[1440px] overflow-hidden bg-[#f6f3ec]">
+        <PublicNav />
 
-      <main className="mx-auto max-w-[1100px] px-6 pb-20 pt-20">
-        <div className="grid gap-14 lg:grid-cols-2">
+        <main className="grid gap-14 px-6 py-16 sm:px-[52px] lg:grid-cols-[1fr_1.1fr]">
           <div>
-            <p className="eyebrow">Contact</p>
-            <h1 className="mt-4 font-display text-[44px] leading-[1.06] text-ink">
-              Talk to a human.
-            </h1>
-            <p className="mt-5 max-w-md text-[17px] leading-relaxed text-ink-muted">
-              A real person reads every message. If something went wrong with a paid
-              generation, say so — we&apos;ll make it right.
+            <p className="mb-[18px] font-mono text-[13px] tracking-[0.16em] text-[#2e6a4a]">
+              CONTACT
             </p>
 
-            <ul className="mt-10 space-y-5">
-              {INQUIRIES.map((item) => (
-                <li key={item.label} className="flex items-start gap-4">
-                  <Monogram tone={item.tone}>{item.code}</Monogram>
-                  <div>
-                    <p className="text-[15px] font-bold text-ink">{item.label}</p>
-                    <p className="mt-0.5 text-[14px] leading-relaxed text-ink-muted">
-                      {item.desc}
-                    </p>
-                  </div>
+            <h1 className="mb-4 font-display text-[36px] font-medium leading-[1.05] tracking-[-0.015em] text-[#211f1c] sm:text-[44px]">
+              Talk to a human.
+            </h1>
+
+            <p className="mb-[30px] max-w-[400px] text-[17px] leading-[1.6] text-[#5c564d]">
+              Say what your message is about so it reaches the right person faster. A person
+              reads every one of these.
+            </p>
+
+            <ul className="mb-[30px] flex flex-col gap-[14px]">
+              {ROUTES.map((route) => (
+                <li key={route.code} className="flex items-center gap-[13px]">
+                  <span
+                    aria-hidden="true"
+                    className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[9px] bg-[#e7efe8] font-mono text-[12px] font-bold text-[#2e6a4a]"
+                  >
+                    {route.code}
+                  </span>
+
+                  <span>
+                    <span className="block text-[15px] font-semibold text-[#211f1c]">
+                      {route.title}
+                    </span>
+                    <span className="block text-[13px] text-[#8a837a]">{route.blurb}</span>
+                  </span>
                 </li>
               ))}
             </ul>
 
-            <div className="mt-10 border-t border-border pt-6">
-              <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-faint">
-                Or email us
+            <div className="border-t border-[rgba(33,31,28,.1)] pt-5">
+              <p className="mb-1.5 font-mono text-[11px] tracking-[0.08em] text-[#8a837a]">
+                EMAIL US DIRECTLY
               </p>
               <a
-                href="mailto:support@profyleai.com"
-                className="mt-1.5 block text-[16px] font-semibold text-brand underline-offset-4 hover:underline"
+                href={`mailto:${CONTACT_EMAIL}`}
+                className="text-[16px] font-semibold text-[#2e6a4a] hover:underline"
               >
-                support@profyleai.com
+                {CONTACT_EMAIL}
               </a>
-              <p className="mt-2 font-mono text-[11px] tracking-[0.04em] text-ink-faint">
-                Replies within one working day.
-              </p>
             </div>
           </div>
 
           <ContactForm />
-        </div>
-      </main>
+        </main>
 
-      <SiteFooter />
+        <div className="border-t border-[rgba(33,31,28,.08)]">
+          <SiteFooter />
+        </div>
+      </div>
     </div>
   )
 }

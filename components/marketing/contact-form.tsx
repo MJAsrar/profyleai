@@ -2,20 +2,31 @@
 
 import { useState } from "react"
 import { toast } from "sonner"
-import { Button } from "@/components/ui/button"
 import { Input, FieldLabel } from "@/components/ui/input"
-import { Card } from "@/components/ui/card"
-import { cn } from "@/lib/utils"
 
-const TOPICS = ["Support", "Billing", "Privacy", "Something else"]
+const TOPICS = [
+  "General questions",
+  "Billing & credits",
+  "Technical support",
+  "Privacy",
+] as const
 
+/** The address used everywhere else in the app (terms, privacy). */
+export const CONTACT_EMAIL = "junaidasrar04@gmail.com"
+
+/**
+ * The contact form, to the design.
+ *
+ * There is no contact endpoint in this app, so the form hands the message to the user's own
+ * mail client rather than pretending it was delivered to a support queue that doesn't exist.
+ * The button says so.
+ */
 export function ContactForm() {
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
-  const [topic, setTopic] = useState(TOPICS[0])
+  const [topic, setTopic] = useState<string>(TOPICS[0])
   const [message, setMessage] = useState("")
   const [errors, setErrors] = useState<Record<string, string>>({})
-  const [sending, setSending] = useState(false)
 
   function validate() {
     const next: Record<string, string> = {}
@@ -26,94 +37,99 @@ export function ContactForm() {
     return Object.keys(next).length === 0
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!validate()) return
 
-    setSending(true)
-    try {
-      // No contact endpoint exists yet — hand off to the user's mail client rather
-      // than pretending the message was delivered.
-      const subject = encodeURIComponent(`[${topic}] from ${name}`)
-      const body = encodeURIComponent(`${message}\n\n— ${name} (${email})`)
-      window.location.href = `mailto:support@profyleai.com?subject=${subject}&body=${body}`
-      toast.success("Opening your email app…")
-    } finally {
-      setSending(false)
-    }
+    const subject = encodeURIComponent(`[${topic}] from ${name}`)
+    const body = encodeURIComponent(`${message}\n\n— ${name} (${email})`)
+    window.location.href = `mailto:${CONTACT_EMAIL}?subject=${subject}&body=${body}`
+    toast.success("Opening your email app…")
   }
 
+  const fieldError = (key: string) =>
+    errors[key] ? (
+      <p className="mt-1.5 text-[12px] text-[#b4472f]">{errors[key]}</p>
+    ) : null
+
   return (
-    <Card className="h-fit p-7">
-      <form onSubmit={handleSubmit} noValidate>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <FieldLabel htmlFor="c-name">Name</FieldLabel>
-            <Input
-              id="c-name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              onBlur={validate}
-              aria-invalid={!!errors.name}
-            />
-            {errors.name && <p className="mt-1.5 text-[12px] text-danger">{errors.name}</p>}
-          </div>
-
-          <div>
-            <FieldLabel htmlFor="c-email">Email</FieldLabel>
-            <Input
-              id="c-email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              onBlur={validate}
-              aria-invalid={!!errors.email}
-            />
-            {errors.email && <p className="mt-1.5 text-[12px] text-danger">{errors.email}</p>}
-          </div>
-        </div>
-
-        <div className="mt-4">
-          <FieldLabel>What&apos;s this about?</FieldLabel>
-          <div className="flex flex-wrap gap-2">
-            {TOPICS.map((t) => (
-              <button
-                key={t}
-                type="button"
-                onClick={() => setTopic(t)}
-                aria-pressed={topic === t}
-                className={cn(
-                  "rounded-full px-3 py-1.5 text-[13px] transition-colors",
-                  topic === t
-                    ? "bg-brand-tint font-semibold text-brand"
-                    : "border border-border text-ink-muted hover:border-brand hover:text-brand"
-                )}
-              >
-                {t}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="mt-4">
-          <FieldLabel htmlFor="c-message">Message</FieldLabel>
-          <textarea
-            id="c-message"
-            rows={6}
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
+    <form
+      onSubmit={handleSubmit}
+      noValidate
+      className="rounded-[18px] border border-[rgba(33,31,28,.09)] bg-[#fffdf8] p-8"
+      style={{ boxShadow: "0 24px 60px -36px rgba(30,25,20,.28)" }}
+    >
+      <div className="mb-4 grid gap-4 sm:grid-cols-2">
+        <div>
+          <FieldLabel htmlFor="c-name">Name</FieldLabel>
+          <Input
+            id="c-name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
             onBlur={validate}
-            aria-invalid={!!errors.message}
-            className="w-full rounded-input border border-border bg-[var(--card-plain)] px-3.5 py-3 text-[15px] text-ink placeholder:text-ink-faint transition-colors focus-visible:border-brand focus-visible:shadow-focus focus-visible:outline-none"
-            placeholder="What happened, and what were you trying to do?"
+            aria-invalid={!!errors.name}
+            placeholder="Alex Rivera"
           />
-          {errors.message && <p className="mt-1.5 text-[12px] text-danger">{errors.message}</p>}
+          {fieldError("name")}
         </div>
 
-        <Button type="submit" size="lg" className="mt-6 w-full" disabled={sending}>
-          {sending ? "Opening…" : "Send message"}
-        </Button>
-      </form>
-    </Card>
+        <div>
+          <FieldLabel htmlFor="c-email">Email</FieldLabel>
+          <Input
+            id="c-email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            onBlur={validate}
+            aria-invalid={!!errors.email}
+            placeholder="you@email.com"
+          />
+          {fieldError("email")}
+        </div>
+      </div>
+
+      <div className="mb-4">
+        <FieldLabel htmlFor="c-topic">What&apos;s this about?</FieldLabel>
+        <select
+          id="c-topic"
+          value={topic}
+          onChange={(e) => setTopic(e.target.value)}
+          className="w-full rounded-[10px] border border-[rgba(33,31,28,.16)] bg-white px-[14px] py-3 text-[15px] text-[#211f1c] focus-visible:border-[#2e6a4a] focus-visible:shadow-[0_0_0_3px_rgba(46,106,74,.12)] focus-visible:outline-none"
+        >
+          {TOPICS.map((t) => (
+            <option key={t} value={t}>
+              {t}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="mb-5">
+        <FieldLabel htmlFor="c-message">Message</FieldLabel>
+        <textarea
+          id="c-message"
+          rows={5}
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          onBlur={validate}
+          aria-invalid={!!errors.message}
+          placeholder="Tell us what's going on…"
+          className="w-full resize-y rounded-[10px] border border-[rgba(33,31,28,.16)] bg-white px-[14px] py-3 text-[15px] text-[#211f1c] placeholder:text-[#a79f93] focus-visible:border-[#2e6a4a] focus-visible:shadow-[0_0_0_3px_rgba(46,106,74,.12)] focus-visible:outline-none"
+        />
+        {fieldError("message")}
+      </div>
+
+      <button
+        type="submit"
+        className="w-full cursor-pointer rounded-[11px] border-0 bg-[#2e6a4a] p-[14px] text-[16px] font-bold text-[#f4efe6] hover:bg-[#26583d]"
+      >
+        Write this email
+      </button>
+
+      <p className="mt-3 text-center font-mono text-[11px] leading-relaxed tracking-[0.04em] text-[#8a837a]">
+        This opens your own email app — we don&apos;t have a support inbox that receives
+        forms.
+      </p>
+    </form>
   )
 }

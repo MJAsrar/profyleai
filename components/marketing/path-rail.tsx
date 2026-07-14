@@ -1,18 +1,25 @@
+import { CREDIT_COSTS } from "@/lib/types/credits"
+
 /**
  * "Your path" — the six steps of the journey on a gradient rail.
  *
- * Values, sizes and colours are taken directly from the design: the rail runs from pale
- * sage into evergreen, the first and last markers are filled, and the four in between are
- * outlined.
+ * Sizes and colours are taken directly from the design: the rail runs from pale sage into
+ * evergreen, the first and last markers are filled, the four in between are outlined.
+ *
+ * The credit costs are read from CREDIT_COSTS rather than typed in, so this rail cannot
+ * quote a price the billing code doesn't charge. (The design labelled "Build résumé" as
+ * free; POST /api/resumes charges CREDIT_COSTS.RESUME_BUILDER for it.)
  */
+
+const cost = (n: number) => (n === 0 ? "free" : `${n} credit${n === 1 ? "" : "s"}`)
 
 const STEPS = [
   { label: "Paste the job", note: "start here", filled: true },
-  { label: "Build résumé", note: "free", filled: false },
-  { label: "Tailor to role", note: "2 credits", filled: false },
-  { label: "Cover letter", note: "2 credits", filled: false },
-  { label: "Interview prep", note: "5 credits", filled: false },
-  { label: "Voice interview", note: "50 credits", filled: true },
+  { label: "Build résumé", note: cost(CREDIT_COSTS.RESUME_BUILDER), filled: false },
+  { label: "Tailor to role", note: cost(CREDIT_COSTS.RESUME_TAILORING), filled: false },
+  { label: "Cover letter", note: cost(CREDIT_COSTS.COVER_LETTER), filled: false },
+  { label: "Interview prep", note: cost(CREDIT_COSTS.TEXT_INTERVIEW), filled: false },
+  { label: "Voice interview", note: cost(CREDIT_COSTS.VIDEO_INTERVIEW), filled: true },
 ]
 
 export function PathRail() {

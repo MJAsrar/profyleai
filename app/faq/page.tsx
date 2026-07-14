@@ -68,62 +68,81 @@ const GROUPS = [
 
 export default function FAQPage() {
   return (
-    <div className="min-h-screen bg-paper">
-      <PublicNav />
+    <div className="min-h-screen bg-[#f6f3ec]">
+      <div className="mx-auto w-full max-w-[1440px] overflow-hidden bg-[#f6f3ec]">
+        <PublicNav />
 
-      <main className="mx-auto max-w-[1000px] px-6 pb-20 pt-20">
-        <div className="text-center">
-          <p className="eyebrow">FAQ</p>
-          <h1 className="mt-4 font-display text-[44px] leading-[1.06] text-ink">
-            Questions, answered plainly.
-          </h1>
-        </div>
+        <main>
+          <section className="px-6 pb-10 pt-16 text-center sm:px-12">
+            <p className="mb-[18px] font-mono text-[13px] tracking-[0.16em] text-[#2e6a4a]">
+              FAQ
+            </p>
 
-        <div className="mt-14 space-y-12">
-          {GROUPS.map((group) => (
-            <section key={group.label}>
-              <h2 className="font-mono text-[10px] uppercase tracking-[0.16em] text-brand">
-                {group.label}
-              </h2>
+            <h1 className="mb-[14px] font-display text-[36px] font-medium leading-[1.04] tracking-[-0.015em] text-[#211f1c] sm:text-[48px]">
+              Questions, answered.
+            </h1>
 
-              <div className="mt-4 divide-y divide-border overflow-hidden rounded-card border border-border bg-card">
+            <p className="text-[17px] text-[#5c564d]">
+              Everything about credits, privacy, and how the tools fit together.
+            </p>
+          </section>
+
+          <section className="mx-auto max-w-[900px] px-6 pb-5 sm:px-12">
+            {GROUPS.map((group, gi) => (
+              <div key={group.label}>
+                <p
+                  className={`mb-2.5 font-mono text-[11px] uppercase tracking-[0.12em] text-[#8a837a] ${
+                    gi === 0 ? "mt-2" : "mt-[26px]"
+                  }`}
+                >
+                  {group.label}
+                </p>
+
                 {group.items.map((item, i) => (
                   <details
                     key={item.q}
-                    className="group"
-                    open={group.label === "General" && i === 0}
+                    open={gi === 0 && i === 0}
+                    className={`group border-t border-[rgba(33,31,28,.1)] ${
+                      gi === GROUPS.length - 1 && i === group.items.length - 1
+                        ? "border-b"
+                        : ""
+                    }`}
                   >
-                    <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 text-[15px] font-semibold text-ink transition-colors hover:bg-section-tint/50 [&::-webkit-details-marker]:hidden">
+                    <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-1 py-5 text-[17px] font-semibold text-[#211f1c] [&::-webkit-details-marker]:hidden">
                       {item.q}
 
                       <span
                         aria-hidden="true"
-                        className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-section-tint font-mono text-[13px] text-ink-muted transition-colors group-open:bg-brand-tint group-open:text-brand"
+                        className="flex h-6 w-6 shrink-0 items-center justify-center rounded-[7px] bg-[#e7efe8] text-[16px] text-[#2e6a4a]"
                       >
                         <span className="group-open:hidden">+</span>
                         <span className="hidden group-open:inline">−</span>
                       </span>
                     </summary>
 
-                    <div className="px-5 pb-5 pr-14">
-                      <p className="text-[15px] leading-relaxed text-ink-muted">{item.a}</p>
-                    </div>
+                    <p className="max-w-[760px] px-1 pb-[22px] text-[15px] leading-[1.6] text-[#5c564d]">
+                      {item.a}
+                    </p>
                   </details>
                 ))}
               </div>
-            </section>
-          ))}
+            ))}
+          </section>
+
+          <p className="px-6 pb-14 pt-[14px] text-center sm:px-12">
+            <Link
+              href="/contact"
+              className="inline-flex items-center gap-2 text-[15px] font-semibold text-[#2e6a4a] hover:text-[#26583d]"
+            >
+              Still have a question? Contact us →
+            </Link>
+          </p>
+        </main>
+
+        <div className="border-t border-[rgba(33,31,28,.08)]">
+          <SiteFooter />
         </div>
-
-        <p className="mt-12 text-center text-[15px] text-ink-muted">
-          Still stuck?{" "}
-          <Link href="/contact" className="font-semibold text-brand underline-offset-4 hover:underline">
-            Contact us →
-          </Link>
-        </p>
-      </main>
-
-      <SiteFooter />
+      </div>
     </div>
   )
 }

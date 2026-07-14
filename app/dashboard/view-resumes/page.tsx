@@ -185,6 +185,7 @@ export default function ViewResumesPage() {
                       onEdit={() =>
                         router.push(`/dashboard/resume-builder?resumeId=${resume.id}`)
                       }
+                      onPreview={() => router.push("/dashboard/preview")}
                       onDownload={() => download(resume.id, resume.title, false)}
                       onAskDelete={() => setConfirmingId(resume.id)}
                       onCancelDelete={() => setConfirmingId(null)}
@@ -250,6 +251,16 @@ export default function ViewResumesPage() {
                 </Card>
               )
             })}
+
+            <Link
+              href="/dashboard/resume-builder"
+              className="flex items-center justify-center gap-2.5 rounded-card border-[1.5px] border-dashed border-[rgba(33,31,28,.2)] px-5 py-6 text-[15px] font-semibold text-[#6f685f] transition-colors hover:border-brand hover:text-brand"
+            >
+              <span aria-hidden="true" className="text-[18px]">
+                +
+              </span>
+              Create a new résumé
+            </Link>
 
             {/* Tailored résumés whose base has been deleted — still downloadable. */}
             {orphaned.length > 0 && (
@@ -326,6 +337,7 @@ function RowActions({
   busy,
   confirming,
   onEdit,
+  onPreview,
   onDownload,
   onAskDelete,
   onCancelDelete,
@@ -336,6 +348,7 @@ function RowActions({
   busy: boolean
   confirming: boolean
   onEdit: () => void
+  onPreview?: () => void
   onDownload: () => void
   onAskDelete: () => void
   onCancelDelete: () => void
@@ -364,10 +377,15 @@ function RowActions({
   return (
     <div className="flex shrink-0 items-center gap-1.5">
       <Button size="sm" variant={compact ? "ghost" : "outline"} onClick={onEdit}>
-        Edit
+        Open
       </Button>
+      {onPreview && (
+        <Button size="sm" variant="ghost" onClick={onPreview}>
+          Preview
+        </Button>
+      )}
       <Button size="sm" variant="ghost" onClick={onDownload} disabled={busy}>
-        {busy ? "…" : "PDF"}
+        {busy ? "…" : "Download"}
       </Button>
       <Button
         size="sm"

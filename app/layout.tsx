@@ -4,6 +4,7 @@ import { Analytics } from '@vercel/analytics/next'
 import { SessionProviderWrapper } from '@/components/providers/session-provider'
 import { ThemeProvider } from '@/components/theme-provider'
 import { Toaster } from '@/components/ui/toaster'
+import { Toaster as SonnerToaster } from '@/components/ui/sonner'
 import { defaultMetadata, organizationSchema } from '@/lib/seo-config'
 import './globals.css'
 
@@ -81,6 +82,9 @@ export default function RootLayout({
           <SessionProviderWrapper>
             {children}
             <Toaster />
+            {/* Sonner is what almost every page actually calls. Without this it was
+                mounting nothing and the toasts went nowhere. */}
+            <SonnerToaster />
           </SessionProviderWrapper>
         </ThemeProvider>
         <Analytics />

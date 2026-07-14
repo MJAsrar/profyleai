@@ -706,7 +706,7 @@ export function ElevenLabsInterviewRoom({
 
   if (isInitializing) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-brand-deep px-6">
+      <div className="flex min-h-screen items-center justify-center bg-[#16211b] px-6">
         <div className="text-center">
           <div className="mx-auto h-14 w-14 animate-pulse rounded-full bg-paper/15" />
           <h2 className="mt-6 font-display text-[24px] text-paper">Setting up the room</h2>
@@ -719,7 +719,7 @@ export function ElevenLabsInterviewRoom({
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-brand-deep text-paper">
+    <div className="flex min-h-screen flex-col bg-[#16211b] text-paper">
       {/* ---- Top bar ---- */}
       <header className="flex flex-wrap items-center justify-between gap-4 border-b border-paper/10 px-6 py-4">
         <div className="min-w-0">
@@ -753,55 +753,84 @@ export function ElevenLabsInterviewRoom({
       </header>
 
       {/* ---- Stage ---- */}
-      <main className="relative flex flex-1 flex-col items-center justify-center px-6 py-10">
-        <AiAvatar
-          isActive={connectionStatus !== "ended" && connectionStatus !== "disconnected"}
-          isSpeaking={isAgentSpeaking}
-        />
+      <main className="flex flex-1 flex-col gap-[18px] overflow-hidden p-[26px]">
+        <div className="grid flex-1 gap-[18px] lg:grid-cols-[1fr_300px]">
+          {/* Sarah */}
+          <div
+            className="flex flex-col items-center justify-center gap-[22px] rounded-[16px] border border-white/[.06]"
+            style={{
+              background: "radial-gradient(circle at 50% 42%,#24382c,#16211b)",
+            }}
+          >
+            <AiAvatar
+              isActive={connectionStatus !== "ended" && connectionStatus !== "disconnected"}
+              isSpeaking={isAgentSpeaking}
+            />
 
-        <p className="mt-6 font-mono text-[10px] uppercase tracking-[0.14em] text-paper/50">
-          {isAgentSpeaking
-            ? "Sarah is speaking"
-            : isUserSpeaking
-              ? "Listening to you"
-              : "Waiting for you"}
-        </p>
+            <div className="text-center">
+              <p className="text-[16px] font-bold text-[#f4efe6]">Sarah</p>
+              <p
+                aria-live="polite"
+                className="mt-[3px] font-mono text-[11px] tracking-[0.06em] text-[#8fc7a3]"
+              >
+                {isAgentSpeaking
+                  ? "SPEAKING"
+                  : isUserSpeaking
+                    ? "LISTENING"
+                    : status.label.toUpperCase()}
+              </p>
+            </div>
+          </div>
 
-        {/* Live captions. The overlay existed in the codebase but was never rendered, so
-            deaf and hard-of-hearing users got audio-only questions. */}
-        <SubtitleOverlay
-          currentSubtitle={currentSubtitle}
-          isVisible={subtitlesEnabled}
-          position="bottom"
-          className="pointer-events-none"
-        />
-
-        {/* Your camera, small and out of the way. It's a voice interview — the video is
-            there so you can see yourself, not so anyone else can. */}
-        <div className="absolute bottom-6 right-6 h-[120px] w-[160px] overflow-hidden rounded-[12px] border border-paper/15 bg-black/40">
-          <video
-            ref={localVideoRef}
-            autoPlay
-            muted
-            playsInline
-            controls={false}
-            className={cn(
-              "h-full w-full object-cover transition-opacity duration-300",
-              localStream && isVideoEnabled ? "opacity-100" : "opacity-0"
-            )}
-            style={{ transform: "scaleX(-1)" }}
-            onCanPlay={() => localVideoRef.current?.play().catch(() => {})}
-          />
-
-          {(!localStream || !isVideoEnabled) && (
-            <span className="absolute inset-0 flex items-center justify-center font-mono text-[10px] uppercase tracking-[0.1em] text-paper/40">
-              Camera off
+          {/* Your camera — small, and there so you can see yourself. */}
+          <div
+            className="relative flex items-end overflow-hidden rounded-[16px] border border-white/[.06] p-[14px]"
+            style={{ background: "#1b271f" }}
+          >
+            <span className="absolute left-[14px] top-[14px] font-mono text-[10px] tracking-[0.12em] text-[#8fc7a3]">
+              YOUR CAMERA
             </span>
+
+            <video
+              ref={localVideoRef}
+              autoPlay
+              muted
+              playsInline
+              controls={false}
+              className={cn(
+                "absolute inset-0 h-full w-full object-cover transition-opacity duration-300",
+                localStream && isVideoEnabled ? "opacity-100" : "opacity-0"
+              )}
+              style={{ transform: "scaleX(-1)" }}
+              onCanPlay={() => localVideoRef.current?.play().catch(() => {})}
+            />
+
+            {(!localStream || !isVideoEnabled) && (
+              <span className="relative font-mono text-[10px] uppercase tracking-[0.1em] text-paper/40">
+                Camera off
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Live caption. The overlay existed in the codebase but was never mounted, so deaf
+            and hard-of-hearing users got audio-only questions. */}
+        <div className="rounded-[14px] border border-white/[.06] bg-black/25 px-5 py-4">
+          <p className="mb-1.5 font-mono text-[10px] tracking-[0.12em] text-[#8fc7a3]">
+            SARAH · LIVE CAPTION
+          </p>
+
+          {subtitlesEnabled ? (
+            <p className="text-[15px] leading-[1.5] text-[#f4efe6]">
+              {currentSubtitle?.text ?? "…"}
+            </p>
+          ) : (
+            <p className="text-[15px] leading-[1.5] text-paper/40">Captions are off.</p>
           )}
         </div>
 
         {streamError && (
-          <p className="absolute bottom-6 left-6 max-w-[280px] rounded-[10px] bg-black/40 px-3 py-2 text-[12px] leading-relaxed text-paper/80">
+          <p className="rounded-[10px] bg-black/30 px-3 py-2 text-[12px] leading-relaxed text-paper/80">
             {streamError}
           </p>
         )}
@@ -853,30 +882,37 @@ export function ElevenLabsInterviewRoom({
           </div>
         )}
 
-        <div className="mx-auto flex max-w-[760px] flex-wrap items-center justify-center gap-2">
-          <RoomToggle on={isMicEnabled} onClick={toggleMic} onLabel="Mic on" offLabel="Mic off" />
+        <div className="mx-auto flex max-w-[760px] flex-wrap items-center justify-center gap-3">
+          <RoomToggle
+            on={isMicEnabled}
+            onClick={toggleMic}
+            glyph="🎤"
+            onLabel="Mute microphone"
+            offLabel="Unmute microphone"
+          />
           <RoomToggle
             on={isVideoEnabled}
             onClick={toggleVideo}
-            onLabel="Camera on"
-            offLabel="Camera off"
+            glyph="📷"
+            onLabel="Turn camera off"
+            offLabel="Turn camera on"
           />
           <RoomToggle
             on={subtitlesEnabled}
             onClick={toggleSubtitles}
-            onLabel="Captions on"
-            offLabel="Captions off"
+            glyph="CC"
+            onLabel="Hide captions"
+            offLabel="Show captions"
           />
           <RoomToggle
             on={showTextInput}
             onClick={() => setShowTextInput(!showTextInput)}
-            onLabel="Typing"
-            offLabel="Type instead"
+            glyph="⌨"
+            onLabel="Hide the typing box"
+            offLabel="Type instead of speaking"
           />
 
-          <span className="mx-1 hidden h-6 w-px bg-paper/15 sm:block" aria-hidden="true" />
-
-          <Button variant="destructive" onClick={handleEndInterview}>
+          <Button variant="destructive" className="ml-2" onClick={handleEndInterview}>
             End interview
           </Button>
         </div>
@@ -922,15 +958,22 @@ export function ElevenLabsInterviewRoom({
   )
 }
 
-/** A control in the live room. On/off is stated in words, not just colour. */
+/**
+ * A round control in the live room.
+ *
+ * The glyph alone can't say whether the mic is live, so the state is carried by
+ * aria-pressed and a real accessible name that changes with it — not by colour alone.
+ */
 function RoomToggle({
   on,
   onClick,
+  glyph,
   onLabel,
   offLabel,
 }: {
   on: boolean
   onClick: () => void
+  glyph: string
   onLabel: string
   offLabel: string
 }) {
@@ -939,14 +982,18 @@ function RoomToggle({
       type="button"
       onClick={onClick}
       aria-pressed={on}
+      aria-label={on ? onLabel : offLabel}
+      title={on ? onLabel : offLabel}
       className={cn(
-        "rounded-[10px] border px-3.5 py-2 text-[13px] font-medium transition-colors",
+        "flex h-12 w-12 items-center justify-center rounded-full text-[18px] transition-colors",
         on
-          ? "border-paper/25 bg-paper/10 text-paper hover:bg-paper/15"
-          : "border-paper/15 bg-transparent text-paper/50 hover:text-paper/80"
+          ? "bg-[#2e6a4a] text-[#f4efe6] hover:bg-[#357a56]"
+          : "bg-white/10 text-[#cddccf] hover:bg-white/20"
       )}
     >
-      {on ? onLabel : offLabel}
+      <span aria-hidden="true" className={glyph === "CC" ? "font-mono text-[13px]" : ""}>
+        {glyph}
+      </span>
     </button>
   )
 }

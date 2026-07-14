@@ -173,9 +173,12 @@ export function ResumePreviewFull() {
         </div>
       </div>
 
-      {/* ---- The page ---- */}
-      <div className="mt-6 overflow-auto rounded-panel bg-section-tint p-6 sm:p-10">
-        <div className="mx-auto w-fit rounded-[4px] bg-white shadow-doc">
+      {/* ---- The page, on the design's darker canvas ---- */}
+      <div className="mt-6 flex justify-center overflow-auto rounded-panel bg-[#e7e3da] p-6 sm:p-10">
+        <div
+          className="h-fit w-[720px] max-w-full bg-white"
+          style={{ boxShadow: "0 30px 80px -30px rgba(30,25,20,.45)" }}
+        >
           <Page template={selectedTemplate} data={resumeData} scale={zoom} />
         </div>
       </div>

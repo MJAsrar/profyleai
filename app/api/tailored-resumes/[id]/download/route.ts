@@ -138,8 +138,9 @@ async function handleDownload(req: NextRequest, { params }: RouteParams, fontCon
       contentType: 'application/pdf'
     })
 
-    // Return PDF as download
-    return new NextResponse(pdfBuffer, {
+    // Return PDF as download. Wrap in a plain Uint8Array: a Node Buffer is not a
+    // valid BodyInit under current @types/node (Buffer<ArrayBufferLike>). Same bytes.
+    return new NextResponse(new Uint8Array(pdfBuffer), {
       status: 200,
       headers: {
         'Content-Type': 'application/pdf',

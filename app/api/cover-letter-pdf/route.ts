@@ -52,8 +52,9 @@ export async function POST(req: NextRequest) {
 
       console.log(`✅ Successfully generated cover letter PDF: ${filename}`)
 
-      // Return PDF as response
-      return new NextResponse(pdfBlob, {
+      // Return PDF as response. Wrap in a plain Uint8Array: a Node Buffer is not a
+      // valid BodyInit under current @types/node (Buffer<ArrayBufferLike>). Same bytes.
+      return new NextResponse(new Uint8Array(pdfBlob), {
         status: 200,
         headers: {
           'Content-Type': 'application/pdf',

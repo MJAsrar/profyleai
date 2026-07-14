@@ -345,7 +345,7 @@ export function generateMetadata(page: keyof typeof pageMetadata, customData?: P
 
 // Helper function to get page paths
 function getPagePath(page: keyof typeof pageMetadata): string {
-  const paths = {
+  const paths: Partial<Record<keyof typeof pageMetadata, string>> = {
     home: '/',
     login: '/login',
     signup: '/signup',

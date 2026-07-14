@@ -2,7 +2,7 @@
  * Classic PDF Template - Traditional, formal design
  */
 
-import type { Content, Style } from 'pdfmake/interfaces'
+import type { Content, Style, Margins, Column } from 'pdfmake/interfaces'
 import type { ResumeData } from '@/lib/resume-store'
 import { BasePDFTemplate, type TemplateStyles } from '../template-engine'
 import { fontManager } from '../font-manager'
@@ -85,7 +85,7 @@ export class ClassicPDFTemplate extends BasePDFTemplate {
           style: 'professionalTitle',
           alignment: 'center',
           margin: [0, 0, 0, 0]
-        }] : []),
+        }] as Content[] : []),
         // Contact Information - centered (only if we have contact info)
         ...(contactInfo.length > 0 ? [{
           stack: contactInfo.map(info => ({
@@ -94,7 +94,7 @@ export class ClassicPDFTemplate extends BasePDFTemplate {
             alignment: 'center'
           })),
           margin: [0, 0, 0, 0]
-        }] : []),
+        }] as Content[] : []),
         // Removed separator line for minimal design
       ],
       margin: [0, 0, 0, 0] // No spacing after header
@@ -301,7 +301,7 @@ export class ClassicPDFTemplate extends BasePDFTemplate {
    */
   protected buildExperienceItem(exp: any, isLast: boolean): Content {
     const endDate = exp.isCurrent ? 'Present' : exp.endDate
-    const margin = isLast ? [0, 0, 0, 0] : [0, 0, 0, this.styles.spacing.paragraph]
+    const margin: Margins = isLast ? [0, 0, 0, 0] : [0, 0, 0, this.styles.spacing.paragraph]
 
     return {
       stack: [
@@ -331,13 +331,13 @@ export class ClassicPDFTemplate extends BasePDFTemplate {
           text: exp.location,
           style: 'dateText',
           margin: [0, 2, 0, 4]
-        }] : []),
+        }] as Content[] : []),
         // Description
         ...(exp.description ? [{
           text: exp.description,
           style: 'jobDescription',
           margin: [0, 4, 0, 4]
-        }] : []),
+        }] as Content[] : []),
         // Achievements
         ...(exp.achievements?.length > 0 ? [{
           ul: exp.achievements.map((achievement: string) => ({
@@ -345,7 +345,7 @@ export class ClassicPDFTemplate extends BasePDFTemplate {
             style: 'achievementItem'
           })),
           margin: [0, 0, 0, 4]
-        }] : []),
+        }] as Content[] : []),
         // Technologies
         ...(exp.technologies?.length > 0 ? [{
           text: [
@@ -353,7 +353,7 @@ export class ClassicPDFTemplate extends BasePDFTemplate {
             { text: exp.technologies.join(', '), style: 'techList' }
           ],
           margin: [0, 0, 0, 0]
-        }] : [])
+        }] as Content[] : [])
       ],
       margin
     }
@@ -363,7 +363,7 @@ export class ClassicPDFTemplate extends BasePDFTemplate {
    * Classic education layout
    */
   protected buildEducationItem(edu: any, isLast: boolean): Content {
-    const margin = isLast ? [0, 0, 0, 0] : [0, 0, 0, this.styles.spacing.paragraph]
+    const margin: Margins = isLast ? [0, 0, 0, 0] : [0, 0, 0, this.styles.spacing.paragraph]
 
     return {
       stack: [
@@ -401,7 +401,7 @@ export class ClassicPDFTemplate extends BasePDFTemplate {
               style: 'gpaText',
               width: 'auto',
               alignment: 'right'
-            }] : [])
+            }] as Column[] : [])
           ],
           margin: [0, 2, 0, 4]
         },
@@ -411,7 +411,7 @@ export class ClassicPDFTemplate extends BasePDFTemplate {
             { text: 'Honors: ', style: 'techLabel' },
             { text: edu.honors.join(', '), style: 'techList' }
           ]
-        }] : [])
+        }] as Content[] : [])
       ],
       margin
     }

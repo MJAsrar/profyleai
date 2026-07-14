@@ -87,6 +87,14 @@ export function VideoInterviewResults({
 }: VideoInterviewResultsProps) {
   const [activeTab, setActiveTab] = useState('overview')
 
+  // These fields are supplied by the summary payload but are not part of the
+  // shared InterviewSummary type; assert their presence for typed access.
+  const detailedSummary = summary as InterviewSummary & {
+    detailedFeedback: string
+    recommendations: string[]
+    nextSteps: string[]
+  }
+
   const handleDownloadReport = () => {
     // Implement PDF report generation
     console.log('Downloading report for session:', sessionId)
@@ -341,7 +349,7 @@ export function VideoInterviewResults({
             <CardContent>
               <div className="prose max-w-none">
                 <p className="text-muted-foreground leading-relaxed">
-                  {summary.detailedFeedback}
+                  {detailedSummary.detailedFeedback}
                 </p>
               </div>
             </CardContent>
@@ -393,7 +401,7 @@ export function VideoInterviewResults({
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {summary.recommendations.map((recommendation, index) => (
+                {detailedSummary.recommendations.map((recommendation, index) => (
                   <div key={index} className="flex items-start gap-3 p-4 bg-blue-50 rounded-lg">
                     <div className="flex items-center justify-center w-6 h-6 bg-blue-500 text-white text-sm font-bold rounded-full flex-shrink-0">
                       {index + 1}
@@ -413,7 +421,7 @@ export function VideoInterviewResults({
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {summary.nextSteps.map((step, index) => (
+                {detailedSummary.nextSteps.map((step, index) => (
                   <div key={index} className="flex items-center gap-3 p-3 border rounded-lg">
                     <Clock className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm">{step}</span>

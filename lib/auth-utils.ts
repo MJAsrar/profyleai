@@ -3,35 +3,41 @@ import { getServerSession } from "next-auth/next"
 import { authOptions } from "./auth"
 import { prisma } from "./prisma"
 
+// Re-export the pure token helpers so existing imports from "@/lib/auth-utils" keep working.
+export { generateApiToken, hashApiToken, API_TOKEN_TTL_MS } from "./api-token"
+import { hashApiToken } from "./api-token"
+
 /**
- * Get authenticated user from server session or Bearer token
- * Returns null if user is not authenticated
+ * Get authenticated user from the server session or a Bearer API token.
+ * Returns null if the user is not authenticated.
+ *
+ * SECURITY: the Bearer token is an opaque random secret looked up by its hash,
+ * NOT the user id. Presenting another user's id no longer authenticates as them.
  */
 export async function getAuthenticatedUser(req: NextRequest) {
   try {
-    // First try Bearer token authentication (for extension)
+    // Bearer token authentication (for the browser extension)
     const authHeader = req.headers.get('authorization')
     if (authHeader && authHeader.startsWith('Bearer ')) {
-      const token = authHeader.substring(7) // Remove 'Bearer ' prefix
-      
-      // Look up user by ID (token is user ID in our implementation)
-      const user = await prisma.user.findUnique({
-        where: { id: token },
-        select: {
-          id: true,
-          email: true,
-          name: true
+      const token = authHeader.substring(7).trim()
+
+      // Reject anything that looks like a bare Mongo ObjectId (legacy id-as-token) early.
+      if (token.length >= 40) {
+        const user = await prisma.user.findFirst({
+          where: { apiTokenHash: hashApiToken(token) },
+          select: { id: true, email: true, name: true, apiTokenExpiresAt: true },
+        })
+
+        if (user && user.apiTokenExpiresAt && user.apiTokenExpiresAt.getTime() > Date.now()) {
+          return { id: user.id, email: user.email, name: user.name }
         }
-      })
-      
-      if (user) {
-        return user
       }
+      // Invalid/expired token → fall through to session (do NOT trust the raw value).
     }
-    
-    // Fallback to session-based auth (for web app)
+
+    // Session-based auth (for the web app)
     const session = await getServerSession(authOptions)
-    
+
     if (!session?.user?.id) {
       return null
     }

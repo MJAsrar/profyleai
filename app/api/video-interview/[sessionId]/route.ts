@@ -3,9 +3,9 @@ import { getAuthenticatedUser, createAuthError } from '@/lib/auth-utils'
 import { prisma } from '@/lib/prisma'
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     sessionId: string
-  }
+  }>
 }
 
 // GET - Retrieve video interview session
@@ -16,7 +16,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       return createAuthError()
     }
 
-    const { sessionId } = params
+    const { sessionId } = await params
 
     const videoInterview = await prisma.videoInterview.findFirst({
       where: {
@@ -66,7 +66,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       return createAuthError()
     }
 
-    const { sessionId } = params
+    const { sessionId } = await params
     const body = await request.json()
 
     const videoInterview = await prisma.videoInterview.findFirst({
@@ -136,7 +136,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       return createAuthError()
     }
 
-    const { sessionId } = params
+    const { sessionId } = await params
 
     const videoInterview = await prisma.videoInterview.findFirst({
       where: {

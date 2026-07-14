@@ -81,13 +81,13 @@ export function StylingControls({ showEditFormButton = false, onEditForm, center
 
         {/* Conditional Controls */}
         {showFontControls && (
-          <MotionWrapper animation="slide-in-down" delay={0}>
+          <MotionWrapper animation="fade-in-down" delay={0}>
             <FontSizeControls />
           </MotionWrapper>
         )}
         
         {showSpacingControls && (
-          <MotionWrapper animation="slide-in-down" delay={0}>
+          <MotionWrapper animation="fade-in-down" delay={0}>
             <SpacingControls />
           </MotionWrapper>
         )}

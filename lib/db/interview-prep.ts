@@ -88,6 +88,7 @@ export async function createInterviewPrep(
 
   return {
     ...interviewPrep,
+    industry: interviewPrep.industry ?? undefined,
     questions: questions,
     companyResearch: undefined,
     behavioralCoaching: undefined,
@@ -105,9 +106,10 @@ export async function getUserInterviewPreps(userId: string): Promise<InterviewPr
 
   return preps.map(prep => ({
     ...prep,
-    questions: prep.questions as PracticeQuestion[],
-    companyResearch: prep.companyResearch as CompanyResearch | undefined,
-    behavioralCoaching: prep.behavioralCoaching as BehavioralCoaching | undefined,
+    industry: prep.industry ?? undefined,
+    questions: prep.questions as unknown as PracticeQuestion[],
+    companyResearch: (prep.companyResearch as unknown as CompanyResearch) ?? undefined,
+    behavioralCoaching: (prep.behavioralCoaching as unknown as BehavioralCoaching) ?? undefined,
   }))
 }
 
@@ -123,9 +125,10 @@ export async function getInterviewPrep(id: string, userId: string): Promise<Inte
 
   return {
     ...prep,
-    questions: prep.questions as PracticeQuestion[],
-    companyResearch: prep.companyResearch as CompanyResearch | undefined,
-    behavioralCoaching: prep.behavioralCoaching as BehavioralCoaching | undefined,
+    industry: prep.industry ?? undefined,
+    questions: prep.questions as unknown as PracticeQuestion[],
+    companyResearch: (prep.companyResearch as unknown as CompanyResearch) ?? undefined,
+    behavioralCoaching: (prep.behavioralCoaching as unknown as BehavioralCoaching) ?? undefined,
   }
 }
 
@@ -137,14 +140,18 @@ export async function updateInterviewPrepResearch(
   userId: string,
   research: CompanyResearch
 ): Promise<void> {
-  await prisma.interviewPrep.update({
-    where: { id },
+  // Scope by userId so one user cannot overwrite another user's prep (IDOR).
+  const result = await prisma.interviewPrep.updateMany({
+    where: { id, userId },
     data: {
       companyResearch: research as any,
       researchCompleted: true,
       updatedAt: new Date()
     }
   })
+  if (result.count === 0) {
+    throw new Error('Interview prep not found or access denied')
+  }
 }
 
 /**
@@ -155,14 +162,18 @@ export async function updateInterviewPrepCoaching(
   userId: string,
   coaching: BehavioralCoaching
 ): Promise<void> {
-  await prisma.interviewPrep.update({
-    where: { id },
+  // Scope by userId so one user cannot overwrite another user's prep (IDOR).
+  const result = await prisma.interviewPrep.updateMany({
+    where: { id, userId },
     data: {
       behavioralCoaching: coaching as any,
       coachingLoaded: true,
       updatedAt: new Date()
     }
   })
+  if (result.count === 0) {
+    throw new Error('Interview prep not found or access denied')
+  }
 }
 
 /**
@@ -201,6 +212,9 @@ export async function createMockInterview(
 
   return {
     ...mockInterview,
+    completedAt: mockInterview.completedAt ?? undefined,
+    totalTime: mockInterview.totalTime ?? undefined,
+    overallScore: mockInterview.overallScore ?? undefined,
     questions: questions,
     summary: undefined,
     answers: []
@@ -314,11 +328,14 @@ export async function completeMockInterview(
 
   return {
     ...updatedInterview,
-    questions: updatedInterview.questions as PracticeQuestion[],
+    completedAt: updatedInterview.completedAt ?? undefined,
+    totalTime: updatedInterview.totalTime ?? undefined,
+    overallScore: updatedInterview.overallScore ?? undefined,
+    questions: updatedInterview.questions as unknown as PracticeQuestion[],
     summary: summary,
     answers: updatedInterview.answers.map(answer => ({
       ...answer,
-      feedback: answer.feedback as AnswerFeedback,
+      feedback: answer.feedback as unknown as AnswerFeedback,
       starAnalysis: answer.starAnalysis
     }))
   }
@@ -368,11 +385,14 @@ export async function getMockInterview(
 
   return {
     ...mockInterview,
-    questions: mockInterview.questions as PracticeQuestion[],
-    summary: mockInterview.summary as MockInterviewSummary | undefined,
+    completedAt: mockInterview.completedAt ?? undefined,
+    totalTime: mockInterview.totalTime ?? undefined,
+    overallScore: mockInterview.overallScore ?? undefined,
+    questions: mockInterview.questions as unknown as PracticeQuestion[],
+    summary: (mockInterview.summary as unknown as MockInterviewSummary) ?? undefined,
     answers: mockInterview.answers.map(answer => ({
       ...answer,
-      feedback: answer.feedback as AnswerFeedback,
+      feedback: answer.feedback as unknown as AnswerFeedback,
       starAnalysis: answer.starAnalysis
     }))
   }
@@ -423,11 +443,14 @@ export async function getUserMockInterviews(userId: string): Promise<MockIntervi
 
   return interviews.map(interview => ({
     ...interview,
-    questions: interview.questions as PracticeQuestion[],
-    summary: interview.summary as MockInterviewSummary | undefined,
+    completedAt: interview.completedAt ?? undefined,
+    totalTime: interview.totalTime ?? undefined,
+    overallScore: interview.overallScore ?? undefined,
+    questions: interview.questions as unknown as PracticeQuestion[],
+    summary: (interview.summary as unknown as MockInterviewSummary) ?? undefined,
     answers: interview.answers.map(answer => ({
       ...answer,
-      feedback: answer.feedback as AnswerFeedback,
+      feedback: answer.feedback as unknown as AnswerFeedback,
       starAnalysis: answer.starAnalysis
     }))
   }))
@@ -557,8 +580,12 @@ export async function deleteInterviewPrep(id: string, userId: string): Promise<v
     where: { interviewPrepId: id, userId }
   })
 
-  // Then delete the interview prep
-  await prisma.interviewPrep.delete({
-    where: { id }
+  // Then delete the interview prep — scoped by userId so a caller cannot delete
+  // another user's prep by guessing its id (IDOR).
+  const result = await prisma.interviewPrep.deleteMany({
+    where: { id, userId }
   })
+  if (result.count === 0) {
+    throw new Error('Interview prep not found or access denied')
+  }
 }

@@ -143,7 +143,7 @@ export function UserProfileSettings() {
           {/* Profile Header */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 bg-muted/30 rounded-lg">
             <Avatar className="h-20 w-20">
-              <AvatarImage src={profile.image} alt={profile.name} />
+              <AvatarImage src={profile.image ?? undefined} alt={profile.name ?? undefined} />
               <AvatarFallback className="text-lg">
                 {profile.name?.charAt(0)?.toUpperCase() || "U"}
               </AvatarFallback>

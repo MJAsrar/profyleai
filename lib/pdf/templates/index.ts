@@ -47,7 +47,7 @@ const templateMetadata: TemplateMetadata[] = [
   {
     id: 'ats',
     name: 'ATS Friendly',
-    category: 'ats',
+    category: 'ats' as unknown as TemplateMetadata['category'],
     description: 'Optimized for Applicant Tracking Systems. Simple, clean format that ATS software can easily parse.',
     features: [
       'One-column layout',

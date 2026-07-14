@@ -491,7 +491,7 @@ async function main() {
             category: template.category,
             previewUrl: template.previewUrl,
             cssData: template.cssData,
-            isActive: template.isActive || true
+            isActive: (template as { isActive?: boolean }).isActive || true
           }
         })
         console.log(`✅ Updated template: ${template.name} (ID: ${updated.id})`)
@@ -500,7 +500,7 @@ async function main() {
         const created = await prisma.template.create({
           data: {
             ...template,
-            isActive: template.isActive !== undefined ? template.isActive : true
+            isActive: (template as { isActive?: boolean }).isActive !== undefined ? (template as { isActive?: boolean }).isActive : true
           }
         })
         console.log(`✅ Created template: ${template.name} (ID: ${created.id})`)

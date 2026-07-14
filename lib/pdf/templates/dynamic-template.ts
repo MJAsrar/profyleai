@@ -10,6 +10,16 @@ import { FontSizeConfig, DEFAULT_FONT_SIZES, fontSizeToPDF } from '@/lib/font-co
 import { SpacingConfig, DEFAULT_SPACING, spacingToPDF } from '@/lib/spacing-config'
 import { FontLoader } from '../font-loader'
 
+/**
+ * PDFMake `Style` extended with the custom border/textTransform fields this
+ * template stores on style objects before mapping them onto table cells.
+ */
+interface ExtendedStyle extends Style {
+  border?: number[]
+  borderColor?: (string | null)[]
+  textTransform?: string
+}
+
 export class DynamicPDFTemplate {
   id = 'dynamic'
   name = 'Dynamic Template'
@@ -595,8 +605,8 @@ export class DynamicPDFTemplate {
           body: [
             [{
               stack: content,
-              border: convertedStyles.border,
-              borderColor: convertedStyles.borderColor,
+              border: convertedStyles.border as unknown as [boolean, boolean, boolean, boolean],
+              borderColor: convertedStyles.borderColor as unknown as [string, string, string, string],
               margin: [
                 12, // left padding (1rem converted to pts, from paddingLeft: '1rem')
                 4,  // top padding 
@@ -777,8 +787,8 @@ export class DynamicPDFTemplate {
   /**
    * Convert CSS style object to PDFMake style with NaN protection
    */
-  private convertCSSStyleToPDF(cssStyle: any): Style {
-    const pdfStyle: Style = {}
+  private convertCSSStyleToPDF(cssStyle: any): ExtendedStyle {
+    const pdfStyle: ExtendedStyle = {}
 
     try {
       // Font size
@@ -881,7 +891,7 @@ export class DynamicPDFTemplate {
   private addBorderStyles(cssStyle: any, pdfStyle: any): void {
     try {
       const borders = [0, 0, 0, 0] // [left, top, right, bottom]
-      const borderColors = [null, null, null, null] // [left, top, right, bottom]
+      const borderColors: (string | null)[] = [null, null, null, null] // [left, top, right, bottom]
       let hasBorders = false
 
       // Parse borderLeft (e.g., "2px solid #022c22")

@@ -1,10 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   eslint: {
-    ignoreDuringBuilds: true,
+    // Lint runs on build. Type-safety is the hard gate (tsc); stylistic lint rules
+    // are demoted to warnings in .eslintrc.json so they surface without blocking.
+    ignoreDuringBuilds: false,
   },
   typescript: {
-    ignoreBuildErrors: true,
+    // Enforce types on every build — `tsc --noEmit` is clean. Do not re-enable.
+    ignoreBuildErrors: false,
   },
   images: {
     unoptimized: true,

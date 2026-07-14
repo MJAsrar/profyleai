@@ -1,74 +1,53 @@
 import { NextRequest, NextResponse } from "next/server"
-import { signIn, getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
+import { generateApiToken } from "@/lib/auth-utils"
 import bcrypt from "bcryptjs"
 
 /**
- * POST /api/auth/extension-login - Handle extension-specific login
+ * POST /api/auth/extension-login - Authenticate the browser extension.
+ *
+ * Requires email + password. On success it mints an opaque, random, expiring
+ * API token (only its hash is stored) and returns the raw token for the
+ * extension to send as `Authorization: Bearer <token>`.
+ *
+ * The previous passwordless `sessionToken` branch (which logged in as any user
+ * by id and returned `user.id` as a permanent credential) has been removed.
  */
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { email, password, sessionToken } = body
+    const { email, password } = body
 
-    // If sessionToken provided, validate existing session
-    if (sessionToken) {
-      const user = await prisma.user.findUnique({
-        where: { id: sessionToken }
-      })
-      
-      if (user) {
-        return NextResponse.json({
-          success: true,
-          user: {
-            id: user.id,
-            email: user.email,
-            name: user.name
-          },
-          token: user.id
-        })
-      }
+    if (!email || !password) {
+      return NextResponse.json(
+        { success: false, error: "Email and password are required" },
+        { status: 400 }
+      )
     }
 
-    // If credentials provided, authenticate
-    if (email && password) {
-      const user = await prisma.user.findUnique({
-        where: { email }
-      })
+    const user = await prisma.user.findUnique({ where: { email } })
 
-      if (!user || !user.password) {
-        return NextResponse.json(
-          { success: false, error: "Invalid credentials" },
-          { status: 401 }
-        )
-      }
-
-      const isPasswordValid = await bcrypt.compare(password, user.password)
-
-      if (!isPasswordValid) {
-        return NextResponse.json(
-          { success: false, error: "Invalid credentials" },
-          { status: 401 }
-        )
-      }
-
-      return NextResponse.json({
-        success: true,
-        user: {
-          id: user.id,
-          email: user.email,
-          name: user.name
-        },
-        token: user.id
-      })
+    // Same generic error whether the user exists or the password is wrong,
+    // so this endpoint does not reveal which emails are registered.
+    if (!user || !user.password || !(await bcrypt.compare(password, user.password))) {
+      return NextResponse.json(
+        { success: false, error: "Invalid credentials" },
+        { status: 401 }
+      )
     }
 
-    return NextResponse.json(
-      { success: false, error: "Missing credentials" },
-      { status: 400 }
-    )
+    const { raw, hash, expiresAt } = generateApiToken()
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { apiTokenHash: hash, apiTokenExpiresAt: expiresAt },
+    })
 
+    return NextResponse.json({
+      success: true,
+      user: { id: user.id, email: user.email, name: user.name },
+      token: raw,
+      expiresAt: expiresAt.toISOString(),
+    })
   } catch (error) {
     console.error("[Auth] Extension login error:", error)
     return NextResponse.json(

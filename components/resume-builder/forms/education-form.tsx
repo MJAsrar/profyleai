@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Plus, Trash2, Edit, Save, X } from "lucide-react"
 import { useResumeStore } from "@/lib/resume-store"
+import type { EducationItem } from "@/lib/validations/resume"
 
 export function EducationForm() {
   const { resumeData, addEducation, updateEducation, removeEducation } = useResumeStore()
@@ -24,7 +25,7 @@ export function EducationForm() {
 
   const handleAddEducation = () => {
     // Allow adding education even with empty fields
-    addEducation(newEducation)
+    addEducation(newEducation as unknown as Omit<EducationItem, "id">)
     setNewEducation({
       institution: "",
       degree: "",
@@ -241,7 +242,7 @@ export function EducationForm() {
                     <Button variant="ghost" size="sm" onClick={() => handleEditEducation(edu)}>
                       <Edit className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="sm" onClick={() => removeEducation(edu.id)}>
+                    <Button variant="ghost" size="sm" onClick={() => removeEducation(edu.id!)}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>

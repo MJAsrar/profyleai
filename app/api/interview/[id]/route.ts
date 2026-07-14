@@ -3,9 +3,9 @@ import { getAuthenticatedUser, createAuthError } from '@/lib/auth-utils'
 import { getInterviewPrep, deleteInterviewPrep } from '@/lib/db/interview-prep'
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 export async function GET(request: NextRequest, { params }: RouteParams) {
@@ -16,7 +16,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       return createAuthError()
     }
 
-    const { id } = params
+    const { id } = await params
 
     console.log('🎯 Fetching interview prep:', id)
 
@@ -53,7 +53,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       return createAuthError()
     }
 
-    const { id } = params
+    const { id } = await params
 
     console.log('🎯 Deleting interview prep:', id)
 

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, type ComponentProps } from "react"
 import { PageContainer } from "@/components/ui/page-container"
 import { MotionWrapper } from "@/components/ui/motion-wrapper"
 import { ResumeTailoringHeader } from "@/components/resume-tailoring/resume-tailoring-header"
@@ -137,7 +137,7 @@ export default function ResumeTailoringPage() {
           <MotionWrapper animation="fade-in-up" delay={300}>
             <TailoredResumePreview 
               jobData={jobData} 
-              tailoringData={tailoringData}
+              tailoringData={tailoringData as ComponentProps<typeof TailoredResumePreview>["tailoringData"]}
               resumeData={resumeData}
             />
           </MotionWrapper>

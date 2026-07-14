@@ -7,7 +7,7 @@ import { getAuthenticatedUser, createAuthError } from "@/lib/auth-utils"
  */
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Check authentication
@@ -16,7 +16,7 @@ export async function GET(
       return createAuthError()
     }
 
-    const tailoredResumeId = params.id
+    const { id: tailoredResumeId } = await params
 
     console.log(`📋 Fetching tailored resume ${tailoredResumeId} for user ${user.id}`)
 
@@ -73,7 +73,7 @@ export async function GET(
  */
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Check authentication
@@ -82,7 +82,7 @@ export async function DELETE(
       return createAuthError()
     }
 
-    const tailoredResumeId = params.id
+    const { id: tailoredResumeId } = await params
 
     console.log(`🗑️ Deleting tailored resume ${tailoredResumeId} for user ${user.id}`)
 

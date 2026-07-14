@@ -155,11 +155,12 @@ export const useElevenLabsInterviewStore = create<ElevenLabsInterviewStore>()(
         try {
           console.log('🚀 Initializing ElevenLabs interview...')
 
-          const apiKey = process.env.NEXT_PUBLIC_ELEVENLABS_API_KEY
+          // Only the public agent id is needed client-side. The secret API key is
+          // never exposed to the browser (it was previously shipped in the bundle).
           const agentId = process.env.NEXT_PUBLIC_ELEVENLABS_AGENT_ID
 
-          if (!apiKey || !agentId) {
-            throw new Error('ElevenLabs API key or Agent ID not configured')
+          if (!agentId) {
+            throw new Error('ElevenLabs Agent ID not configured')
           }
 
           // Create service with callbacks
@@ -275,7 +276,7 @@ export const useElevenLabsInterviewStore = create<ElevenLabsInterviewStore>()(
             }
           }
 
-          const service = createElevenLabsInterviewService(apiKey, agentId, callbacks)
+          const service = createElevenLabsInterviewService(agentId, callbacks)
 
           // Update state
           set((draft) => {

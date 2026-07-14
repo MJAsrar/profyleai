@@ -66,7 +66,7 @@ export default function ViewResumesPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
-  const { fontConfig } = useFontConfig()
+  const fontConfig = useFontConfig()
 
   const fetchAllResumes = async () => {
     try {

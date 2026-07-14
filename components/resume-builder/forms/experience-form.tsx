@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Plus, Trash2, Sparkles, Loader2, Edit, Save, X } from "lucide-react"
 import { useResumeStore } from "@/lib/resume-store"
 import { useToast } from "@/hooks/use-toast"
+import type { ExperienceItem } from "@/lib/validations/resume"
 
 export function ExperienceForm() {
   const { resumeData, addExperience, updateExperience, removeExperience } = useResumeStore()
@@ -30,7 +31,7 @@ export function ExperienceForm() {
 
   const handleAddExperience = () => {
     // Allow adding experience even with empty fields
-    addExperience(newExperience)
+    addExperience(newExperience as unknown as Omit<ExperienceItem, "id">)
     setNewExperience({
       company: "",
       position: "",
@@ -61,7 +62,7 @@ export function ExperienceForm() {
     setEditData(null)
   }
 
-  const optimizeExperienceDescription = async (company: string, position: string, currentDescription: string, experienceId?: string) => {
+  const optimizeExperienceDescription = async (company: string | undefined, position: string | undefined, currentDescription: string | undefined, experienceId?: string) => {
     if (!currentDescription || currentDescription.trim().length === 0) {
       toast({
         title: "No content to optimize",
@@ -336,7 +337,7 @@ export function ExperienceForm() {
                     <h4 className="font-semibold">{exp.position}</h4>
                     <p className="text-muted-foreground">{exp.company}</p>
                     <p className="text-sm text-muted-foreground">
-                      {exp.startDate} - {exp.current ? "Present" : exp.endDate}
+                      {exp.startDate} - {(exp as { current?: boolean }).current ? "Present" : exp.endDate}
                     </p>
                     {exp.description && (
                       <div className="mt-2">
@@ -363,7 +364,7 @@ export function ExperienceForm() {
                     <Button variant="ghost" size="sm" onClick={() => handleEditExperience(exp)}>
                       <Edit className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="sm" onClick={() => removeExperience(exp.id)}>
+                    <Button variant="ghost" size="sm" onClick={() => removeExperience(exp.id!)}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>

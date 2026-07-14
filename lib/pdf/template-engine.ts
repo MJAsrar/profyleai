@@ -10,10 +10,10 @@ import { fontManager } from './font-manager'
 // Define types locally to avoid import issues
 interface ExperienceItem {
   id?: string
-  company: string
-  position: string
+  company?: string
+  position?: string
   location?: string
-  startDate: string
+  startDate?: string
   endDate?: string
   isCurrent: boolean
   description?: string
@@ -23,11 +23,11 @@ interface ExperienceItem {
 
 interface EducationItem {
   id?: string
-  institution: string
-  degree: string
+  institution?: string
+  degree?: string
   field?: string
   location?: string
-  startDate: string
+  startDate?: string
   endDate?: string
   gpa?: string
   honors?: string[]
@@ -36,17 +36,17 @@ interface EducationItem {
 
 interface SkillCategory {
   id?: string
-  category: string
+  category?: string
   skills: Array<{
-    name: string
+    name?: string
     level?: string
   }>
 }
 
 interface ProjectItem {
   id?: string
-  name: string
-  description: string
+  name?: string
+  description?: string
   technologies?: string[]
   startDate?: string
   endDate?: string

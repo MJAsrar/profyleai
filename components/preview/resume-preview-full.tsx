@@ -15,7 +15,7 @@ import Link from "next/link"
 export function ResumePreviewFull() {
   const { resumeData, selectedTemplate, loadResume, templates } = useResumeStore()
   const { toast } = useToast()
-  const { fontConfig } = useFontConfig()
+  const fontConfig = useFontConfig()
   const [isExporting, setIsExporting] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
 

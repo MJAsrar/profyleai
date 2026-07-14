@@ -5,6 +5,12 @@ import { PrismaAdapter } from "@next-auth/prisma-adapter"
 import { prisma } from "./prisma"
 import bcrypt from "bcryptjs"
 
+// Fail closed: never sign session JWTs with a hardcoded fallback secret.
+// A missing secret in production is a hard error, not a silent downgrade.
+if (process.env.NODE_ENV === "production" && !process.env.NEXTAUTH_SECRET) {
+  throw new Error("NEXTAUTH_SECRET must be set in production — refusing to start with an insecure default.")
+}
+
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
   providers: [
@@ -71,7 +77,7 @@ export const authOptions: NextAuthOptions = {
       }
     },
   },
-  secret: process.env.NEXTAUTH_SECRET || "fallback-development-secret-key",
+  secret: process.env.NEXTAUTH_SECRET,
   pages: {
     signIn: "/login",
     error: "/login"

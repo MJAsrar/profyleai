@@ -66,7 +66,7 @@ export const useFontConfigStore = create<FontConfigState>()(
       
       // Apply a preset configuration
       applyPreset: (preset: keyof typeof FONT_SIZE_PRESETS) =>
-        set({ fontConfig: { ...FONT_SIZE_PRESETS[preset] } }),
+        set({ fontConfig: { ...FONT_SIZE_PRESETS[preset] } as FontSizeConfig }),
       
       // Get a specific font size
       getFontSize: (element: keyof FontSizeConfig) => 
@@ -97,8 +97,9 @@ export const useGetFontSize = () => useFontConfigStore((state) => state.getFontS
 export function getPresetName(fontConfig: FontSizeConfig): string | null {
   // Check each preset for exact match
   for (const [name, preset] of Object.entries(FONT_SIZE_PRESETS)) {
+    const presetConfig = preset as FontSizeConfig
     const isMatch = Object.keys(preset).every(
-      key => fontConfig[key as keyof FontSizeConfig] === preset[key as keyof FontSizeConfig]
+      key => fontConfig[key as keyof FontSizeConfig] === presetConfig[key as keyof FontSizeConfig]
     )
     if (isMatch) return name
   }

@@ -83,7 +83,7 @@ export function CertificationsForm() {
     })
   }
 
-  const formatDate = (dateStr: string) => {
+  const formatDate = (dateStr: string | undefined) => {
     if (!dateStr) return ''
     try {
       const date = new Date(dateStr + '-01') // Add day for YYYY-MM format
@@ -93,7 +93,7 @@ export function CertificationsForm() {
     }
   }
 
-  const optimizeCertificationDescription = async (certificationName: string, currentDescription: string, certificationId?: string) => {
+  const optimizeCertificationDescription = async (certificationName: string | undefined, currentDescription: string | undefined, certificationId?: string) => {
     if (!currentDescription || currentDescription.trim().length === 0) {
       toast({
         title: "No content to optimize",

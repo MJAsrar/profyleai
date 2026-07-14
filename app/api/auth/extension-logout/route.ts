@@ -1,24 +1,29 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
+import { getAuthenticatedUser } from "@/lib/auth-utils"
+import { prisma } from "@/lib/prisma"
 
 /**
- * POST /api/auth/extension-logout - Notify that user has logged out
- * This endpoint allows the web app to signal that a user has logged out
- * so the extension can clear its stored session
+ * POST /api/auth/extension-logout - Revoke the caller's extension API token.
+ * Identifies the user from their own credential (Bearer token or session) and
+ * clears the stored token hash so it can no longer authenticate. Idempotent.
  */
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json()
-    const { userId } = body
+    const user = await getAuthenticatedUser(req)
 
-    // We don't need to validate session here since we're logging out
-    // Just return success to indicate the logout was acknowledged
-    console.log(`[Auth] Extension logout signal received for user: ${userId}`)
-    
+    if (user) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { apiTokenHash: null, apiTokenExpiresAt: null },
+      })
+    }
+
+    // Always succeed: logging out an unknown/expired token is a no-op.
     return NextResponse.json({
       success: true,
-      message: "Logout signal received"
+      message: "Extension token revoked",
     })
   } catch (error) {
     console.error("[Auth] Extension logout error:", error)

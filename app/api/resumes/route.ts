@@ -94,7 +94,7 @@ export const POST = withCreditCheck('RESUME_BUILDER')(async (req, context) => {
       data: {
         userId: user.id,
         title: validatedData.title,
-        templateId: validatedData.templateId,
+        templateId: validatedData.templateId!,
         personalInfo: validatedData.personalInfo,
         summary: validatedData.summary || "",
         experience: validatedData.experience,

@@ -6,11 +6,26 @@
  */
 
 import Stripe from 'stripe'
-import { CREDIT_PACKAGES, CreditPackageId, isCreditPackageId } from '@/lib/types/credits'
+import { CREDIT_PACKAGES, CreditPackageId, isCreditPackageId, CreditErrorType } from '@/lib/types/credits'
+
+/**
+ * Result of processing a webhook event.
+ * - processed: the event was fully handled (or is an idempotent duplicate) → HTTP 200
+ * - retryable: a HANDLED event failed transiently → the route returns 5xx so Stripe retries
+ *   (unhandled event types are processed:false, retryable:false → HTTP 200, no retry)
+ */
+export type WebhookResult = { processed: boolean; message: string; retryable?: boolean }
+
+/** True if the error means the purchase was already completed (safe, idempotent). */
+function isDuplicatePurchaseError(error: unknown): boolean {
+  const err = error as any
+  const type = err?.type ?? err?.details?.originalError?.type
+  return type === CreditErrorType.DUPLICATE_TRANSACTION
+}
 
 // Initialize Stripe with secret key
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2025-03-31.basil',
+  apiVersion: '2025-07-30.basil',
   typescript: true,
 })
 
@@ -51,9 +66,8 @@ export async function createStripeProducts() {
         },
       })
       
-      // Create price
+      // Create price (Stripe assigns the price id automatically; it cannot be set)
       const price = await stripe.prices.create({
-        id: `price_${packageId}`,
         product: product.id,
         unit_amount: Math.round(packageInfo.price * 100), // Convert to cents
         currency: STRIPE_CONFIG.currency,
@@ -244,10 +258,7 @@ export function verifyWebhookSignature(
 /**
  * Process webhook event
  */
-export async function processWebhookEvent(event: Stripe.Event): Promise<{
-  processed: boolean
-  message: string
-}> {
+export async function processWebhookEvent(event: Stripe.Event): Promise<WebhookResult> {
   try {
     switch (event.type) {
       case 'checkout.session.completed':
@@ -273,8 +284,10 @@ export async function processWebhookEvent(event: Stripe.Event): Promise<{
     }
   } catch (error) {
     console.error('Error processing webhook event:', error)
+    // Unexpected failure at the dispatch level — treat as transient so Stripe retries.
     return {
       processed: false,
+      retryable: true,
       message: `Error processing event: ${error instanceof Error ? error.message : 'Unknown error'}`
     }
   }
@@ -287,34 +300,40 @@ export async function processWebhookEvent(event: Stripe.Event): Promise<{
 /**
  * Handle completed checkout session
  */
-async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session): Promise<{
-  processed: boolean
-  message: string
-}> {
+async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session): Promise<WebhookResult> {
   const { purchaseId, userId, packageId, credits } = session.metadata || {}
-  
+
   if (!purchaseId || !userId || !packageId || !credits) {
+    // Permanent problem with this event — retrying won't help.
     return {
       processed: false,
+      retryable: false,
       message: 'Missing required metadata in checkout session'
     }
   }
-  
+
   try {
     // Import here to avoid circular dependencies
     const { creditService } = await import('@/lib/services/credit-service')
-    
+
     // Complete the credit purchase
     await creditService.completeCreditPurchase(purchaseId, session.id)
-    
+
     return {
       processed: true,
       message: `Successfully processed credit purchase for user ${userId}`
     }
   } catch (error) {
+    // Already granted (duplicate delivery) is success, not a failure to retry.
+    if (isDuplicatePurchaseError(error)) {
+      return { processed: true, message: `Credit purchase already completed for user ${userId}` }
+    }
+    // Transient failure (e.g. DB unavailable): return retryable so the route emits 5xx
+    // and Stripe retries — otherwise the customer paid but was never credited.
     console.error('Error completing credit purchase from checkout session:', error)
     return {
       processed: false,
+      retryable: true,
       message: `Failed to complete credit purchase: ${error instanceof Error ? error.message : 'Unknown error'}`
     }
   }
@@ -367,34 +386,36 @@ async function handleCheckoutSessionExpired(session: Stripe.Checkout.Session): P
 /**
  * Handle successful payment
  */
-async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent): Promise<{
-  processed: boolean
-  message: string
-}> {
+async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent): Promise<WebhookResult> {
   const { purchaseId, userId, packageId, credits } = paymentIntent.metadata
-  
+
   if (!purchaseId || !userId || !packageId || !credits) {
     return {
       processed: false,
+      retryable: false,
       message: 'Missing required metadata in payment intent'
     }
   }
-  
+
   try {
     // Import here to avoid circular dependencies
     const { creditService } = await import('@/lib/services/credit-service')
-    
+
     // Complete the credit purchase
     await creditService.completeCreditPurchase(purchaseId, paymentIntent.id)
-    
+
     return {
       processed: true,
       message: `Successfully processed credit purchase for user ${userId}`
     }
   } catch (error) {
+    if (isDuplicatePurchaseError(error)) {
+      return { processed: true, message: `Credit purchase already completed for user ${userId}` }
+    }
     console.error('Error completing credit purchase:', error)
     return {
       processed: false,
+      retryable: true,
       message: `Failed to complete credit purchase: ${error instanceof Error ? error.message : 'Unknown error'}`
     }
   }

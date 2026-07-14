@@ -257,6 +257,3 @@ export class TemplateRegistry {
 
 // Export singleton instance
 export const templateRegistry = new TemplateRegistry()
-
-// Export types for external use
-export type { TemplateMetadata }

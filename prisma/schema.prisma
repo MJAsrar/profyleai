@@ -48,13 +48,21 @@ model User {
   subscriptionTier SubscriptionTier @default(FREE)
   
   // Credit system fields
-  credits           Int      @default(10)   // Current credit balance
-  totalCreditsEarned Int     @default(10)   // Lifetime credits earned (includes signup bonus)
+  // Balance/earned default to 0; the signup bonus is granted in exactly one place
+  // (register route for email, createUser event for OAuth) so the ledger always matches.
+  credits           Int      @default(0)    // Current credit balance
+  totalCreditsEarned Int     @default(0)    // Lifetime credits earned (includes signup bonus)
   totalCreditsSpent  Int     @default(0)    // Lifetime credits spent
   lastCreditUpdate  DateTime @default(now()) // Last time credits were modified
-  
+
+  // Extension API token (opaque, random, hashed at rest, expiring). Never the user id.
+  apiTokenHash      String?   // sha256 of the raw bearer token issued to the extension
+  apiTokenExpiresAt DateTime? // token expiry; expired tokens are rejected
+
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+
+  @@index([apiTokenHash])
 
   accounts         Account[]
   sessions         Session[]

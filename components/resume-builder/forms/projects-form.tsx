@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Plus, Trash2, X, Sparkles, Loader2, Edit, Save } from "lucide-react"
 import { useResumeStore } from "@/lib/resume-store"
 import { useToast } from "@/hooks/use-toast"
+import type { ProjectItem } from "@/lib/validations/resume"
 
 export function ProjectsForm() {
   const { resumeData, addProject, updateProject, removeProject } = useResumeStore()
@@ -48,7 +49,7 @@ export function ProjectsForm() {
 
   const handleAddProject = () => {
     if (newProject.name && newProject.description) {
-      addProject(newProject)
+      addProject(newProject as unknown as Omit<ProjectItem, "id">)
       setNewProject({
         name: "",
         description: "",
@@ -107,7 +108,7 @@ export function ProjectsForm() {
     }
   }
 
-  const optimizeProjectDescription = async (projectName: string, currentDescription: string, projectId?: string) => {
+  const optimizeProjectDescription = async (projectName: string | undefined, currentDescription: string | undefined, projectId?: string) => {
     if (!currentDescription || currentDescription.trim().length === 0) {
       toast({
         title: "No content to optimize",
@@ -378,9 +379,9 @@ export function ProjectsForm() {
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
                       <h4 className="font-semibold">{project.name}</h4>
-                      {project.url && (
+                      {(project as { url?: string }).url && (
                         <a
-                          href={project.url}
+                          href={(project as { url?: string }).url}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-primary hover:underline text-sm"
@@ -420,7 +421,7 @@ export function ProjectsForm() {
                     <Button variant="ghost" size="sm" onClick={() => handleEditProject(project)}>
                       <Edit className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="sm" onClick={() => removeProject(project.id)}>
+                    <Button variant="ghost" size="sm" onClick={() => removeProject(project.id ?? "")}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>

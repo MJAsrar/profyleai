@@ -157,5 +157,12 @@ export function createRelativeFontConfig(baseSize: number = 8): FontSizeConfig {
     
     certificationName: baseSize,    // 1x base
     certificationDetails: baseSize * 0.875, // 0.875x base
+
+    projectTitle: baseSize * 1.25,  // 1.25x base (synced with jobTitle)
+    projectDescription: baseSize,   // 1x base (synced with content)
+    projectLink: baseSize * 1.25,   // 1.25x base (synced with jobTitle)
+
+    certificationIssuer: baseSize * 1.125, // 1.125x base (synced with company)
+    certificationDate: baseSize * 1.25,    // 1.25x base (synced with jobTitle)
   }
 }

@@ -96,9 +96,9 @@ export type CreditPackage = typeof CREDIT_PACKAGES[CreditPackageId]
  */
 export interface CreditSummary {
   userId: string
-  currentBalance: int
-  totalEarned: int
-  totalSpent: int
+  currentBalance: number
+  totalEarned: number
+  totalSpent: number
   lastUpdate: Date
   recentTransactions: CreditTransactionSummary[]
   lowBalanceWarning: boolean // true if balance < 10 credits
@@ -110,9 +110,9 @@ export interface CreditSummary {
 export interface CreditTransactionSummary {
   id: string
   type: CreditTransactionType
-  amount: int
+  amount: number
   description: string
-  balanceAfter: int
+  balanceAfter: number
   createdAt: Date
   referenceType?: string | null
 }
@@ -124,12 +124,12 @@ export interface CreditTransactionDetails {
   id: string
   userId: string
   type: CreditTransactionType
-  amount: int
+  amount: number
   description: string
   referenceId?: string | null
   referenceType?: string | null
-  balanceAfter: int
-  balanceBefore: int
+  balanceAfter: number
+  balanceBefore: number
   isReversed: boolean
   reversalId?: string | null
   metadata?: Record<string, any> | null
@@ -144,7 +144,7 @@ export interface CreditPurchaseDetails {
   id: string
   userId: string
   packageType: string
-  creditsAmount: int
+  creditsAmount: number
   dollarAmount: number
   creditsPerDollar: number
   paymentProvider: string
@@ -156,7 +156,7 @@ export interface CreditPurchaseDetails {
   completedAt?: Date | null
   failedAt?: Date | null
   errorMessage?: string | null
-  retryCount: int
+  retryCount: number
   purchaseMetadata?: Record<string, any> | null
 }
 
@@ -179,8 +179,8 @@ export interface SpendCreditsRequest {
 export interface SpendCreditsResponse {
   success: boolean
   transactionId: string
-  newBalance: int
-  amountSpent: int
+  newBalance: number
+  amountSpent: number
   message: string
 }
 
@@ -202,7 +202,7 @@ export interface PurchaseCreditsResponse {
   paymentIntentId: string
   clientSecret: string
   amount: number
-  credits: int
+  credits: number
   redirectUrl?: string
 }
 
@@ -221,8 +221,8 @@ export interface RefundCreditsRequest {
 export interface RefundCreditsResponse {
   success: boolean
   transactionId: string
-  refundedAmount: int
-  newBalance: int
+  refundedAmount: number
+  newBalance: number
   message: string
 }
 
@@ -260,9 +260,9 @@ export interface CreditError {
  */
 export interface InsufficientCreditsError extends CreditError {
   type: CreditErrorType.INSUFFICIENT_CREDITS
-  currentBalance: int
-  requiredCredits: int
-  shortfall: int
+  currentBalance: number
+  requiredCredits: number
+  shortfall: number
   suggestedPackage?: CreditPackage
 }
 
@@ -275,12 +275,12 @@ export interface InsufficientCreditsError extends CreditError {
  */
 export interface ICreditService {
   // Balance operations
-  getCreditBalance(userId: string): Promise<int>
+  getCreditBalance(userId: string): Promise<number>
   getCreditSummary(userId: string): Promise<CreditSummary>
   
   // Transaction operations
   spendCredits(userId: string, action: CreditAction, referenceId?: string, metadata?: Record<string, any>): Promise<CreditTransactionDetails>
-  addCredits(userId: string, amount: int, type: CreditTransactionType, referenceId?: string, metadata?: Record<string, any>): Promise<CreditTransactionDetails>
+  addCredits(userId: string, amount: number, type: CreditTransactionType, referenceId?: string, metadata?: Record<string, any>): Promise<CreditTransactionDetails>
   refundCredits(userId: string, originalTransactionId: string, reason?: string): Promise<CreditTransactionDetails>
   
   // Validation
@@ -292,8 +292,8 @@ export interface ICreditService {
   completeCreditPurchase(purchaseId: string, paymentId: string): Promise<CreditTransactionDetails>
   
   // Transaction history
-  getTransactionHistory(userId: string, limit?: int, offset?: int): Promise<CreditTransactionDetails[]>
-  getTransactionsByType(userId: string, type: CreditTransactionType, limit?: int): Promise<CreditTransactionDetails[]>
+  getTransactionHistory(userId: string, limit?: number, offset?: number): Promise<CreditTransactionDetails[]>
+  getTransactionsByType(userId: string, type: CreditTransactionType, limit?: number): Promise<CreditTransactionDetails[]>
 }
 
 /**
@@ -342,8 +342,8 @@ export interface CreditTransactionMetadata {
   // Video interview metadata
   videoInterview?: {
     sessionId: string
-    duration?: int
-    questionsCount?: int
+    duration?: number
+    questionsCount?: number
     jobTitle?: string
     companyName?: string
   }
@@ -362,7 +362,7 @@ export interface CreditTransactionMetadata {
     tailoredResumeId: string
     jobTitle?: string
     companyName?: string
-    matchScore?: int
+    matchScore?: number
   }
   
   // Cover letter metadata
@@ -379,7 +379,7 @@ export interface CreditTransactionMetadata {
     paymentProvider: string
     paymentIntentId: string
     originalAmount: number
-    bonusCredits?: int
+    bonusCredits?: number
   }
   
   // Refund metadata
@@ -407,14 +407,14 @@ export function isCreditPackageId(packageId: string): packageId is CreditPackage
 /**
  * Calculate credits needed for multiple actions
  */
-export function calculateTotalCredits(actions: CreditAction[]): int {
+export function calculateTotalCredits(actions: CreditAction[]): number {
   return actions.reduce((total, action) => total + CREDIT_COSTS[action], 0)
 }
 
 /**
  * Get the appropriate package suggestion for a credit amount
  */
-export function suggestPackageForCredits(creditsNeeded: int): CreditPackage | null {
+export function suggestPackageForCredits(creditsNeeded: number): CreditPackage | null {
   const packages = Object.values(CREDIT_PACKAGES)
   const suitablePackages = packages.filter(pkg => pkg.credits >= creditsNeeded)
   

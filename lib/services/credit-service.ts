@@ -452,17 +452,25 @@ export class CreditService implements ICreditService {
       if (purchase.status !== CreditPurchaseStatus.PENDING) {
         throw this.createError(CreditErrorType.DUPLICATE_TRANSACTION, 'Purchase already processed')
       }
-      
-      // Update purchase status
-      await tx.creditPurchase.update({
-        where: { id: purchaseId },
+
+      // Atomic compare-and-swap: only the first caller flips PENDING -> COMPLETED.
+      // Stripe delivers webhooks at-least-once (and both checkout.session.completed
+      // and payment_intent.succeeded can fire for one purchase), so this guard is
+      // what prevents a duplicate delivery from crediting the user twice.
+      const claimed = await tx.creditPurchase.updateMany({
+        where: { id: purchaseId, status: CreditPurchaseStatus.PENDING },
         data: {
           status: CreditPurchaseStatus.COMPLETED,
           paymentId,
           completedAt: new Date(),
         }
       })
-      
+
+      if (claimed.count === 0) {
+        // Another concurrent delivery already claimed it — treat as duplicate.
+        throw this.createError(CreditErrorType.DUPLICATE_TRANSACTION, 'Purchase already processed')
+      }
+
       // Add credits to user account
       const transaction = await this.addCreditsWithTransaction(
         tx,
@@ -762,7 +770,7 @@ export class CreditService implements ICreditService {
       currentBalance,
       requiredCredits,
       shortfall,
-      suggestedPackage,
+      suggestedPackage: suggestedPackage ?? undefined,
       retryable: false,
     }
   }

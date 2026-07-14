@@ -4,9 +4,9 @@ import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 
 interface RouteParams {
-  params: {
+  params: Promise<{
     sessionId: string
-  }
+  }>
 }
 
 const analyticsSchema = z.object({
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       return createAuthError()
     }
 
-    const { sessionId } = params
+    const { sessionId } = await params
     const body = await request.json()
 
     // Validate request body
@@ -111,7 +111,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       return createAuthError()
     }
 
-    const { sessionId } = params
+    const { sessionId } = await params
     const { searchParams } = new URL(request.url)
     const type = searchParams.get('type')
     const fromTimestamp = searchParams.get('fromTimestamp')

@@ -22,11 +22,11 @@ interface ExtractedJobInfo {
   title: string
   company: string
   description: string
-  location?: string
-  salary?: string
-  jobType?: string
-  requirements?: string[]
-  benefits?: string
+  location?: string | null
+  salary?: string | null
+  jobType?: string | null
+  requirements?: string[] | null
+  benefits?: string | null
   isJobPosting: boolean
 }
 

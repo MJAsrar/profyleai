@@ -2,13 +2,16 @@ import { NextRequest, NextResponse } from "next/server"
 import bcrypt from "bcryptjs"
 import { prisma } from "@/lib/prisma"
 import { z } from "zod"
-import { CreditTransactionType } from "@prisma/client"
+import { CreditTransactionType, Prisma } from "@prisma/client"
 
 const registerSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Invalid email address"),
   password: z.string().min(6, "Password must be at least 6 characters"),
 })
+
+// Single source of truth for the signup bonus so balance and ledger never drift.
+const SIGNUP_BONUS = 10
 
 export async function POST(req: NextRequest) {
   try {
@@ -33,12 +36,16 @@ export async function POST(req: NextRequest) {
     // Create user and initial credit transaction in a single transaction
     try {
       const result = await prisma.$transaction(async (tx) => {
-        // Create user (credits default to 10 from schema)
+        // Create user with the signup bonus granted explicitly (schema default is 0)
+        // so balance and ledger always agree.
         const user = await tx.user.create({
           data: {
             name,
             email,
             password: hashedPassword,
+            credits: SIGNUP_BONUS,
+            totalCreditsEarned: SIGNUP_BONUS,
+            lastCreditUpdate: new Date(),
           }
         })
 
@@ -47,10 +54,10 @@ export async function POST(req: NextRequest) {
           data: {
             userId: user.id,
             type: CreditTransactionType.EARNED_SIGNUP,
-            amount: 10, // Signup bonus
+            amount: SIGNUP_BONUS, // Signup bonus
             description: "Welcome Bonus",
             balanceBefore: 0,
-            balanceAfter: 10,
+            balanceAfter: SIGNUP_BONUS,
             metadata: {
               timestamp: new Date().toISOString(),
               signupMethod: "email",
@@ -87,8 +94,8 @@ export async function POST(req: NextRequest) {
               email,
               password: hashedPassword,
               subscriptionTier: "FREE",
-              credits: 10,
-              totalCreditsEarned: 10,
+              credits: SIGNUP_BONUS,
+              totalCreditsEarned: SIGNUP_BONUS,
               totalCreditsSpent: 0,
               lastCreditUpdate: new Date(),
               createdAt: new Date(),
@@ -97,7 +104,7 @@ export async function POST(req: NextRequest) {
           })
           
           // Get the created user ID
-          const insertedId = userResult.insertedIds?.[0]
+          const insertedId = (userResult as unknown as { insertedIds?: Prisma.InputJsonValue[] }).insertedIds?.[0]
           
           if (insertedId) {
             // Create initial credit transaction
@@ -106,10 +113,10 @@ export async function POST(req: NextRequest) {
               documents: [{
                 userId: insertedId,
                 type: "EARNED_SIGNUP",
-                amount: 50,
+                amount: SIGNUP_BONUS,
                 description: "Welcome Bonus",
                 balanceBefore: 0,
-                balanceAfter: 50,
+                balanceAfter: SIGNUP_BONUS,
                 isReversed: false,
                 metadata: {
                   timestamp: new Date().toISOString(),

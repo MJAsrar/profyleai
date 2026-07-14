@@ -39,17 +39,29 @@ export async function POST(req: NextRequest) {
 
     if (result.processed) {
       console.log(`Successfully processed webhook event: ${event.type}`)
-      return NextResponse.json({ 
+      return NextResponse.json({
         received: true,
-        message: result.message 
+        message: result.message
       })
-    } else {
-      console.warn(`Failed to process webhook event: ${event.type} - ${result.message}`)
-      return NextResponse.json({ 
-        received: true,
-        message: result.message 
-      }, { status: 200 }) // Still return 200 to avoid Stripe retries for unhandled events
     }
+
+    if (result.retryable) {
+      // A handled event failed transiently (e.g. DB down). Return 5xx so Stripe
+      // retries with backoff — otherwise the customer is charged but never credited.
+      console.error(`Retryable failure processing webhook event: ${event.type} - ${result.message}`)
+      return NextResponse.json({
+        received: false,
+        message: result.message
+      }, { status: 500 })
+    }
+
+    // Permanent / unhandled event (bad metadata, event type we don't act on):
+    // acknowledge with 200 so Stripe stops retrying.
+    console.warn(`Not processed (no retry): ${event.type} - ${result.message}`)
+    return NextResponse.json({
+      received: true,
+      message: result.message
+    }, { status: 200 })
 
   } catch (error) {
     console.error("Webhook error:", error)

@@ -6,7 +6,8 @@ import { PracticeQuestion } from './interview-service'
 // ===== TYPES =====
 
 export interface ElevenLabsConfig {
-  apiKey: string
+  // The realtime connection uses only the public agentId. No secret key is needed
+  // (or wanted) in the browser; a private agent should use a server-minted signed URL.
   agentId: string
 }
 
@@ -828,16 +829,8 @@ export class ElevenLabsInterviewService {
 // ===== FACTORY FUNCTION =====
 
 export function createElevenLabsInterviewService(
-  apiKey: string,
   agentId: string,
   callbacks: ElevenLabsCallbacks
 ): ElevenLabsInterviewService {
-  const config: ElevenLabsConfig = {
-    apiKey,
-    agentId
-  }
-  
-  return new ElevenLabsInterviewService(config, callbacks)
+  return new ElevenLabsInterviewService({ agentId }, callbacks)
 }
-
-//git asd

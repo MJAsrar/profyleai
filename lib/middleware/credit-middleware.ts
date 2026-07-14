@@ -87,7 +87,9 @@ export function withCreditCheck(
   return function middleware(handler: CreditRouteHandler) {
     return async function wrappedHandler(
       req: NextRequest,
-      context: { params?: any } = {}
+      // Shape must satisfy Next 15's RouteContext (params is a required Promise),
+      // otherwise the generated route type validator rejects the exported handler.
+      context: { params: Promise<any> }
     ): Promise<NextResponse> {
       try {
         // Validate and enrich request with credit context
@@ -217,8 +219,8 @@ async function validateCreditsMiddleware(
   
   const user = {
     id: session.user.id,
-    email: session.user.email,
-    name: session.user.name,
+    email: session.user.email ?? undefined,
+    name: session.user.name ?? undefined,
   }
   
   try {

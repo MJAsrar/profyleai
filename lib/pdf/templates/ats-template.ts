@@ -6,6 +6,14 @@ import type { Content, Style, TDocumentDefinitions } from 'pdfmake/interfaces'
 import type { ResumeData } from '@/lib/resume-store'
 import { BasePDFTemplate, type TemplateStyles } from '../template-engine'
 
+// The ATS template's style object uses a `typography` block (name/title/body/contact)
+// instead of the base `TemplateStyles.sizes` shape. Model that precisely so the
+// property stays assignable to the base `styles: TemplateStyles` while still exposing
+// the `typography` fields this template reads.
+type ATSTemplateStyles = TemplateStyles & {
+  typography: { name: number; title: number; body: number; contact: number }
+}
+
 export class ATSPDFTemplate extends BasePDFTemplate {
   id = 'ats'
   name = 'ATS Friendly'
@@ -23,7 +31,7 @@ export class ATSPDFTemplate extends BasePDFTemplate {
     }
   }
 
-  styles: TemplateStyles = {
+  styles: ATSTemplateStyles = {
     fonts: {
       header: 'Arial',  // ATS-friendly fonts
       body: 'Arial',
@@ -48,7 +56,7 @@ export class ATSPDFTemplate extends BasePDFTemplate {
       body: 11,                // 11pt for body text
       contact: 11              // 11pt for contact info
     }
-  }
+  } as unknown as ATSTemplateStyles
 
   protected buildHeader(data: ResumeData): Content {
     const personalInfo = data.personalInfo || {}

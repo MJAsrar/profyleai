@@ -18,7 +18,7 @@ export function SkillsForm() {
   const [editData, setEditData] = useState<any>(null)
   const [newCategory, setNewCategory] = useState({
     category: "",
-    skills: [] as Array<{ name: string; level?: string }>,
+    skills: [] as Array<{ name: string; level?: "Beginner" | "Intermediate" | "Advanced" | "Expert" }>,
   })
   const [currentSkill, setCurrentSkill] = useState("")
 
@@ -240,7 +240,7 @@ export function SkillsForm() {
                     <Button variant="ghost" size="sm" onClick={() => handleEditSkillCategory(skillCategory)}>
                       <Edit className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="sm" onClick={() => removeSkillCategory(skillCategory.id)}>
+                    <Button variant="ghost" size="sm" onClick={() => removeSkillCategory(skillCategory.id!)}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>

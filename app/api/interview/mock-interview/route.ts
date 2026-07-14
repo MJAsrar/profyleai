@@ -302,7 +302,7 @@ function generateRealMockInterviewSummary(mockInterview: any): any {
   
   console.log('📊 Generating summary with answers:', {
     totalAnswers: answers.length,
-    answersData: answers.map(a => ({ 
+    answersData: answers.map((a: any) => ({
       id: a.id, 
       score: a.score, 
       questionId: a.questionId,
@@ -398,7 +398,7 @@ function generateRealMockInterviewSummary(mockInterview: any): any {
   })
 
   const overallStarUsage = Math.round(
-    starScores.reduce((sum, item) => sum + item.score, 0) / starScores.length
+    starScores.reduce((sum: number, item: any) => sum + item.score, 0) / starScores.length
   )
 
   // Generate weaknesses based on analysis

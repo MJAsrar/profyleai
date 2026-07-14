@@ -1,42 +1,24 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { PageContainer } from "@/components/ui/page-container"
-import { MotionWrapper } from "@/components/ui/motion-wrapper"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { 
-  FolderOpen, 
-  Download, 
-  Edit, 
-  Trash2, 
-  Calendar, 
-  Building2, 
-  FileText,
-  AlertCircle,
-  Target,
-  TrendingUp,
-  Plus,
-  Layout
-} from "lucide-react"
+import { useCallback, useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useFontConfig } from "@/lib/font-config-store"
+import { toast } from "sonner"
 
-interface Resume {
+import { ToolTopBar } from "@/components/layout/tool-top-bar"
+import { Button } from "@/components/ui/button"
+import { Card } from "@/components/ui/card"
+import { EmptyState, ErrorState, ListSkeleton } from "@/components/ui/states"
+import { Monogram } from "@/components/ui/monogram"
+import { useFontConfig } from "@/lib/font-config-store"
+import { cn } from "@/lib/utils"
+
+interface BaseResume {
   id: string
   title: string
   createdAt: string
   updatedAt: string
-  template: {
-    id: string
-    name: string
-    category: string
-    previewUrl: string | null
-  }
+  template: { id: string; name: string; category: string } | null
 }
 
 interface TailoredResume {
@@ -44,522 +26,357 @@ interface TailoredResume {
   title: string
   jobTitle: string
   companyName: string
-  jobDescription: string
   matchScore: number | null
   createdAt: string
-  template: {
-    id: string
-    name: string
-    category: string
-    previewUrl: string | null
-  }
-  baseResume: {
-    id: string
-    title: string
-  }
-  tailoringMetadata?: any
+  baseResume: { id: string; title: string } | null
+}
+
+function formatDate(iso: string): string {
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return ""
+  return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })
 }
 
 export default function ViewResumesPage() {
-  const [resumes, setResumes] = useState<Resume[]>([])
-  const [tailoredResumes, setTailoredResumes] = useState<TailoredResume[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const router = useRouter()
   const fontConfig = useFontConfig()
 
-  const fetchAllResumes = async () => {
-    try {
-      setIsLoading(true)
-      
-      // Fetch both regular resumes and tailored resumes
-      const [resumesResponse, tailoredResponse] = await Promise.all([
-        fetch('/api/resumes'),
-        fetch('/api/tailored-resumes')
-      ])
-      
-      if (!resumesResponse.ok || !tailoredResponse.ok) {
-        throw new Error('Failed to fetch resumes')
-      }
+  const [resumes, setResumes] = useState<BaseResume[]>([])
+  const [tailored, setTailored] = useState<TailoredResume[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-      const [resumesData, tailoredData] = await Promise.all([
-        resumesResponse.json(),
-        tailoredResponse.json()
+  const [confirmingId, setConfirmingId] = useState<string | null>(null)
+  const [busyId, setBusyId] = useState<string | null>(null)
+
+  const load = useCallback(async () => {
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      const [a, b] = await Promise.all([
+        fetch("/api/resumes"),
+        fetch("/api/tailored-resumes"),
       ])
-      
-      setResumes(resumesData.data || resumesData.resumes || [])
-      setTailoredResumes(tailoredData.data || tailoredData.tailoredResumes || [])
-    } catch (error) {
-      console.error('Failed to fetch resumes:', error)
-      setError(error instanceof Error ? error.message : 'Failed to load resumes')
+      if (!a.ok || !b.ok) throw new Error()
+
+      const [ra, rb] = await Promise.all([a.json(), b.json()])
+      setResumes(ra.data ?? ra.resumes ?? [])
+      setTailored(rb.data ?? rb.tailoredResumes ?? [])
+    } catch {
+      setError("We couldn't load your résumés.")
     } finally {
       setIsLoading(false)
     }
-  }
-
-  useEffect(() => {
-    fetchAllResumes()
   }, [])
 
-  const handleEditResume = (resumeId: string) => {
-    // Navigate to resume builder with the specific resume ID
-    router.push(`/dashboard/resume-builder?resumeId=${resumeId}`)
-  }
+  useEffect(() => {
+    load()
+  }, [load])
 
-  const handleEditTailoredResume = (tailoredResumeId: string) => {
-    // Navigate to resume builder with the specific tailored resume ID
-    router.push(`/dashboard/resume-builder?tailoredResumeId=${tailoredResumeId}`)
-  }
-
-  const handleDownload = async (resumeId: string, title: string, isTailored: boolean = false) => {
+  async function download(id: string, title: string, isTailored: boolean) {
+    setBusyId(id)
     try {
-      console.log('Downloading resume:', resumeId)
-      
-      const endpoint = isTailored 
-        ? `/api/tailored-resumes/${resumeId}/download`
-        : `/api/resumes/${resumeId}/download`
-      
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          fontConfig
-        })
-      })
-      
-      if (!response.ok) {
-        throw new Error('Failed to download resume')
-      }
-      
-      // Get the PDF blob
-      const blob = await response.blob()
-      
-      // Create download link
-      const url = window.URL.createObjectURL(blob)
-      const link = document.createElement('a')
+      const res = await fetch(
+        isTailored ? `/api/tailored-resumes/${id}/download` : `/api/resumes/${id}/download`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ fontConfig }),
+        }
+      )
+      if (!res.ok) throw new Error()
+
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement("a")
       link.href = url
-      link.download = `${title.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_')}_Resume.pdf`
+      link.download = `${title.replace(/[^\w\s-]/g, "").trim().replace(/\s+/g, "_") || "resume"}.pdf`
       document.body.appendChild(link)
       link.click()
-      
-      // Cleanup
-      document.body.removeChild(link)
-      window.URL.revokeObjectURL(url)
-      
-      console.log('✅ Resume downloaded successfully')
-    } catch (error) {
-      console.error('Failed to download resume:', error)
-      setError('Failed to download resume. Please try again.')
+      link.remove()
+      URL.revokeObjectURL(url)
+    } catch {
+      toast.error("The download failed. Try again in a moment.")
+    } finally {
+      setBusyId(null)
     }
   }
 
-  const handleDeleteResume = async (resumeId: string) => {
-    if (!confirm('Are you sure you want to delete this resume? This action cannot be undone.')) {
-      return
-    }
-
+  async function remove(id: string, isTailored: boolean) {
+    setBusyId(id)
     try {
-      const response = await fetch(`/api/resumes/${resumeId}`, {
-        method: 'DELETE'
-      })
+      const res = await fetch(
+        isTailored ? `/api/tailored-resumes/${id}` : `/api/resumes/${id}`,
+        { method: "DELETE" }
+      )
+      if (!res.ok) throw new Error()
 
-      if (!response.ok) {
-        throw new Error('Failed to delete resume')
-      }
+      // Drop it locally rather than refetching — the list is already correct.
+      if (isTailored) setTailored((t) => t.filter((r) => r.id !== id))
+      else setResumes((r) => r.filter((x) => x.id !== id))
 
-      // Refresh the list
-      await fetchAllResumes()
-    } catch (error) {
-      console.error('Failed to delete resume:', error)
-      setError(error instanceof Error ? error.message : 'Failed to delete resume')
+      setConfirmingId(null)
+      toast.success("Deleted.")
+    } catch {
+      toast.error("Couldn't delete that. It's still here.")
+    } finally {
+      setBusyId(null)
     }
   }
 
-  const handleDeleteTailoredResume = async (tailoredResumeId: string) => {
-    if (!confirm('Are you sure you want to delete this tailored resume?')) {
-      return
-    }
-
-    try {
-      const response = await fetch(`/api/tailored-resumes/${tailoredResumeId}`, {
-        method: 'DELETE'
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to delete tailored resume')
-      }
-
-      // Refresh the list
-      await fetchAllResumes()
-    } catch (error) {
-      console.error('Failed to delete tailored resume:', error)
-      setError(error instanceof Error ? error.message : 'Failed to delete tailored resume')
-    }
-  }
-
-  const getScoreColor = (score: number | null) => {
-    if (!score) return "text-gray-500"
-    if (score >= 90) return "text-green-600"
-    if (score >= 75) return "text-yellow-600"
-    return "text-red-600"
-  }
-
-  const getScoreBadge = (score: number | null) => {
-    if (!score) return "secondary"
-    if (score >= 90) return "default"
-    if (score >= 75) return "secondary"
-    return "destructive"
-  }
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    })
-  }
-
-  const truncateDescription = (description: string, maxLength: number = 100) => {
-    if (description.length <= maxLength) return description
-    return description.slice(0, maxLength) + '...'
-  }
+  /** Tailored versions belong to the résumé they were cut from — show them there. */
+  const versionsOf = (baseId: string) => tailored.filter((t) => t.baseResume?.id === baseId)
+  const orphaned = tailored.filter(
+    (t) => !t.baseResume || !resumes.some((r) => r.id === t.baseResume!.id)
+  )
 
   return (
-    <PageContainer maxWidth="full" padding="lg" className="min-h-screen">
-      <MotionWrapper animation="fade-in-down">
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <FolderOpen className="h-6 w-6 text-primary" />
-            <h1 className="text-3xl font-bold">My Resumes</h1>
-          </div>
-          <p className="text-muted-foreground">
-            Manage all your resumes and tailored versions in one place
-          </p>
-        </div>
-      </MotionWrapper>
+    <>
+      <ToolTopBar
+        title="My résumés"
+        actions={
+          <Button asChild size="sm">
+            <Link href="/dashboard/resume-builder">New résumé</Link>
+          </Button>
+        }
+      />
 
-      {/* Error Alert */}
-      {error && (
-        <MotionWrapper animation="fade-in">
-          <Alert variant="destructive" className="mb-6">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        </MotionWrapper>
-      )}
+      <div className="mx-auto w-full max-w-[1000px] px-8 py-8">
+        {isLoading ? (
+          <ListSkeleton rows={4} />
+        ) : error ? (
+          <ErrorState title="Couldn't load your résumés" description={error} onRetry={load} />
+        ) : resumes.length === 0 && tailored.length === 0 ? (
+          <EmptyState
+            code="RB"
+            title="Nothing here yet"
+            description="Build one résumé. Every other tool — tailoring, cover letters, interview prep — works from it."
+            action={
+              <Button asChild>
+                <Link href="/dashboard/resume-builder">Build my résumé</Link>
+              </Button>
+            }
+          />
+        ) : (
+          <div className="space-y-5">
+            {resumes.map((resume) => {
+              const versions = versionsOf(resume.id)
 
-      {/* Loading State */}
-      {isLoading ? (
-        <MotionWrapper animation="scale-in">
-          <div className="space-y-8">
-            {/* Loading sections */}
-            {[1, 2].map((section) => (
-              <div key={section} className="space-y-4">
-                <div className="h-6 bg-gray-200 rounded w-1/4"></div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                  {[1, 2, 3].map((i) => (
-                    <Card key={i} className="animate-pulse">
-                      <CardHeader>
-                        <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                        <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-2">
-                          <div className="h-3 bg-gray-200 rounded"></div>
-                          <div className="h-3 bg-gray-200 rounded w-2/3"></div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </MotionWrapper>
-      ) : (
-        <div className="space-y-12">
-          {/* My Resumes Section */}
-          <MotionWrapper animation="fade-in-up" delay={200}>
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-2xl font-bold">My Resumes</h2>
-                  <p className="text-muted-foreground">
-                    Your base resumes that can be tailored for different jobs
-                  </p>
-                </div>
-                <Button asChild>
-                  <Link href="/dashboard/resume-builder">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Create New Resume
-                  </Link>
-                </Button>
-              </div>
+              return (
+                <Card key={resume.id} className="overflow-hidden p-0">
+                  {/* ---- The base résumé ---- */}
+                  <div className="flex flex-wrap items-start gap-4 p-5">
+                    <Monogram tone="brand">RB</Monogram>
 
-              {resumes.length === 0 ? (
-                <Card className="text-center py-12">
-                  <CardContent>
-                    <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">No Resumes Yet</h3>
-                    <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                      Create your first resume to get started. You can then tailor it for different job applications.
-                    </p>
-                    <Button asChild>
-                      <Link href="/dashboard/resume-builder">
-                        <Plus className="h-4 w-4 mr-2" />
-                        Create First Resume
-                      </Link>
-                    </Button>
-                  </CardContent>
-                </Card>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                  {resumes.map((resume, index) => (
-                    <MotionWrapper key={resume.id} animation="slide-in-up" delay={index * 50}>
-                      <Card className="h-full hover:shadow-md transition-shadow">
-                        <CardHeader className="pb-3">
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <CardTitle className="text-lg line-clamp-2 mb-1">
-                                {resume.title}
-                              </CardTitle>
-                              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                <Layout className="h-4 w-4" />
-                                <span>{resume.template.name}</span>
-                              </div>
-                            </div>
-                            <Badge variant="outline" className="ml-2 text-xs">
-                              {resume.template.category}
-                            </Badge>
-                          </div>
-                        </CardHeader>
-                        
-                        <CardContent className="space-y-4">
-                          <Separator />
+                    <div className="min-w-0 flex-1">
+                      <h2 className="truncate text-[16px] font-bold text-ink">
+                        {resume.title || "Untitled résumé"}
+                      </h2>
+                      <p className="mt-0.5 font-mono text-[10px] uppercase tracking-[0.1em] text-ink-faint">
+                        {resume.template?.name ?? "No template"} · edited{" "}
+                        {formatDate(resume.updatedAt || resume.createdAt)}
+                      </p>
+                    </div>
 
-                          {/* Resume Details */}
-                          <div className="space-y-2">
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                              <Calendar className="h-4 w-4" />
-                              <span>Updated {formatDate(resume.updatedAt)}</span>
-                            </div>
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                              <FileText className="h-4 w-4" />
-                              <span>Created {formatDate(resume.createdAt)}</span>
-                            </div>
-                          </div>
+                    <RowActions
+                      busy={busyId === resume.id}
+                      confirming={confirmingId === resume.id}
+                      onEdit={() =>
+                        router.push(`/dashboard/resume-builder?resumeId=${resume.id}`)
+                      }
+                      onDownload={() => download(resume.id, resume.title, false)}
+                      onAskDelete={() => setConfirmingId(resume.id)}
+                      onCancelDelete={() => setConfirmingId(null)}
+                      onConfirmDelete={() => remove(resume.id, false)}
+                      deleteWarning={
+                        versions.length > 0
+                          ? `This also deletes ${versions.length} tailored version${versions.length === 1 ? "" : "s"}.`
+                          : undefined
+                      }
+                    />
+                  </div>
 
-                          <Separator />
+                  {/* ---- Its tailored versions ---- */}
+                  {versions.length > 0 && (
+                    <ul className="divide-y divide-border border-t border-border bg-section-tint">
+                      {versions.map((v) => (
+                        <li
+                          key={v.id}
+                          className="flex flex-wrap items-center gap-4 px-5 py-3.5"
+                        >
+                          <span
+                            aria-hidden="true"
+                            className="font-mono text-[11px] text-ink-faint"
+                          >
+                            ↳
+                          </span>
 
-                          {/* Action Buttons */}
-                          <div className="flex gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="flex-1"
-                              onClick={() => handleEditResume(resume.id)}
-                            >
-                              <Edit className="h-4 w-4 mr-1" />
-                              Edit
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="flex-1"
-                              onClick={() => handleDownload(resume.id, resume.title, false)}
-                            >
-                              <Download className="h-4 w-4 mr-1" />
-                              Download
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleDeleteResume(resume.id)}
-                              className="text-destructive hover:text-destructive"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </MotionWrapper>
-                  ))}
-                </div>
-              )}
-            </div>
-          </MotionWrapper>
-
-          {/* Tailored Resumes Section */}
-          <MotionWrapper animation="fade-in-up" delay={400}>
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-2xl font-bold">Tailored Resumes</h2>
-                  <p className="text-muted-foreground">
-                    AI-optimized versions of your resumes for specific job applications
-                  </p>
-                </div>
-                <Button variant="outline" asChild>
-                  <Link href="/dashboard/resume-tailoring">
-                    <Target className="h-4 w-4 mr-2" />
-                    Create Tailored Resume
-                  </Link>
-                </Button>
-              </div>
-
-              {tailoredResumes.length === 0 ? (
-                <Card className="text-center py-12">
-                  <CardContent>
-                    <Target className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">No Tailored Resumes Yet</h3>
-                    <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                      Use our AI-powered resume tailoring to optimize your resume for specific job applications.
-                    </p>
-                    <Button asChild>
-                      <Link href="/dashboard/resume-tailoring">
-                        <Target className="h-4 w-4 mr-2" />
-                        Start Tailoring
-                      </Link>
-                    </Button>
-                  </CardContent>
-                </Card>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                  {tailoredResumes.map((resume, index) => (
-                    <MotionWrapper key={resume.id} animation="slide-in-up" delay={index * 50}>
-                      <Card className="h-full hover:shadow-md transition-shadow">
-                        <CardHeader className="pb-3">
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <CardTitle className="text-lg line-clamp-2 mb-1">
-                                {resume.jobTitle}
-                              </CardTitle>
-                              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                <Building2 className="h-4 w-4" />
-                                <span>{resume.companyName}</span>
-                              </div>
-                            </div>
-                            {resume.matchScore && (
-                              <Badge variant={getScoreBadge(resume.matchScore)} className="ml-2">
-                                {resume.matchScore}%
-                              </Badge>
-                            )}
-                          </div>
-                        </CardHeader>
-                        
-                        <CardContent className="space-y-4">
-                          {/* Job Description Preview */}
-                          <div className="space-y-2">
-                            <p className="text-sm text-muted-foreground line-clamp-3">
-                              {truncateDescription(resume.jobDescription)}
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-[14px] font-semibold text-ink-2">
+                              {v.jobTitle}
+                              <span className="font-normal text-ink-muted">
+                                {" "}
+                                · {v.companyName}
+                              </span>
+                            </p>
+                            <p className="mt-0.5 font-mono text-[10px] uppercase tracking-[0.1em] text-ink-faint">
+                              Tailored {formatDate(v.createdAt)}
                             </p>
                           </div>
 
-                          <Separator />
+                          {typeof v.matchScore === "number" && (
+                            <MatchChip score={v.matchScore} />
+                          )}
 
-                          {/* Resume Details */}
-                          <div className="space-y-2">
-                            <div className="flex items-center justify-between text-sm">
-                              <span className="text-muted-foreground">Template:</span>
-                              <span className="font-medium">{resume.template.name}</span>
-                            </div>
-                            <div className="flex items-center justify-between text-sm">
-                              <span className="text-muted-foreground">Based on:</span>
-                              <span className="font-medium">{resume.baseResume.title}</span>
-                            </div>
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                              <Calendar className="h-4 w-4" />
-                              <span>Created {formatDate(resume.createdAt)}</span>
-                            </div>
-                          </div>
+                          <RowActions
+                            compact
+                            busy={busyId === v.id}
+                            confirming={confirmingId === v.id}
+                            onEdit={() =>
+                              router.push(
+                                `/dashboard/resume-builder?tailoredResumeId=${v.id}`
+                              )
+                            }
+                            onDownload={() => download(v.id, v.title || v.jobTitle, true)}
+                            onAskDelete={() => setConfirmingId(v.id)}
+                            onCancelDelete={() => setConfirmingId(null)}
+                            onConfirmDelete={() => remove(v.id, true)}
+                          />
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </Card>
+              )
+            })}
 
-                          <Separator />
+            {/* Tailored résumés whose base has been deleted — still downloadable. */}
+            {orphaned.length > 0 && (
+              <Card className="p-5">
+                <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink-faint">
+                  Tailored versions whose original is gone
+                </p>
 
-                          {/* Action Buttons */}
-                          <div className="flex gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="flex-1"
-                              onClick={() => handleEditTailoredResume(resume.id)}
-                            >
-                              <Edit className="h-4 w-4 mr-1" />
-                              Edit
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="flex-1"
-                              onClick={() => handleDownload(resume.id, resume.title, true)}
-                            >
-                              <Download className="h-4 w-4 mr-1" />
-                              Download
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleDeleteTailoredResume(resume.id)}
-                              className="text-destructive hover:text-destructive"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </MotionWrapper>
+                <ul className="mt-3 divide-y divide-border">
+                  {orphaned.map((v) => (
+                    <li key={v.id} className="flex flex-wrap items-center gap-4 py-3">
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-[14px] font-semibold text-ink-2">
+                          {v.jobTitle}
+                          <span className="font-normal text-ink-muted"> · {v.companyName}</span>
+                        </p>
+                        <p className="mt-0.5 font-mono text-[10px] uppercase tracking-[0.1em] text-ink-faint">
+                          Tailored {formatDate(v.createdAt)}
+                        </p>
+                      </div>
+
+                      {typeof v.matchScore === "number" && <MatchChip score={v.matchScore} />}
+
+                      <RowActions
+                        compact
+                        busy={busyId === v.id}
+                        confirming={confirmingId === v.id}
+                        onEdit={() =>
+                          router.push(`/dashboard/resume-builder?tailoredResumeId=${v.id}`)
+                        }
+                        onDownload={() => download(v.id, v.title || v.jobTitle, true)}
+                        onAskDelete={() => setConfirmingId(v.id)}
+                        onCancelDelete={() => setConfirmingId(null)}
+                        onConfirmDelete={() => remove(v.id, true)}
+                      />
+                    </li>
                   ))}
-                </div>
-              )}
-            </div>
-          </MotionWrapper>
-        </div>
-      )}
+                </ul>
+              </Card>
+            )}
+          </div>
+        )}
+      </div>
+    </>
+  )
+}
 
-      {/* Statistics */}
-      {(resumes.length > 0 || tailoredResumes.length > 0) && (
-        <MotionWrapper animation="fade-in" delay={600}>
-          <Card className="mt-8">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5" />
-                Resume Statistics
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-center">
-                <div>
-                  <div className="text-2xl font-bold text-primary">{resumes.length}</div>
-                  <div className="text-sm text-muted-foreground">Base Resumes</div>
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-blue-600">{tailoredResumes.length}</div>
-                  <div className="text-sm text-muted-foreground">Tailored Versions</div>
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-green-600">
-                    {tailoredResumes.filter(r => r.matchScore && r.matchScore >= 90).length}
-                  </div>
-                  <div className="text-sm text-muted-foreground">High Match (90%+)</div>
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-yellow-600">
-                    {tailoredResumes.filter(r => r.matchScore && r.matchScore >= 75 && r.matchScore < 90).length}
-                  </div>
-                  <div className="text-sm text-muted-foreground">Good Match (75-89%)</div>
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-purple-600">
-                    {tailoredResumes.length > 0 ? new Set(tailoredResumes.map(r => r.companyName)).size : 0}
-                  </div>
-                  <div className="text-sm text-muted-foreground">Companies Applied</div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </MotionWrapper>
+function MatchChip({ score }: { score: number }) {
+  const clamped = Math.max(0, Math.min(100, Math.round(score)))
+  const strong = clamped >= 80
+
+  return (
+    <span
+      className={cn(
+        "shrink-0 rounded-full px-2 py-0.5 font-mono text-[10px] tracking-[0.06em]",
+        strong ? "bg-brand-tint text-brand" : "bg-clay-tint text-clay"
       )}
-    </PageContainer>
+      title="How closely this version matched the posting"
+    >
+      {clamped}% match
+    </span>
+  )
+}
+
+/**
+ * Row actions, with delete confirmed inline.
+ *
+ * `window.confirm` used to guard this — a browser dialog that can't say what else is
+ * about to disappear. Deleting a base résumé takes its tailored versions with it, and
+ * that's worth saying out loud before it happens.
+ */
+function RowActions({
+  compact = false,
+  busy,
+  confirming,
+  onEdit,
+  onDownload,
+  onAskDelete,
+  onCancelDelete,
+  onConfirmDelete,
+  deleteWarning,
+}: {
+  compact?: boolean
+  busy: boolean
+  confirming: boolean
+  onEdit: () => void
+  onDownload: () => void
+  onAskDelete: () => void
+  onCancelDelete: () => void
+  onConfirmDelete: () => void
+  deleteWarning?: string
+}) {
+  if (confirming) {
+    return (
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-[13px] text-ink-2">
+          Delete this?
+          {deleteWarning && (
+            <span className="ml-1 font-semibold text-clay">{deleteWarning}</span>
+          )}
+        </span>
+        <Button size="sm" variant="destructive" onClick={onConfirmDelete} disabled={busy}>
+          {busy ? "Deleting…" : "Delete"}
+        </Button>
+        <Button size="sm" variant="ghost" onClick={onCancelDelete} disabled={busy}>
+          Keep
+        </Button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex shrink-0 items-center gap-1.5">
+      <Button size="sm" variant={compact ? "ghost" : "outline"} onClick={onEdit}>
+        Edit
+      </Button>
+      <Button size="sm" variant="ghost" onClick={onDownload} disabled={busy}>
+        {busy ? "…" : "PDF"}
+      </Button>
+      <Button
+        size="sm"
+        variant="ghost"
+        onClick={onAskDelete}
+        className="text-ink-faint hover:text-danger"
+      >
+        Delete
+      </Button>
+    </div>
   )
 }

@@ -1,200 +1,183 @@
 "use client"
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { memo, useEffect, useState } from "react"
+import Link from "next/link"
+import { toast } from "sonner"
+
 import { Button } from "@/components/ui/button"
-import { Download, Edit, Share } from "lucide-react"
-import { useResumeStore } from "@/lib/resume-store"
+import { EmptyState, ListSkeleton } from "@/components/ui/states"
 import { EnhancedResumeRenderer } from "@/components/resume-builder/enhanced-resume-renderer"
-import { exportResumeToPDFMake, generatePDFFilename } from "@/lib/pdf-make-utils"
-import { useState, useEffect } from "react"
-import { useToast } from "@/hooks/use-toast"
+import { useResumeStore, type ResumeData, type ResumeTemplate } from "@/lib/resume-store"
 import { useFontConfig } from "@/lib/font-config-store"
 
-import Link from "next/link"
+const ZOOM_STEPS = [0.6, 0.75, 0.9, 1, 1.25] as const
+
+const Page = memo(function Page({
+  template,
+  data,
+  scale,
+}: {
+  template: ResumeTemplate
+  data: ResumeData
+  scale: number
+}) {
+  return <EnhancedResumeRenderer key={template.id} template={template} data={data} scale={scale} />
+})
 
 export function ResumePreviewFull() {
-  const { resumeData, selectedTemplate, loadResume, templates } = useResumeStore()
-  const { toast } = useToast()
-  const fontConfig = useFontConfig()
-  const [isExporting, setIsExporting] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
+  const resumeData = useResumeStore((s) => s.resumeData)
+  const selectedTemplate = useResumeStore((s) => s.selectedTemplate)
+  const loadResume = useResumeStore((s) => s.loadResume)
 
-  // Load the latest saved resume on component mount
+  const fontConfig = useFontConfig()
+
+  const [isLoading, setIsLoading] = useState(true)
+  const [isExporting, setIsExporting] = useState(false)
+  const [zoom, setZoom] = useState(0.9)
+
+  const resumeId = resumeData.id
+
+  // Pull the saved version, so the preview shows what's actually stored rather than
+  // whatever happens to be sitting in the local store from a half-finished edit.
   useEffect(() => {
-    const loadLatestResume = async () => {
+    let cancelled = false
+
+    const run = async () => {
       try {
-        // If we have a resume ID, load the latest data from the database
-        if (resumeData.id) {
-          await loadResume(resumeData.id)
-        }
-      } catch (error) {
-        console.error('Failed to load latest resume:', error)
-        toast({
-          title: "Load Error",
-          description: "Could not load the latest resume data. Showing cached version.",
-          variant: "destructive"
-        })
+        if (resumeId) await loadResume(resumeId)
+      } catch {
+        if (!cancelled) toast.error("Showing your last local copy — we couldn't reach the server.")
       } finally {
-        setIsLoading(false)
+        if (!cancelled) setIsLoading(false)
       }
     }
 
-    loadLatestResume()
-  }, [resumeData.id, loadResume, toast])
+    run()
+    return () => {
+      cancelled = true
+    }
+    // Deliberately keyed on the id alone: re-running when `resumeData` changes would
+    // refetch on every edit.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resumeId])
 
-  const handleExportPDF = async () => {
+  async function download() {
+    if (!resumeId) {
+      toast.error("Save the résumé first — there's nothing to export yet.")
+      return
+    }
+
     setIsExporting(true)
-
     try {
-      if (!resumeData.id) {
-        throw new Error('Resume must be saved before downloading')
-      }
-
-      console.log('Downloading resume PDF:', resumeData.id)
-      
-      const response = await fetch(`/api/resumes/${resumeData.id}/download`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          fontConfig
-        })
+      const res = await fetch(`/api/resumes/${resumeId}/download`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fontConfig }),
       })
-      
-      if (!response.ok) {
-        throw new Error('Failed to download resume')
-      }
-      
-      // Get the PDF blob
-      const blob = await response.blob()
-      
-      // Create download link
-      const url = window.URL.createObjectURL(blob)
-      const link = document.createElement('a')
+      if (!res.ok) throw new Error()
+
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement("a")
       link.href = url
-      link.download = `${resumeData.personalInfo.fullName || 'Resume'}_Resume.pdf`
+      link.download = `${(resumeData.personalInfo?.fullName || "resume")
+        .replace(/[^\w\s-]/g, "")
+        .trim()
+        .replace(/\s+/g, "_")}.pdf`
       document.body.appendChild(link)
       link.click()
-      
-      // Cleanup
-      document.body.removeChild(link)
-      window.URL.revokeObjectURL(url)
-
-      toast({
-        title: "PDF Downloaded! ✨",
-        description: "Resume downloaded successfully",
-      })
-    } catch (error) {
-      console.error('PDF export error:', error)
-      toast({
-        title: "Export Failed",
-        description: error instanceof Error ? error.message : "Could not generate PDF. Please try again.",
-        variant: "destructive"
-      })
+      link.remove()
+      URL.revokeObjectURL(url)
+    } catch {
+      toast.error("The PDF didn't generate. Try again in a moment.")
     } finally {
       setIsExporting(false)
     }
   }
 
-  if (isLoading) {
+  if (isLoading) return <ListSkeleton rows={5} />
+
+  const hasContent =
+    Boolean(resumeId) &&
+    Boolean(
+      resumeData.personalInfo?.fullName?.trim() ||
+        resumeData.personalInfo?.email?.trim() ||
+        resumeData.summary?.trim() ||
+        resumeData.experience?.length ||
+        resumeData.education?.length ||
+        resumeData.skills?.length
+    )
+
+  if (!selectedTemplate || !hasContent) {
     return (
-      <Card className="card-elevated">
-        <CardContent className="p-12 text-center space-y-4">
-          <div className="mx-auto w-16 h-16 bg-gradient-to-br from-slate-600 to-slate-700 rounded-full flex items-center justify-center animate-pulse">
-            <Download className="h-8 w-8 text-white" />
-          </div>
-          <div className="space-y-2">
-            <h2 className="heading-2">Loading Resume...</h2>
-            <p className="text-muted-foreground body-default">Please wait while we load your latest resume data.</p>
-          </div>
-        </CardContent>
-      </Card>
+      <EmptyState
+        code="RB"
+        title="No résumé to preview"
+        description="Once you've built and saved a résumé, this is where you'll see exactly what comes out of the PDF."
+        action={
+          <Button asChild>
+            <Link href="/dashboard/resume-builder">Build my résumé</Link>
+          </Button>
+        }
+      />
     )
   }
 
-  // Check if resume exists and has meaningful content
-  const hasResumeContent = resumeData.id && (
-    (resumeData.personalInfo.fullName && resumeData.personalInfo.fullName.trim().length > 0) ||
-    (resumeData.personalInfo.email && resumeData.personalInfo.email.trim().length > 0) ||
-    (resumeData.summary && resumeData.summary.trim().length > 0) ||
-    (resumeData.experience && resumeData.experience.length > 0) ||
-    (resumeData.education && resumeData.education.length > 0) ||
-    (resumeData.skills && resumeData.skills.length > 0) ||
-    (resumeData.projects && resumeData.projects.length > 0) ||
-    (resumeData.certifications && resumeData.certifications.length > 0)
-  )
-
-  if (!selectedTemplate || !hasResumeContent) {
-    return (
-      <Card className="card-elevated">
-        <CardContent className="p-12 text-center space-y-6">
-          <div className="mx-auto w-16 h-16 bg-gradient-to-br from-slate-600 to-slate-700 rounded-full flex items-center justify-center">
-            <Edit className="h-8 w-8 text-white" />
-          </div>
-          <div className="space-y-3">
-            <h2 className="heading-2">No Resume Found</h2>
-            <p className="text-muted-foreground body-default max-w-md mx-auto">
-              You haven't created a resume yet. Create one first to see it here.
-            </p>
-          </div>
-          <Link href="/dashboard/resume-builder">
-            <Button size="lg" className="h-12 px-8 btn-gradient">
-              <Edit className="mr-2 h-5 w-5" />
-              Create Your First Resume
-            </Button>
-          </Link>
-        </CardContent>
-      </Card>
-    )
-  }
+  const zoomIndex = ZOOM_STEPS.indexOf(zoom as (typeof ZOOM_STEPS)[number])
 
   return (
-    <div className="space-y-8">
-      {/* Action Bar */}
-      <Card className="card-elevated">
-        <CardContent className="p-4 sm:p-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-lg bg-gradient-to-br from-slate-600 to-slate-700 text-white">
-                <Download className="h-4 w-4 sm:h-5 sm:w-5" />
-              </div>
-              <div>
-                <h1 className="text-lg sm:text-xl font-semibold">Resume Preview</h1>
-                <p className="text-xs sm:text-sm text-muted-foreground">View and export your resume</p>
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-2 sm:gap-3">
-              <Link href="/dashboard/resume-builder">
-                <Button variant="outline" className="h-9 px-3 sm:h-10 sm:px-4 text-sm">
-                  <Edit className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-                  Edit
-                </Button>
-              </Link>
-              <Button variant="outline" className="h-9 px-3 sm:h-10 sm:px-4 text-sm">
-                <Share className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-                Share
-              </Button>
-              <Button 
-                onClick={handleExportPDF} 
-                disabled={isExporting}
-                className="h-9 px-3 sm:h-10 sm:px-4 btn-gradient text-sm"
-              >
-                <Download className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-                {isExporting ? "Exporting..." : "Download PDF"}
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+    <div>
+      {/* ---- Action bar ---- */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="truncate font-display text-[26px] leading-tight text-ink">
+            {resumeData.title || "Your résumé"}
+          </h1>
+          <p className="mt-0.5 font-mono text-[10px] uppercase tracking-[0.14em] text-ink-faint">
+            {selectedTemplate.name} · this is what the PDF will look like
+          </p>
+        </div>
 
-      {/* Resume Content */}
-      <div id="resume-preview-full" className="w-full min-h-screen bg-muted/30 rounded-xl p-3 sm:p-6 lg:p-8 shadow-soft">
-        <EnhancedResumeRenderer 
-          template={selectedTemplate} 
-          data={resumeData}
-          className="w-full mx-auto shadow-medium rounded-lg overflow-hidden"
-        />
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center rounded-[8px] border border-border bg-card">
+            <button
+              type="button"
+              onClick={() => setZoom(ZOOM_STEPS[Math.max(0, zoomIndex - 1)])}
+              disabled={zoomIndex <= 0}
+              aria-label="Zoom out"
+              className="px-2.5 py-1.5 font-mono text-[13px] leading-none text-ink-muted hover:text-ink disabled:opacity-40"
+            >
+              −
+            </button>
+            <span className="w-[42px] text-center font-mono text-[10px] text-ink-faint">
+              {Math.round(zoom * 100)}%
+            </span>
+            <button
+              type="button"
+              onClick={() => setZoom(ZOOM_STEPS[Math.min(ZOOM_STEPS.length - 1, zoomIndex + 1)])}
+              disabled={zoomIndex >= ZOOM_STEPS.length - 1}
+              aria-label="Zoom in"
+              className="px-2.5 py-1.5 font-mono text-[13px] leading-none text-ink-muted hover:text-ink disabled:opacity-40"
+            >
+              +
+            </button>
+          </div>
+
+          <Button asChild variant="outline" size="sm">
+            <Link href={`/dashboard/resume-builder?resumeId=${resumeId}`}>Edit</Link>
+          </Button>
+
+          <Button size="sm" onClick={download} disabled={isExporting}>
+            {isExporting ? "Generating…" : "Download PDF"}
+          </Button>
+        </div>
+      </div>
+
+      {/* ---- The page ---- */}
+      <div className="mt-6 overflow-auto rounded-panel bg-section-tint p-6 sm:p-10">
+        <div className="mx-auto w-fit rounded-[4px] bg-white shadow-doc">
+          <Page template={selectedTemplate} data={resumeData} scale={zoom} />
+        </div>
       </div>
     </div>
   )

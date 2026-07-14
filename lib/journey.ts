@@ -15,7 +15,10 @@ export const JOURNEY_STEPS = [
     label: "Résumé",
     shortLabel: "Résumé",
     href: "/dashboard/resume-builder",
-    cost: 0,
+    // Saving a new résumé goes through withCreditCheck('RESUME_BUILDER'), so this step is
+    // not free. Showing 0 here quoted a price the billing code doesn't honour, and the
+    // user found out at the moment they were charged.
+    cost: CREDIT_COSTS.RESUME_BUILDER,
     cta: "Build your résumé",
     blurb: "Start with a résumé we can tailor.",
   },

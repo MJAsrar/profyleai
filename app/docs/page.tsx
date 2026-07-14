@@ -1,263 +1,179 @@
-import { Header } from "@/components/header"
-import { Footer } from "@/components/footer"
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { BookOpen, Code, Zap, FileText, Download, ExternalLink, Search, Copy } from "lucide-react"
+import type { Metadata } from "next"
 import Link from "next/link"
+import { DocumentPage, type DocSection } from "@/components/layout/document-page"
+import { CREDIT_COSTS } from "@/lib/types/credits"
 
-export default function DocumentationPage() {
-  const sections = [
-    {
-      title: "Getting Started",
-      icon: Zap,
-      items: [
-        "Quick Start Guide",
-        "Account Setup",
-        "First Resume Creation",
-        "Basic Features Overview"
-      ]
-    },
-    {
-      title: "Resume Builder",
-      icon: FileText,
-      items: [
-        "Template Selection",
-        "Content Input",
-        "Formatting Options",
-        "Preview & Edit"
-      ]
-    },
-    {
-      title: "AI Features",
-      icon: BookOpen,
-      items: [
-        "Content Suggestions",
-        "Resume Optimization",
-        "ATS Compatibility",
-        "Smart Recommendations"
-      ]
-    },
-    {
-      title: "Export & Sharing",
-      icon: Download,
-      items: [
-        "PDF Export",
-        "Format Options",
-        "Sharing Links",
-        "Print Settings"
-      ]
-    }
-  ]
+export const metadata: Metadata = {
+  title: "How it works",
+  description: "How ProfyleAI turns one job description into a résumé, a letter, and an interview.",
+}
 
+/**
+ * The docs, rewritten as something a person can actually use.
+ *
+ * The previous page was a directory of article titles — "Quick Start Guide", "Smart
+ * Recommendations", "ATS Compatibility" — each linking to an anchor that did not exist
+ * anywhere on the page. Every link was dead. This one has no links to articles that
+ * haven't been written; it just explains the product.
+ *
+ * Credit costs are read from CREDIT_COSTS, so this page cannot quote a price the billing
+ * code doesn't charge.
+ */
+
+const SECTIONS: DocSection[] = [
+  {
+    id: "the-idea",
+    heading: "The idea",
+    body: (
+      <>
+        <p>
+          Most résumé tools are five separate products in a trenchcoat: one builds a résumé,
+          another writes a letter, a third quizzes you — and every one of them asks you to
+          paste the same job description again.
+        </p>
+        <p>
+          ProfyleAI asks once. <strong>You set a target job,</strong> and it carries through
+          everything after it: the tailoring, the cover letter, the practice questions, and
+          the voice interview. Each step is built on the one before it.
+        </p>
+      </>
+    ),
+  },
+  {
+    id: "credits",
+    heading: "Credits",
+    body: (
+      <>
+        <p>
+          There&apos;s no subscription. You buy credits, and you spend them only when work is
+          actually done for you. If a generation fails, the credit comes straight back.
+        </p>
+        <ul>
+          <li>
+            <strong>A new résumé — {CREDIT_COSTS.RESUME_BUILDER} credits,</strong> charged when
+            you first save it. Editing it afterwards is free, and so is downloading it.
+          </li>
+          <li>
+            <strong>Tailoring to a job — {CREDIT_COSTS.RESUME_TAILORING} credits.</strong>
+          </li>
+          <li>
+            <strong>A cover letter — {CREDIT_COSTS.COVER_LETTER} credits.</strong>
+          </li>
+          <li>
+            <strong>Practice questions — {CREDIT_COSTS.TEXT_INTERVIEW} credits.</strong>
+          </li>
+          <li>
+            <strong>A live voice interview — {CREDIT_COSTS.VIDEO_INTERVIEW} credits.</strong>
+          </li>
+        </ul>
+        <p>
+          Credits don&apos;t expire. You can see every credit you&apos;ve spent, earned or had
+          refunded in <Link href="/dashboard/settings">Settings</Link>.
+        </p>
+      </>
+    ),
+  },
+  {
+    id: "resume",
+    heading: "1 — Build the résumé",
+    body: (
+      <>
+        <p>
+          Start in the <Link href="/dashboard/resume-builder">résumé builder</Link>. Sections
+          are on the left and you can jump between them in any order — nobody remembers their
+          career in a straight line. The preview on the right is the actual document, and it
+          updates as you type.
+        </p>
+        <p>
+          Write the experience section like a person, not a job ad.{" "}
+          <strong>Say what changed because you were there,</strong> and put a number on it
+          where you can. &ldquo;Cut invoice processing time by a third&rdquo; beats
+          &ldquo;responsible for invoice processing&rdquo; every time.
+        </p>
+      </>
+    ),
+  },
+  {
+    id: "tailor",
+    heading: "2 — Tailor it to a job",
+    body: (
+      <>
+        <p>
+          Paste the posting into{" "}
+          <Link href="/dashboard/resume-tailoring">tailoring</Link>. Paste the whole thing —
+          the more of the posting we have, the better the match. This is where the job is
+          set, and it&apos;s the last time you type it.
+        </p>
+        <p>
+          You get back a rewritten résumé, a match score against the posting, and a list of
+          what changed and why.
+        </p>
+      </>
+    ),
+  },
+  {
+    id: "letter",
+    heading: "3 — Write the cover letter",
+    body: (
+      <p>
+        The <Link href="/dashboard/cover-letter">cover letter</Link> is written from the job
+        you already gave us and the history already on your résumé, so it names real things
+        you&apos;ve done rather than swapping a company name into a template. Pick a tone,
+        and read it before you send it.
+      </p>
+    ),
+  },
+  {
+    id: "interview",
+    heading: "4 — Practise the questions",
+    body: (
+      <p>
+        <Link href="/dashboard/interview">Interview prep</Link> writes the questions this
+        role is likely to actually ask. Answer them in writing, and each answer is scored
+        against STAR — situation, task, action, result — with the specific thing that&apos;s
+        missing named out loud.
+      </p>
+    ),
+  },
+  {
+    id: "voice",
+    heading: "5 — Say it out loud",
+    body: (
+      <>
+        <p>
+          The <Link href="/dashboard/video-interview">voice interview</Link> is the one that
+          actually resembles the real thing: an interviewer speaks, you answer with your
+          voice, and it follows up on what you said.
+        </p>
+        <p>
+          If you already generated practice questions for this job, the voice interview reuses
+          them — you aren&apos;t charged twice for the same questions. We check your
+          microphone works before spending anything.
+        </p>
+      </>
+    ),
+  },
+  {
+    id: "stuck",
+    heading: "If something goes wrong",
+    body: (
+      <p>
+        Nothing you write here is lost when a generation fails, and you aren&apos;t charged
+        for it. If something looks wrong — a credit that didn&apos;t come back, a document
+        that won&apos;t open — <Link href="/contact">tell us</Link> and we&apos;ll fix it. The{" "}
+        <Link href="/help">help page</Link> covers the things that come up most.
+      </p>
+    ),
+  },
+]
+
+export default function DocsPage() {
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      
-      <main className="content-container py-16">
-        {/* Hero Section */}
-        <div className="text-center mb-16">
-          <div className="flex justify-center mb-6">
-            <div className="p-4 bg-primary/10 rounded-full">
-              <BookOpen className="h-12 w-12 text-primary" />
-            </div>
-          </div>
-          <h1 className="text-4xl font-bold tracking-tight mb-4">Documentation</h1>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Complete guides and documentation to help you master Profyle
-          </p>
-        </div>
-
-        <div className="grid lg:grid-cols-4 gap-8">
-          {/* Sidebar Navigation */}
-          <div className="lg:col-span-1">
-            <Card className="p-6 sticky top-24">
-              <h2 className="font-semibold mb-4 flex items-center">
-                <BookOpen className="h-5 w-5 mr-2 text-primary" />
-                Documentation
-              </h2>
-              <nav className="space-y-3">
-                {sections.map((section, index) => (
-                  <div key={index}>
-                    <h3 className="font-medium text-sm mb-2 flex items-center">
-                      <section.icon className="h-4 w-4 mr-2 text-muted-foreground" />
-                      {section.title}
-                    </h3>
-                    <ul className="ml-6 space-y-1">
-                      {section.items.map((item, itemIndex) => (
-                        <li key={itemIndex}>
-                          <a href={`#${item.toLowerCase().replace(/\s+/g, '-')}`} className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                            {item}
-                          </a>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
-              </nav>
-            </Card>
-          </div>
-
-          {/* Main Content */}
-          <div className="lg:col-span-3 space-y-12">
-            {/* Quick Start */}
-            <section>
-              <h2 className="text-3xl font-bold mb-6 flex items-center">
-                <Zap className="h-8 w-8 mr-3 text-primary" />
-                Quick Start Guide
-              </h2>
-              
-              <div className="grid md:grid-cols-2 gap-6 mb-8">
-                <Card className="p-6">
-                  <div className="flex items-center mb-4">
-                    <div className="w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center text-sm font-bold mr-3">
-                      1
-                    </div>
-                    <h3 className="font-semibold">Create Account</h3>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    Sign up for your free Profyle account and verify your email address.
-                  </p>
-                </Card>
-                
-                <Card className="p-6">
-                  <div className="flex items-center mb-4">
-                    <div className="w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center text-sm font-bold mr-3">
-                      2
-                    </div>
-                    <h3 className="font-semibold">Choose Template</h3>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    Browse our collection of professional templates and select one that fits your style.
-                  </p>
-                </Card>
-                
-                <Card className="p-6">
-                  <div className="flex items-center mb-4">
-                    <div className="w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center text-sm font-bold mr-3">
-                      3
-                    </div>
-                    <h3 className="font-semibold">Add Content</h3>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    Fill in your personal information, work experience, and skills with AI assistance.
-                  </p>
-                </Card>
-                
-                <Card className="p-6">
-                  <div className="flex items-center mb-4">
-                    <div className="w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center text-sm font-bold mr-3">
-                      4
-                    </div>
-                    <h3 className="font-semibold">Download</h3>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    Preview your resume and download it as a professional PDF.
-                  </p>
-                </Card>
-              </div>
-            </section>
-
-            {/* API Documentation */}
-            <section>
-              <h2 className="text-3xl font-bold mb-6 flex items-center">
-                <Code className="h-8 w-8 mr-3 text-primary" />
-                API Documentation
-              </h2>
-              
-              <Card className="p-8 mb-6">
-                <h3 className="text-xl font-semibold mb-4">Authentication</h3>
-                <p className="text-muted-foreground mb-4">
-                  All API requests require authentication using your API key.
-                </p>
-                
-                <div className="bg-muted rounded-lg p-4 mb-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-mono">POST /api/auth</span>
-                    <Button size="sm" variant="ghost">
-                      <Copy className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <pre className="text-sm text-muted-foreground">
-{`{
-  "api_key": "your-api-key-here",
-  "user_id": "user-identifier"
-}`}
-                  </pre>
-                </div>
-                
-                <Button variant="outline" size="sm">
-                  <ExternalLink className="mr-2 h-4 w-4" />
-                  View Full API Reference
-                </Button>
-              </Card>
-            </section>
-
-            {/* Features Documentation */}
-            <section>
-              <h2 className="text-3xl font-bold mb-6 flex items-center">
-                <FileText className="h-8 w-8 mr-3 text-primary" />
-                Feature Guides
-              </h2>
-              
-              <div className="space-y-6">
-                {[
-                  {
-                    title: "AI Content Suggestions",
-                    description: "Learn how to use our AI to improve your resume content",
-                    topics: ["Setting up AI assistance", "Understanding suggestions", "Applying improvements"]
-                  },
-                  {
-                    title: "Template Customization",
-                    description: "Customize templates to match your personal brand",
-                    topics: ["Color schemes", "Font selection", "Layout modifications"]
-                  },
-                  {
-                    title: "ATS Optimization",
-                    description: "Ensure your resume passes Applicant Tracking Systems",
-                    topics: ["ATS-friendly formatting", "Keyword optimization", "Testing compatibility"]
-                  }
-                ].map((guide, index) => (
-                  <Card key={index} className="p-6">
-                    <h3 className="text-lg font-semibold mb-2">{guide.title}</h3>
-                    <p className="text-muted-foreground mb-4">{guide.description}</p>
-                    <div className="flex flex-wrap gap-2">
-                      {guide.topics.map((topic, topicIndex) => (
-                        <span key={topicIndex} className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">
-                          {topic}
-                        </span>
-                      ))}
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            </section>
-
-            {/* Support */}
-            <section>
-              <Card className="p-8 text-center bg-gradient-to-br from-primary/5 to-secondary/5">
-                <h2 className="text-2xl font-bold mb-4">Need More Help?</h2>
-                <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
-                  Can't find what you're looking for in our documentation? Our support team is here to help.
-                </p>
-                <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <Link href="/contact">
-                    <Button size="lg">
-                      Contact Support
-                    </Button>
-                  </Link>
-                  <Link href="/help">
-                    <Button variant="outline" size="lg">
-                      Help Center
-                    </Button>
-                  </Link>
-                </div>
-              </Card>
-            </section>
-          </div>
-        </div>
-      </main>
-      
-      <Footer />
-    </div>
+    <DocumentPage
+      title="How it works"
+      summary="One job description, five tools, in the order you'd actually use them."
+      updated="July 2026"
+      sections={SECTIONS}
+    />
   )
 }

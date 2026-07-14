@@ -1,228 +1,163 @@
-import { Header } from "@/components/header"
-import { Footer } from "@/components/footer"
-import { Card, CardContent } from "@/components/ui/card"
-import { FileText, Scale, Users, Shield, AlertCircle, Calendar } from "lucide-react"
+import type { Metadata } from "next"
+import Link from "next/link"
+import { DocumentPage, type DocSection } from "@/components/layout/document-page"
+
+export const metadata: Metadata = {
+  title: "Terms of Service",
+  description: "The terms you agree to when you use ProfyleAI.",
+}
+
+/**
+ * These are the clauses that were already in force — agreement, licence, accounts,
+ * prohibited uses, changes to the service, limitation of liability, contact. Nothing has
+ * been quietly widened. The document has been rewritten to be readable, and the credits
+ * section now states in the terms what the product already does in code.
+ */
+
+const SECTIONS: DocSection[] = [
+  {
+    id: "agreement",
+    heading: "Agreeing to these terms",
+    body: (
+      <p>
+        By using ProfyleAI, you agree to these terms. If you don&apos;t agree to them,
+        don&apos;t use the service. That&apos;s the whole of it — the rest is detail.
+      </p>
+    ),
+  },
+  {
+    id: "what-you-may-do",
+    heading: "What you may do",
+    body: (
+      <>
+        <p>You may use ProfyleAI to:</p>
+        <ul>
+          <li>Build, tailor and download your own résumés and cover letters.</li>
+          <li>Practise interviews and read your feedback.</li>
+          <li>Send the documents you make here to anyone you like, employers included.</li>
+        </ul>
+        <p>
+          <strong>What you make here is yours.</strong> We claim no ownership of your
+          résumés, your letters, or your interview answers.
+        </p>
+      </>
+    ),
+  },
+  {
+    id: "what-you-may-not-do",
+    heading: "What you may not do",
+    body: (
+      <>
+        <p>You may not:</p>
+        <ul>
+          <li>Copy, resell or redistribute the service itself, or reverse engineer it.</li>
+          <li>Remove copyright or proprietary notices.</li>
+          <li>Use it for anything unlawful, or to harass, impersonate or abuse anyone.</li>
+          <li>Transmit malicious code, or try to get around our security or rate limits.</li>
+          <li>Interfere with the service running for everyone else.</li>
+        </ul>
+      </>
+    ),
+  },
+  {
+    id: "accounts",
+    heading: "Your account",
+    body: (
+      <p>
+        One account per person, and you must be at least 16 years old. Give us accurate
+        information, keep your login to yourself, and tell us if you think someone else has
+        got into your account.
+      </p>
+    ),
+  },
+  {
+    id: "credits",
+    heading: "Credits and payment",
+    body: (
+      <>
+        <p>
+          ProfyleAI runs on credits, not a subscription. You buy them when you want them, and{" "}
+          <strong>they don&apos;t expire</strong>.
+        </p>
+        <p>
+          A credit is spent when work is actually done for you. If a generation fails, the
+          credit is returned automatically — you are not charged for something you
+          didn&apos;t get. Credits have no cash value, aren&apos;t refundable for money once
+          purchased, and unspent credits are not refunded if you delete your account.
+        </p>
+        <p>
+          Payments are handled by Stripe. If you think you&apos;ve been charged in error,{" "}
+          <Link href="/contact">tell us</Link> and we&apos;ll look at it.
+        </p>
+      </>
+    ),
+  },
+  {
+    id: "ai",
+    heading: "What the AI writes",
+    body: (
+      <>
+        <p>
+          ProfyleAI generates text with AI models. It can be wrong, and it can be clumsy.{" "}
+          <strong>Read what it writes before you send it to an employer.</strong> You are the
+          one applying for the job, and the words go out under your name.
+        </p>
+        <p>
+          We don&apos;t guarantee interviews, offers, or that any application will succeed.
+          Nobody honestly can.
+        </p>
+      </>
+    ),
+  },
+  {
+    id: "changes",
+    heading: "Changes to the service",
+    body: (
+      <p>
+        We may change or discontinue parts of ProfyleAI. If we make a significant change,
+        we&apos;ll make a reasonable effort to tell users first and to give you a way to take
+        your work with you. You can export everything you&apos;ve written at any time,
+        without asking us.
+      </p>
+    ),
+  },
+  {
+    id: "liability",
+    heading: "Limitation of liability",
+    body: (
+      <>
+        <p>
+          To the extent the law allows, ProfyleAI is not liable for damages arising from your
+          use of, or inability to use, the service — including lost data, lost profit, or
+          business interruption — even if we had been told such damage was possible.
+        </p>
+        <p>
+          Some jurisdictions don&apos;t allow limits on implied warranties or on liability for
+          incidental damages, so these limits may not apply to you.
+        </p>
+      </>
+    ),
+  },
+  {
+    id: "contact",
+    heading: "Questions",
+    body: (
+      <p>
+        If anything here is unclear, ask. Write to us at{" "}
+        <a href="mailto:junaidasrar04@gmail.com">junaidasrar04@gmail.com</a>, or through{" "}
+        <Link href="/contact">the contact page</Link>.
+      </p>
+    ),
+  },
+]
 
 export default function TermsPage() {
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      
-      <main className="content-container py-16">
-        {/* Hero Section */}
-        <div className="text-center mb-16">
-          <div className="flex justify-center mb-6">
-            <div className="p-4 bg-primary/10 rounded-full">
-              <Scale className="h-12 w-12 text-primary" />
-            </div>
-          </div>
-          <h1 className="text-4xl font-bold tracking-tight mb-4">Terms of Service</h1>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Please read these terms carefully before using our services
-          </p>
-          <div className="mt-6 text-sm text-muted-foreground">
-            Last updated: <span className="font-medium">December 2024</span>
-          </div>
-        </div>
-
-        {/* Content */}
-        <div className="space-y-12">
-          {/* Agreement */}
-          <section>
-            <div className="flex items-center mb-6">
-              <FileText className="h-6 w-6 text-primary mr-3" />
-              <h2 className="text-2xl font-bold">Agreement to Terms</h2>
-            </div>
-            <Card className="p-8">
-              <p className="text-muted-foreground leading-relaxed">
-                By accessing and using Profyle ("Service"), you accept and agree to be bound by the terms and provision of this agreement. 
-                If you do not agree to abide by the above, please do not use this service.
-              </p>
-            </Card>
-          </section>
-
-          {/* Use License */}
-          <section>
-            <div className="flex items-center mb-6">
-              <Shield className="h-6 w-6 text-primary mr-3" />
-              <h2 className="text-2xl font-bold">Use License</h2>
-            </div>
-            <Card className="p-8">
-              <div className="space-y-4">
-                <h3 className="font-semibold text-lg">Permission is granted to temporarily use Profyle for:</h3>
-                <ul className="space-y-2 text-muted-foreground">
-                  <li className="flex items-start">
-                    <div className="w-2 h-2 bg-green-500 rounded-full mt-2 mr-3"></div>
-                    <span>Personal, non-commercial transitory viewing only</span>
-                  </li>
-                  <li className="flex items-start">
-                    <div className="w-2 h-2 bg-green-500 rounded-full mt-2 mr-3"></div>
-                    <span>Creating and downloading your own resume documents</span>
-                  </li>
-                  <li className="flex items-start">
-                    <div className="w-2 h-2 bg-green-500 rounded-full mt-2 mr-3"></div>
-                    <span>Sharing your resume documents with potential employers</span>
-                  </li>
-                </ul>
-                
-                <h3 className="font-semibold text-lg mt-6">This license shall NOT permit you to:</h3>
-                <ul className="space-y-2 text-muted-foreground">
-                  <li className="flex items-start">
-                    <div className="w-2 h-2 bg-red-500 rounded-full mt-2 mr-3"></div>
-                    <span>Modify or copy the materials</span>
-                  </li>
-                  <li className="flex items-start">
-                    <div className="w-2 h-2 bg-red-500 rounded-full mt-2 mr-3"></div>
-                    <span>Use the materials for commercial purposes or public display</span>
-                  </li>
-                  <li className="flex items-start">
-                    <div className="w-2 h-2 bg-red-500 rounded-full mt-2 mr-3"></div>
-                    <span>Attempt to reverse engineer any software</span>
-                  </li>
-                  <li className="flex items-start">
-                    <div className="w-2 h-2 bg-red-500 rounded-full mt-2 mr-3"></div>
-                    <span>Remove any copyright or proprietary notations</span>
-                  </li>
-                </ul>
-              </div>
-            </Card>
-          </section>
-
-          {/* User Accounts */}
-          <section>
-            <div className="flex items-center mb-6">
-              <Users className="h-6 w-6 text-primary mr-3" />
-              <h2 className="text-2xl font-bold">User Accounts</h2>
-            </div>
-            <div className="grid md:grid-cols-2 gap-6">
-              <Card className="p-6">
-                <h3 className="font-semibold mb-3 text-lg">Account Creation</h3>
-                <ul className="space-y-2 text-sm text-muted-foreground">
-                  <li>• You must provide accurate information</li>
-                  <li>• You are responsible for account security</li>
-                  <li>• One account per person</li>
-                  <li>• Must be 16 years or older</li>
-                </ul>
-              </Card>
-              
-              <Card className="p-6">
-                <h3 className="font-semibold mb-3 text-lg">Account Responsibilities</h3>
-                <ul className="space-y-2 text-sm text-muted-foreground">
-                  <li>• Keep login credentials secure</li>
-                  <li>• Notify us of unauthorized access</li>
-                  <li>• Update information when necessary</li>
-                  <li>• Comply with all terms and policies</li>
-                </ul>
-              </Card>
-            </div>
-          </section>
-
-          {/* Prohibited Uses */}
-          <section>
-            <div className="flex items-center mb-6">
-              <AlertCircle className="h-6 w-6 text-primary mr-3" />
-              <h2 className="text-2xl font-bold">Prohibited Uses</h2>
-            </div>
-            <Card className="p-8 border-red-200 bg-gradient-to-br from-red-50 to-red-100 dark:from-red-950/20 dark:to-red-900/20">
-              <div className="space-y-4">
-                <p className="font-medium text-red-800 dark:text-red-200">
-                  You may not use our service:
-                </p>
-                <div className="grid md:grid-cols-2 gap-4">
-                  <ul className="space-y-2 text-sm">
-                    <li className="flex items-start">
-                      <AlertCircle className="h-4 w-4 text-red-500 mt-0.5 mr-2 flex-shrink-0" />
-                      <span>For any unlawful purpose</span>
-                    </li>
-                    <li className="flex items-start">
-                      <AlertCircle className="h-4 w-4 text-red-500 mt-0.5 mr-2 flex-shrink-0" />
-                      <span>To transmit harmful code</span>
-                    </li>
-                    <li className="flex items-start">
-                      <AlertCircle className="h-4 w-4 text-red-500 mt-0.5 mr-2 flex-shrink-0" />
-                      <span>To harass or abuse others</span>
-                    </li>
-                    <li className="flex items-start">
-                      <AlertCircle className="h-4 w-4 text-red-500 mt-0.5 mr-2 flex-shrink-0" />
-                      <span>To violate intellectual property</span>
-                    </li>
-                  </ul>
-                  <ul className="space-y-2 text-sm">
-                    <li className="flex items-start">
-                      <AlertCircle className="h-4 w-4 text-red-500 mt-0.5 mr-2 flex-shrink-0" />
-                      <span>To spam or send unsolicited content</span>
-                    </li>
-                    <li className="flex items-start">
-                      <AlertCircle className="h-4 w-4 text-red-500 mt-0.5 mr-2 flex-shrink-0" />
-                      <span>To impersonate others</span>
-                    </li>
-                    <li className="flex items-start">
-                      <AlertCircle className="h-4 w-4 text-red-500 mt-0.5 mr-2 flex-shrink-0" />
-                      <span>To circumvent security measures</span>
-                    </li>
-                    <li className="flex items-start">
-                      <AlertCircle className="h-4 w-4 text-red-500 mt-0.5 mr-2 flex-shrink-0" />
-                      <span>To interfere with service operation</span>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            </Card>
-          </section>
-
-          {/* Service Modifications */}
-          <section>
-            <div className="flex items-center mb-6">
-              <Calendar className="h-6 w-6 text-primary mr-3" />
-              <h2 className="text-2xl font-bold">Service Modifications</h2>
-            </div>
-            <Card className="p-8">
-              <p className="text-muted-foreground leading-relaxed mb-4">
-                Profyle reserves the right to modify or discontinue the service at any time, with or without notice. 
-                We shall not be liable to you or any third party for any modification, suspension, or discontinuation of the service.
-              </p>
-              <div className="bg-blue-50 dark:bg-blue-950/20 p-4 rounded-lg">
-                <p className="text-sm text-blue-800 dark:text-blue-200">
-                  <strong>Note:</strong> We will make reasonable efforts to notify users of significant changes to our service 
-                  and will provide migration options when possible.
-                </p>
-              </div>
-            </Card>
-          </section>
-
-          {/* Limitation of Liability */}
-          <section>
-            <h2 className="text-2xl font-bold mb-6">Limitation of Liability</h2>
-            <Card className="p-8">
-              <p className="text-muted-foreground leading-relaxed mb-4">
-                In no event shall Profyle or its suppliers be liable for any damages (including, without limitation, 
-                damages for loss of data or profit, or due to business interruption) arising out of the use or inability 
-                to use the materials on Profyle's website, even if Profyle or an authorized representative has been 
-                notified orally or in writing of the possibility of such damage.
-              </p>
-              <p className="text-muted-foreground leading-relaxed">
-                Because some jurisdictions do not allow limitations on implied warranties, or limitations of liability 
-                for consequential or incidental damages, these limitations may not apply to you.
-              </p>
-            </Card>
-          </section>
-
-          {/* Contact Information */}
-          <section>
-            <Card className="p-8 text-center bg-gradient-to-br from-primary/5 to-secondary/5">
-              <h2 className="text-2xl font-bold mb-4">Questions About Terms?</h2>
-              <p className="text-muted-foreground mb-6">
-                If you have any questions about these Terms of Service, please contact us.
-              </p>
-              <div className="text-sm text-muted-foreground">
-                Email: <span className="font-medium">junaidasrar04@gmail.com</span>
-              </div>
-            </Card>
-          </section>
-        </div>
-      </main>
-      
-      <Footer />
-    </div>
+    <DocumentPage
+      title="Terms of Service"
+      summary="What you agree to when you use ProfyleAI, written to be read rather than skipped."
+      updated="July 2026"
+      sections={SECTIONS}
+    />
   )
 }

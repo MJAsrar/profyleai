@@ -78,6 +78,7 @@ model User {
   videoInterviews  VideoInterview[]
   creditTransactions CreditTransaction[]
   creditPurchases    CreditPurchase[]
+  targetJob          TargetJob?
 }
 
 model VerificationToken {
@@ -545,6 +546,39 @@ model CreditPurchase {
   @@index([paymentId])
   @@index([checkoutSessionId])
   @@index([status, createdAt])
+}
+
+/// The job the user is currently chasing — the spine of the whole product.
+///
+/// The design's core thesis: one job description is entered once and flows through
+/// every AI tool. Previously each tool asked for the job again, which is why the app
+/// felt like eight disconnected utilities rather than one journey.
+///
+/// Journey progress is DERIVED from the artifact ids below rather than stored as
+/// separate booleans, so the stepper can never claim a step is done when the thing
+/// it produced doesn't exist.
+model TargetJob {
+  id          String  @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String  @unique @db.ObjectId // one active target job per user
+  role        String
+  company     String
+  description String?
+
+  /// Key requirements pulled from the posting; shown as chips in the job strip.
+  requirements String[]
+
+  // Artifacts produced for this job. Presence == that step is complete.
+  baseResumeId     String? @db.ObjectId
+  tailoredResumeId String? @db.ObjectId
+  coverLetterId    String? @db.ObjectId
+  interviewPrepId  String? @db.ObjectId
+  videoInterviewId String? @db.ObjectId
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // userId is already @unique, which creates its index.
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 /// Durable record of every Stripe webhook event we have acted on.

@@ -1,98 +1,73 @@
-'use client'
+"use client"
 
-import { useEffect, useState, Suspense } from 'react'
-import { useSearchParams, useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/button'
-import { XCircle, ArrowLeft, RefreshCw } from 'lucide-react'
-import { PageContainer } from '@/components/ui/page-container'
+import { Suspense, useEffect } from "react"
+import Link from "next/link"
+import { useSearchParams } from "next/navigation"
+
+import { Button } from "@/components/ui/button"
+import { Card } from "@/components/ui/card"
+import { Monogram } from "@/components/ui/monogram"
 
 function CancelPageContent() {
   const searchParams = useSearchParams()
-  const router = useRouter()
-  const [loading, setLoading] = useState(false)
-  const purchaseId = searchParams.get('purchase_id')
+  const purchaseId = searchParams.get("purchase_id")
 
+  // Release the PENDING purchase row so it can't sit there forever looking like an
+  // unfinished payment.
   useEffect(() => {
-    // Mark the purchase as cancelled if we have a purchase ID
-    if (purchaseId) {
-      fetch('/api/credits/cancel-purchase', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ purchaseId })
-      }).catch(console.error)
-    }
+    if (!purchaseId) return
+
+    fetch("/api/credits/cancel-purchase", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ purchaseId }),
+    }).catch(() => {
+      /* Nothing was charged either way — this is only housekeeping. */
+    })
   }, [purchaseId])
 
-  const handleRetry = () => {
-    setLoading(true)
-    router.push('/dashboard')
-  }
-
-  const handleGoBack = () => {
-    router.push('/dashboard')
-  }
-
   return (
-    <PageContainer className="min-h-screen flex items-center justify-center">
-      <div className="max-w-md w-full text-center space-y-8">
-        <div className="mx-auto w-20 h-20 bg-red-100 rounded-full flex items-center justify-center">
-          <XCircle className="h-10 w-10 text-red-600" />
-        </div>
-        
-        <div className="space-y-4">
-          <h1 className="text-3xl font-bold text-foreground">
-            Purchase Cancelled
+    <main className="flex min-h-screen items-center justify-center bg-paper px-6 py-12">
+      <div className="w-full max-w-[440px]">
+        <Card className="p-8 text-center">
+          <div className="flex justify-center">
+            <Monogram tone="neutral" size="lg">
+              ×
+            </Monogram>
+          </div>
+
+          <h1 className="mt-6 font-display text-[28px] leading-tight text-ink">
+            No charge made.
           </h1>
-          <p className="text-lg text-muted-foreground">
-            Your credit purchase was cancelled. No charges were made to your account.
+
+          <p className="mx-auto mt-3 max-w-[320px] text-[15px] leading-relaxed text-ink-muted">
+            You backed out of checkout, so nothing was taken. Your credits and everything
+            you&apos;ve written are exactly where you left them.
           </p>
-        </div>
 
-        <div className="bg-muted/50 rounded-lg p-6">
-          <p className="text-sm text-muted-foreground">
-            Don't worry! You can try purchasing credits again anytime. 
-            Your account and existing credits remain unchanged.
-          </p>
-        </div>
-
-        <div className="space-y-3">
-          <Button onClick={handleRetry} disabled={loading} className="w-full">
-            {loading ? (
-              <>
-                <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-                Loading...
-              </>
-            ) : (
-              <>
-                Try Again
-                <RefreshCw className="ml-2 h-4 w-4" />
-              </>
-            )}
-          </Button>
-          <Button variant="outline" onClick={handleGoBack} className="w-full">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Dashboard
-          </Button>
-        </div>
-
-        <p className="text-xs text-muted-foreground">
-          Need help? Contact our support team for assistance with your purchase.
-        </p>
+          <div className="mt-6 flex flex-col gap-2">
+            <Button asChild size="lg">
+              <Link href="/dashboard">Back to your dashboard</Link>
+            </Button>
+            <Button asChild variant="ghost">
+              <Link href="/pricing">Look at the packs again</Link>
+            </Button>
+          </div>
+        </Card>
       </div>
-    </PageContainer>
+    </main>
   )
 }
 
 export default function CreditPurchaseCancel() {
   return (
-    <Suspense fallback={
-      <PageContainer className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading...</p>
-        </div>
-      </PageContainer>
-    }>
+    <Suspense
+      fallback={
+        <main className="flex min-h-screen items-center justify-center bg-paper px-6">
+          <div className="h-12 w-12 animate-pulse rounded-full bg-section-tint" />
+        </main>
+      }
+    >
       <CancelPageContent />
     </Suspense>
   )

@@ -3,8 +3,9 @@
 import { useEffect, useState, Suspense, useCallback } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { CheckCircle, ArrowRight, CreditCard, Clock, AlertCircle } from 'lucide-react'
-import { PageContainer } from '@/components/ui/page-container'
+import { Card } from '@/components/ui/card'
+import { Monogram } from '@/components/ui/monogram'
+import { notifyCreditsChanged } from '@/lib/hooks/use-credits'
 
 interface PurchaseDetails {
   credits: number
@@ -42,6 +43,9 @@ function SuccessPageContent() {
 
       if (data.data.creditsGranted) {
         setStillProcessing(false)
+        // Every credit display in the app is fed by one shared store — tell it to refetch,
+        // so the balance in the header is right the moment the user lands back.
+        notifyCreditsChanged()
         return
       }
 
@@ -74,112 +78,89 @@ function SuccessPageContent() {
 
   if (loading) {
     return (
-      <PageContainer className="min-h-screen flex items-center justify-center">
+      <main className="flex min-h-screen items-center justify-center bg-paper px-6">
         <div className="text-center" role="status" aria-live="polite">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Confirming your payment…</p>
+          <div className="mx-auto h-12 w-12 animate-pulse rounded-full bg-section-tint" />
+          <p className="mt-5 text-[15px] text-ink-muted">Confirming your payment…</p>
         </div>
-      </PageContainer>
+      </main>
     )
   }
 
   const granted = purchaseDetails?.creditsGranted ?? false
 
   return (
-    <PageContainer className="min-h-screen flex items-center justify-center">
-      <div className="max-w-md w-full text-center space-y-8">
-        <div
-          className={`mx-auto w-20 h-20 rounded-full flex items-center justify-center ${
-            failed ? 'bg-red-100' : granted ? 'bg-green-100' : 'bg-amber-100'
-          }`}
-        >
-          {failed ? (
-            <AlertCircle className="h-10 w-10 text-red-600" />
-          ) : granted ? (
-            <CheckCircle className="h-10 w-10 text-green-600" />
-          ) : (
-            <Clock className="h-10 w-10 text-amber-600" />
-          )}
-        </div>
+    <main className="flex min-h-screen items-center justify-center bg-paper px-6 py-12">
+      <div className="w-full max-w-[440px]">
+        <Card className="p-8 text-center">
+          <div className="flex justify-center">
+            <Monogram tone={failed ? "clay" : granted ? "brand" : "olive"} size="lg">
+              {failed ? "!" : granted ? "✓" : "··"}
+            </Monogram>
+          </div>
 
-        <div className="space-y-4" role="status" aria-live="polite">
-          <h1 className="text-3xl font-bold text-foreground">
-            {failed
-              ? "We couldn't confirm your purchase"
-              : granted
-                ? 'Purchase complete'
-                : 'Payment received'}
-          </h1>
-          <p className="text-lg text-muted-foreground">
-            {failed
-              ? 'Your payment may still have gone through. Check your balance in a moment, and contact support if the credits do not appear.'
-              : granted
-                ? 'Your credits have been added to your account.'
-                : 'Your payment went through. Your credits are still being applied — this usually takes a few seconds.'}
-          </p>
-        </div>
+          <div role="status" aria-live="polite">
+            <h1 className="mt-6 font-display text-[28px] leading-tight text-ink">
+              {failed
+                ? "We couldn't confirm your purchase"
+                : granted
+                  ? 'Credits added.'
+                  : 'Payment received.'}
+            </h1>
 
-        {purchaseDetails && !failed && (
-          <div className="bg-muted/50 rounded-lg p-6 space-y-3">
-            <div className="flex items-center justify-center gap-2 text-primary">
-              <CreditCard className="h-5 w-5" />
-              <span className="font-medium">Purchase Details</span>
-            </div>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Package:</span>
-                <span className="font-medium">{purchaseDetails.packageName}</span>
+            <p className="mx-auto mt-3 max-w-[340px] text-[15px] leading-relaxed text-ink-muted">
+              {failed
+                ? 'Your payment may still have gone through. Check your balance in a moment — and if the credits never appear, send us your receipt and we will sort it out.'
+                : granted
+                  ? "They're in your account and ready to spend."
+                  : "Your card went through. The credits are still landing — usually a few seconds."}
+            </p>
+          </div>
+
+          {purchaseDetails && !failed && (
+            <dl className="mt-6 space-y-2 rounded-[10px] bg-section-tint p-4 text-left text-[14px]">
+              <div className="flex items-baseline justify-between">
+                <dt className="text-ink-muted">{purchaseDetails.packageName}</dt>
+                <dd className="font-mono text-ink">${purchaseDetails.amount}</dd>
               </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Credits:</span>
-                <span className="font-medium text-primary">
-                  {purchaseDetails.credits.toLocaleString()}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Amount:</span>
-                <span className="font-medium">${purchaseDetails.amount}</span>
+              <div className="flex items-baseline justify-between">
+                <dt className="text-ink-muted">Credits</dt>
+                <dd className="font-mono font-semibold text-brand">
+                  +{purchaseDetails.credits.toLocaleString()}
+                </dd>
               </div>
               {granted && (
-                <div className="flex justify-between border-t pt-2">
-                  <span className="text-muted-foreground">New balance:</span>
-                  <span className="font-medium text-primary">
+                <div className="flex items-baseline justify-between border-t border-border pt-2">
+                  <dt className="font-semibold text-ink">New balance</dt>
+                  <dd className="font-mono font-bold text-ink">
                     {purchaseDetails.balance.toLocaleString()}
-                  </span>
+                  </dd>
                 </div>
               )}
-            </div>
-          </div>
-        )}
+            </dl>
+          )}
 
-        {stillProcessing && !failed && (
-          <p className="text-sm text-amber-700 dark:text-amber-500">
-            Still processing. You can safely leave this page — your credits will appear
-            automatically. If they don&apos;t show up within a few minutes, contact support
-            with your receipt.
-          </p>
-        )}
+          {stillProcessing && !failed && (
+            <p className="mt-4 font-mono text-[10px] leading-relaxed tracking-[0.06em] text-ink-faint">
+              You can leave this page — the credits will appear on their own.
+            </p>
+          )}
 
-        <div className="space-y-3">
-          <Button onClick={handleContinue} className="w-full">
-            Continue to Dashboard
-            <ArrowRight className="ml-2 h-4 w-4" />
+          <Button size="lg" className="mt-6 w-full" onClick={handleContinue}>
+            Back to your dashboard
           </Button>
-        </div>
+        </Card>
       </div>
-    </PageContainer>
+    </main>
   )
 }
 
 export default function CreditPurchaseSuccess() {
   return (
     <Suspense fallback={
-      <PageContainer className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading...</p>
-        </div>
-      </PageContainer>
+      <main className="flex min-h-screen items-center justify-center bg-paper px-6">
+        <div className="h-12 w-12 animate-pulse rounded-full bg-section-tint" />
+      </main>
     }>
       <SuccessPageContent />
     </Suspense>

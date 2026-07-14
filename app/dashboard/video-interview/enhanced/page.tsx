@@ -1,184 +1,133 @@
-'use client'
+"use client"
 
-import { useState } from 'react'
-import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { EnhancedInterviewSetup } from '@/components/video-interview/enhanced-interview-setup'
-import { ElevenLabsInterviewRoom } from '@/components/video-interview/elevenlabs-interview-room'
-import { VideoInterviewErrorBoundary } from '@/components/video-interview/video-interview-error-boundary'
-import { InterviewJobData, PracticeQuestion } from '@/lib/services/interview-service'
+import { useState } from "react"
+import Link from "next/link"
+import { toast } from "sonner"
 
-type InterviewPhase = 'setup' | 'interview' | 'completed'
+import { ToolTopBar } from "@/components/layout/tool-top-bar"
+import { JobContextStrip } from "@/components/journey/job-context-strip"
+import { VoiceSetup, type VoiceSetupResult } from "@/components/video-interview/voice-setup"
+import { ElevenLabsInterviewRoom } from "@/components/video-interview/elevenlabs-interview-room"
+import { VideoInterviewErrorBoundary } from "@/components/video-interview/video-interview-error-boundary"
+import { Button } from "@/components/ui/button"
+import { Card } from "@/components/ui/card"
+import { EmptyState, ListSkeleton } from "@/components/ui/states"
+import { useTargetJob } from "@/lib/hooks/use-target-job"
+import { notifyCreditsChanged } from "@/lib/hooks/use-credits"
 
-interface ResumeData {
-  id: string
-  title: string
-  personalInfo: {
-    fullName: string
-    email: string
-    phone: string
-    location: string
-  }
-  summary?: string
-  experience: Array<{
-    jobTitle: string
-    company: string
-    duration: string
-    description: string
-  }>
-  skills: Array<{
-    category: string
-    skills: string[]
-  }>
-  education: Array<{
-    degree: string
-    institution: string
-    year: string
-  }>
-  projects: Array<{
-    name: string
-    description: string
-    technologies: string[]
-  }>
-}
+type Phase = "setup" | "interview" | "completed"
 
-interface InterviewSessionData {
-  sessionId: string
-  jobData: InterviewJobData
-  selectedResume: ResumeData
-  questions: PracticeQuestion[]
-}
+export default function VoiceInterviewPage() {
+  const { job, progress, isLoading, linkArtifact } = useTargetJob()
 
-export default function EnhancedVideoInterviewPage() {
-  const [currentPhase, setCurrentPhase] = useState<InterviewPhase>('setup')
-  const [sessionData, setSessionData] = useState<InterviewSessionData | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
+  const [phase, setPhase] = useState<Phase>("setup")
+  const [isStarting, setIsStarting] = useState(false)
+  const [session, setSession] = useState<(VoiceSetupResult & { sessionId: string }) | null>(
+    null
+  )
 
-  const handleSetupComplete = async (data: {
-    jobData: InterviewJobData
-    selectedResume: ResumeData
-    questions: PracticeQuestion[]
-  }) => {
+  async function begin(setup: VoiceSetupResult) {
+    setIsStarting(true)
+
     try {
-      setIsLoading(true)
-
-      // Create video interview session with resume context
-      const response = await fetch('/api/video-interview/create', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch("/api/video-interview/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ...data.jobData,
-          questions: data.questions,
-          resumeId: data.selectedResume.id,
-          aiPersonality: 'professional',
-          type: 'practice'
-        })
+          ...setup.jobData,
+          questions: setup.questions,
+          resumeId: setup.selectedResume.id,
+          aiPersonality: "professional",
+          type: "practice",
+        }),
       })
 
-      const result = await response.json()
-      
-      if (!result.success) {
-        throw new Error(result.error || 'Failed to create interview session')
+      const body = await res.json()
+
+      if (res.status === 402) {
+        toast.error("Not enough credits for a voice interview.")
+        return
+      }
+      if (!body.success) {
+        toast.error(body.error ?? "The room didn't open. You haven't been charged.")
+        return
       }
 
-      // Store session data
-      const sessionData: InterviewSessionData = {
-        sessionId: result.data.sessionId,
-        jobData: data.jobData,
-        selectedResume: data.selectedResume,
-        questions: data.questions
+      setSession({ ...setup, sessionId: body.data.sessionId })
+      setPhase("interview")
+      notifyCreditsChanged()
+
+      // Advance the journey — this is its last step.
+      if (body.data.videoInterviewId) {
+        await linkArtifact({ videoInterviewId: body.data.videoInterviewId })
       }
-
-      setSessionData(sessionData)
-      setCurrentPhase('interview')
-
-    } catch (error) {
-      console.error('Error creating interview session:', error)
-      // Handle error (you might want to add error state)
+    } catch {
+      toast.error("The room didn't open. You haven't been charged.")
     } finally {
-      setIsLoading(false)
+      setIsStarting(false)
     }
   }
 
-  const handleInterviewComplete = () => {
-    setCurrentPhase('completed')
-  }
-
-  const handleInterviewEnd = () => {
-    // Redirect to results or dashboard
-    window.location.href = '/dashboard/video-interview'
-  }
-
-  const handleStartOver = () => {
-    setCurrentPhase('setup')
-    setSessionData(null)
+  // The live room takes the whole screen. Nothing else on it.
+  if (phase === "interview" && session) {
+    return (
+      <VideoInterviewErrorBoundary>
+        <ElevenLabsInterviewRoom
+          sessionId={session.sessionId}
+          jobTitle={session.jobData.jobTitle}
+          companyName={session.jobData.companyName}
+          jobDescription={session.jobData.jobDescription}
+          resumeData={session.selectedResume}
+          questions={session.questions}
+          onInterviewComplete={() => setPhase("completed")}
+          onInterviewEnd={() => setPhase("completed")}
+        />
+      </VideoInterviewErrorBoundary>
+    )
   }
 
   return (
     <VideoInterviewErrorBoundary>
-      <div className="min-h-screen bg-background">
-        <div className="content-container py-6 md:py-8">
-          {currentPhase === 'setup' && (
-            <EnhancedInterviewSetup
-              onSetupComplete={handleSetupComplete}
-              isLoading={isLoading}
-            />
-          )}
+      <ToolTopBar title="Voice interview" backHref="/dashboard/video-interview" />
+      <JobContextStrip job={job} progress={progress} current="voice" />
 
-          {currentPhase === 'interview' && sessionData && (
-            <ElevenLabsInterviewRoom
-              sessionId={sessionData.sessionId}
-              jobTitle={sessionData.jobData.jobTitle}
-              companyName={sessionData.jobData.companyName}
-              jobDescription={sessionData.jobData.jobDescription}
-              resumeData={sessionData.selectedResume}
-              questions={sessionData.questions}
-              onInterviewComplete={handleInterviewComplete}
-              onInterviewEnd={handleInterviewEnd}
-            />
-          )}
+      <div className="mx-auto w-full max-w-[1100px] px-8 py-8">
+        {isLoading ? (
+          <ListSkeleton rows={3} />
+        ) : phase === "completed" ? (
+          <Card className="p-8 text-center">
+            <h2 className="font-display text-[28px] leading-tight text-ink">
+              You got through it.
+            </h2>
+            <p className="mx-auto mt-2 max-w-[440px] text-[15px] leading-relaxed text-ink-muted">
+              We&apos;re scoring what you said against the role. The feedback names the
+              answers that landed and the ones that didn&apos;t.
+            </p>
 
-          {currentPhase === 'completed' && (
-            <div className="w-full max-w-4xl mx-auto">
-              <Card className="card-elevated shadow-strong border-border/50 text-center">
-                <CardContent className="p-8 space-y-6">
-                  <div className="space-y-4">
-                    <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center mx-auto shadow-medium">
-                      <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                    </div>
-                    <div className="space-y-2">
-                      <h2 className="heading-2 text-foreground">Interview Complete!</h2>
-                      <p className="body-large text-muted-foreground">
-                        Great job! Your interview has been recorded and analyzed. We'll provide detailed feedback to help you improve.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="space-y-3">
-                    <Button
-                      onClick={handleInterviewEnd}
-                      className="w-full btn-gradient shadow-medium py-4 text-base font-semibold"
-                      size="lg"
-                    >
-                      View Results & Feedback
-                    </Button>
-                    
-                    <Button
-                      onClick={handleStartOver}
-                      variant="outline"
-                      className="w-full border-border/50 hover:bg-muted/50 py-4 text-base"
-                      size="lg"
-                    >
-                      Start Another Interview
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+            <div className="mt-6 flex flex-wrap justify-center gap-2">
+              <Button asChild>
+                <Link href="/dashboard/video-interview">See my feedback</Link>
+              </Button>
+              <Button variant="outline" onClick={() => setPhase("setup")}>
+                Go again
+              </Button>
             </div>
-          )}
-        </div>
+          </Card>
+        ) : !job?.role || !job?.company ? (
+          <EmptyState
+            code="VI"
+            tone="brand"
+            title="Set the job first"
+            description="The interviewer asks about a specific role at a specific company. Without one, it's small talk."
+            action={
+              <Button asChild>
+                <Link href="/dashboard/resume-tailoring">Set your target job</Link>
+              </Button>
+            }
+          />
+        ) : (
+          <VoiceSetup job={job} onReady={begin} isStarting={isStarting} />
+        )}
       </div>
     </VideoInterviewErrorBoundary>
   )

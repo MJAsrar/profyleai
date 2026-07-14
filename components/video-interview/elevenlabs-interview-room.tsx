@@ -2,29 +2,8 @@
 
 import { useState, useEffect, useRef, useCallback } from "react"
 import { useRouter } from "next/navigation"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import {
-  Camera,
-  CameraOff,
-  Mic,
-  MicOff,
-  PhoneOff,
-  MessageSquare,
-  Loader2,
-  AlertCircle,
-  Send,
-  Monitor,
-  User,
-  Clock,
-  Zap,
-  Maximize,
-  Minimize,
-  AlertTriangle,
-  Captions,
-} from "lucide-react"
+import { cn } from "@/lib/utils"
 import {
   Dialog,
   DialogContent,
@@ -701,565 +680,273 @@ export function ElevenLabsInterviewRoom({
   const minutes = Math.floor(sessionDuration / 60)
   const seconds = sessionDuration % 60
 
-  // Get connection status display
-  const getConnectionStatusDisplay = () => {
+  /**
+   * The room's status, in words a person would use.
+   *
+   * The old version showed "AI Speaking..." in blue and "Listening..." in purple, which
+   * told you the machine's state but not yours. What matters in a live interview is whose
+   * turn it is.
+   */
+  const status: { label: string; live: boolean } = (() => {
     switch (connectionStatus) {
       case "connecting":
-        return { text: "Connecting...", color: "bg-amber-500", pulse: true }
-      case "connected":
-        return { text: "Connected", color: "bg-emerald-500", pulse: false }
+        return { label: "Connecting…", live: false }
       case "speaking":
-        return { text: "AI Speaking...", color: "bg-blue-500", pulse: true }
+        return { label: "Sarah is speaking", live: true }
       case "listening":
-        return { text: "Listening...", color: "bg-purple-500", pulse: true }
+        return { label: "Your turn — go ahead", live: true }
+      case "connected":
+        return { label: "Connected", live: true }
       case "ended":
-        return { text: "Interview Ended", color: "bg-gray-500", pulse: false }
+        return { label: "Interview ended", live: false }
       default:
-        return { text: "Disconnected", color: "bg-red-500", pulse: false }
+        return { label: "Disconnected", live: false }
     }
-  }
-
-  const statusDisplay = getConnectionStatusDisplay()
+  })()
 
   if (isInitializing) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-950">
-        <div className="text-center p-8">
-          <div className="relative mb-6">
-            <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto shadow-lg">
-              <Loader2 className="w-8 h-8 animate-spin text-white" />
-            </div>
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl animate-pulse opacity-20"></div>
-          </div>
-          <h2 className="text-xl font-semibold text-foreground mb-2">Preparing Your Interview</h2>
-          <p className="text-muted-foreground">Setting up the AI interviewer and video connection...</p>
+      <div className="flex min-h-screen items-center justify-center bg-brand-deep px-6">
+        <div className="text-center">
+          <div className="mx-auto h-14 w-14 animate-pulse rounded-full bg-paper/15" />
+          <h2 className="mt-6 font-display text-[24px] text-paper">Setting up the room</h2>
+          <p className="mt-2 text-[14px] text-paper/70">
+            Sarah is reading your résumé and the posting. A few seconds.
+          </p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
-      <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200/50 dark:border-slate-800/50 sticky top-0 z-40 shadow-sm">
-        <div className="content-container py-4">
-          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                  <Monitor className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h1 className="text-lg lg:text-xl font-bold text-foreground">AI Interview Session</h1>
-                  <p className="text-sm text-muted-foreground truncate max-w-[300px]">
-                    {jobTitle} • {companyName}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-                <div
-                  className={`w-2.5 h-2.5 rounded-full ${statusDisplay.color} ${statusDisplay.pulse ? "animate-pulse" : ""}`}
-                />
-                <span className="text-sm font-medium text-foreground">{statusDisplay.text}</span>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-                <Clock className="w-4 h-4 text-slate-600 dark:text-slate-400" />
-                <span className="text-sm font-mono font-semibold text-foreground">
-                  {minutes}:{seconds.toString().padStart(2, "0")}
-                </span>
-              </div>
-
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={handleEndInterview}
-                disabled={connectionStatus === "ended"}
-                className="shadow-md hover:shadow-lg transition-all duration-200 px-4 py-2"
-              >
-                <PhoneOff className="w-4 h-4 mr-2" />
-                End Interview
-              </Button>
-            </div>
-          </div>
+    <div className="flex min-h-screen flex-col bg-brand-deep text-paper">
+      {/* ---- Top bar ---- */}
+      <header className="flex flex-wrap items-center justify-between gap-4 border-b border-paper/10 px-6 py-4">
+        <div className="min-w-0">
+          <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-paper/50">
+            Live interview
+          </p>
+          <h1 className="truncate text-[16px] font-bold text-paper">
+            {jobTitle} <span className="font-normal text-paper/60">· {companyName}</span>
+          </h1>
         </div>
-      </div>
 
-      {/* Main Content */}
-      <div className="content-container py-6">
-        {(lastError || streamError) && (
-          <Alert
-            className="mb-6 border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/50 shadow-md"
-            variant="destructive"
-          >
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription className="text-foreground flex items-center justify-between">
-              <span>{lastError || streamError}</span>
-              <Button
-                variant="outline"
-                size="sm"
-                className="ml-4 border-red-300 dark:border-red-700 hover:bg-red-100 dark:hover:bg-red-900/50 bg-transparent"
-                onClick={clearErrors}
-              >
-                Dismiss
-              </Button>
-            </AlertDescription>
-          </Alert>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <span
+              aria-hidden="true"
+              className={cn(
+                "h-2 w-2 rounded-full",
+                status.live ? "bg-[#7fb98f]" : "bg-paper/35",
+                connectionStatus === "connecting" && "animate-pulse"
+              )}
+            />
+            <span aria-live="polite" className="text-[13px] text-paper/80">
+              {status.label}
+            </span>
+          </div>
+
+          <span className="font-mono text-[13px] tabular-nums text-paper/70">
+            {minutes}:{seconds.toString().padStart(2, "0")}
+          </span>
+        </div>
+      </header>
+
+      {/* ---- Stage ---- */}
+      <main className="relative flex flex-1 flex-col items-center justify-center px-6 py-10">
+        <AiAvatar
+          isActive={connectionStatus !== "ended" && connectionStatus !== "disconnected"}
+          isSpeaking={isAgentSpeaking}
+        />
+
+        <p className="mt-6 font-mono text-[10px] uppercase tracking-[0.14em] text-paper/50">
+          {isAgentSpeaking
+            ? "Sarah is speaking"
+            : isUserSpeaking
+              ? "Listening to you"
+              : "Waiting for you"}
+        </p>
+
+        {/* Live captions. The overlay existed in the codebase but was never rendered, so
+            deaf and hard-of-hearing users got audio-only questions. */}
+        <SubtitleOverlay
+          currentSubtitle={currentSubtitle}
+          isVisible={subtitlesEnabled}
+          position="bottom"
+          className="pointer-events-none"
+        />
+
+        {/* Your camera, small and out of the way. It's a voice interview — the video is
+            there so you can see yourself, not so anyone else can. */}
+        <div className="absolute bottom-6 right-6 h-[120px] w-[160px] overflow-hidden rounded-[12px] border border-paper/15 bg-black/40">
+          <video
+            ref={localVideoRef}
+            autoPlay
+            muted
+            playsInline
+            controls={false}
+            className={cn(
+              "h-full w-full object-cover transition-opacity duration-300",
+              localStream && isVideoEnabled ? "opacity-100" : "opacity-0"
+            )}
+            style={{ transform: "scaleX(-1)" }}
+            onCanPlay={() => localVideoRef.current?.play().catch(() => {})}
+          />
+
+          {(!localStream || !isVideoEnabled) && (
+            <span className="absolute inset-0 flex items-center justify-center font-mono text-[10px] uppercase tracking-[0.1em] text-paper/40">
+              Camera off
+            </span>
+          )}
+        </div>
+
+        {streamError && (
+          <p className="absolute bottom-6 left-6 max-w-[280px] rounded-[10px] bg-black/40 px-3 py-2 text-[12px] leading-relaxed text-paper/80">
+            {streamError}
+          </p>
+        )}
+      </main>
+
+      {/* ---- Transcript ---- */}
+      {conversationHistory.length > 0 && (
+        <section className="max-h-[220px] overflow-y-auto border-t border-paper/10 px-6 py-4">
+          <ul className="mx-auto max-w-[760px] space-y-3">
+            {conversationHistory.map((message, i) => (
+              <li key={i}>
+                <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-paper/40">
+                  {message.role === "agent" ? "Sarah" : "You"}
+                </p>
+                <p
+                  className={cn(
+                    "mt-0.5 text-[14px] leading-relaxed",
+                    message.role === "agent" ? "text-paper" : "text-paper/70"
+                  )}
+                >
+                  {message.content}
+                </p>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {/* ---- Controls ---- */}
+      <footer className="border-t border-paper/10 px-6 py-4">
+        {showTextInput && (
+          <div className="mx-auto mb-3 flex max-w-[760px] gap-2">
+            <input
+              value={textMessage}
+              onChange={(e) => setTextMessage(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault()
+                  handleSendMessage()
+                }
+              }}
+              placeholder="Type instead of speaking…"
+              aria-label="Type your answer"
+              className="h-11 flex-1 rounded-input border border-paper/20 bg-paper/5 px-3.5 text-[15px] text-paper placeholder:text-paper/40 focus-visible:border-paper/50 focus-visible:outline-none"
+            />
+            <Button variant="onDark" onClick={handleSendMessage} disabled={!textMessage.trim()}>
+              Send
+            </Button>
+          </div>
         )}
 
-        <div className="h-[60vh] lg:h-[65vh] mb-6">
-          <Card className="h-full shadow-xl border-slate-200/50 dark:border-slate-800/50 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm">
-            <CardContent className="p-0 h-full">
-              <div
-                className={`relative h-full rounded-xl overflow-hidden bg-gradient-to-br from-slate-900 to-slate-800 dark:from-slate-950 dark:to-slate-900 ${isFullscreen ? "fixed inset-0 z-50 rounded-none" : ""}`}
-              >
-                <div className="grid grid-cols-1 lg:grid-cols-2 h-full">
-                  <div className="relative bg-slate-900 dark:bg-slate-950 lg:border-r-2 border-b-2 lg:border-b-0 border-slate-600/30">
-                    {/* User label with improved styling */}
-                    <div className="absolute top-4 left-4 z-10">
-                      <div className="px-3 py-2 bg-black/60 backdrop-blur-md rounded-lg border border-white/20 shadow-lg">
-                        <span className="text-white text-sm font-semibold">You</span>
-                      </div>
-                    </div>
+        <div className="mx-auto flex max-w-[760px] flex-wrap items-center justify-center gap-2">
+          <RoomToggle on={isMicEnabled} onClick={toggleMic} onLabel="Mic on" offLabel="Mic off" />
+          <RoomToggle
+            on={isVideoEnabled}
+            onClick={toggleVideo}
+            onLabel="Camera on"
+            offLabel="Camera off"
+          />
+          <RoomToggle
+            on={subtitlesEnabled}
+            onClick={toggleSubtitles}
+            onLabel="Captions on"
+            offLabel="Captions off"
+          />
+          <RoomToggle
+            on={showTextInput}
+            onClick={() => setShowTextInput(!showTextInput)}
+            onLabel="Typing"
+            offLabel="Type instead"
+          />
 
-                    {isUserSpeaking && (
-                      <div className="absolute top-4 right-4 z-10">
-                        <div className="px-3 py-2 bg-emerald-500/90 backdrop-blur-md rounded-lg border border-emerald-400/50 shadow-lg">
-                          <div className="flex items-center gap-2">
-                            <div className="flex gap-1">
-                              <div className="w-1 h-4 bg-white rounded-full animate-pulse"></div>
-                              <div
-                                className="w-1 h-4 bg-white rounded-full animate-pulse"
-                                style={{ animationDelay: "0.1s" }}
-                              ></div>
-                              <div
-                                className="w-1 h-4 bg-white rounded-full animate-pulse"
-                                style={{ animationDelay: "0.2s" }}
-                              ></div>
-                            </div>
-                            <span className="text-white text-sm font-medium hidden sm:inline">Speaking</span>
-                          </div>
-                        </div>
-                      </div>
-                    )}
+          <span className="mx-1 hidden h-6 w-px bg-paper/15 sm:block" aria-hidden="true" />
 
-                                         {/* User Video */}
-                     <video
-                       ref={localVideoRef}
-                       autoPlay
-                       muted
-                       playsInline
-                       controls={false}
-                       className={`w-full h-full object-contain object-center transition-all duration-500 ${
-                         localStream && isVideoEnabled ? "opacity-100 scale-100" : "opacity-0 scale-105"
-                       }`}
-                       style={{
-                         transform: "scaleX(-1)", // Mirror the video like a selfie camera
-                         backgroundColor: "#1f2937",
-                       }}
-                      onCanPlay={() => {
-                        console.log("📺 Video can play event fired")
-                        if (localVideoRef.current) {
-                          localVideoRef.current.play().catch(console.error)
-                        }
-                      }}
-                      onPlaying={() => console.log("📺 Video is playing")}
-                      onError={(e) => console.error("📺 Video error:", e)}
-                    />
-
-                                         {(!localStream || !isVideoEnabled) && (
-                       <div className="absolute inset-0 w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-800 to-slate-900">
-                         <div className="text-center text-white p-4">
-                           <div className="w-16 h-16 bg-gradient-to-r from-slate-600 to-slate-700 rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg">
-                             <User className="w-8 h-8" />
-                           </div>
-                           <p className="text-base font-semibold mb-1">Camera Off</p>
-                           <p className="text-xs text-slate-300">
-                             {streamError ? "Camera access denied" : "Video disabled"}
-                           </p>
-                         </div>
-                       </div>
-                     )}
-                  </div>
-
-                  <div className="relative bg-gradient-to-br from-blue-900 via-indigo-900 to-purple-900 dark:from-blue-950 dark:via-indigo-950 dark:to-purple-950 flex items-center justify-center overflow-hidden">
-                    {/* Enhanced background pattern */}
-                    <div className="absolute inset-0 opacity-20">
-                      <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.1)_0%,transparent_50%)]"></div>
-                      <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(255,255,255,0.1)_0%,transparent_50%)]"></div>
-                      <div className="absolute inset-0 bg-[conic-gradient(from_0deg_at_50%_50%,transparent_0deg,rgba(255,255,255,0.05)_60deg,transparent_120deg)]"></div>
-                    </div>
-
-                    {/* AI label with improved styling */}
-                    <div className="absolute top-4 left-4 z-10">
-                      <div className="px-3 py-2 bg-black/60 backdrop-blur-md rounded-lg border border-white/20 shadow-lg">
-                        <span className="text-white text-sm font-semibold">Sarah (AI)</span>
-                      </div>
-                    </div>
-
-                    {isAgentSpeaking && (
-                      <div className="absolute top-4 right-4 z-10">
-                        <div className="px-3 py-2 bg-blue-500/90 backdrop-blur-md rounded-lg border border-blue-400/50 shadow-lg">
-                          <div className="flex items-center gap-2">
-                            <div className="flex gap-1">
-                              <div className="w-1 h-4 bg-white rounded-full animate-pulse"></div>
-                              <div
-                                className="w-1 h-4 bg-white rounded-full animate-pulse"
-                                style={{ animationDelay: "0.1s" }}
-                              ></div>
-                              <div
-                                className="w-1 h-4 bg-white rounded-full animate-pulse"
-                                style={{ animationDelay: "0.2s" }}
-                              ></div>
-                            </div>
-                            <span className="text-white text-sm font-medium hidden sm:inline">Speaking</span>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                                         <div className="flex items-center justify-center h-full relative z-10 p-6">
-                       <div className="scale-[1.8] sm:scale-[2] lg:scale-[2.2] xl:scale-[2.4] transform transition-transform duration-300">
-                         <AiAvatar
-                           isActive={connectionStatus === "connected" || connectionStatus === "speaking"}
-                           isSpeaking={isAgentSpeaking}
-                           name="Sarah"
-                         />
-                       </div>
-                     </div>
-                  </div>
-                </div>
-
-                {/* Live captions for the AI's speech. The overlay existed but was never
-                    rendered, so deaf/hard-of-hearing users got audio-only questions. */}
-                <SubtitleOverlay
-                  currentSubtitle={currentSubtitle}
-                  isVisible={subtitlesEnabled}
-                  position="bottom"
-                  className="pointer-events-none"
-                />
-
-                <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2">
-                  <div className="flex items-center gap-3 px-6 py-3 bg-black/70 backdrop-blur-xl rounded-2xl border border-white/20 shadow-2xl">
-                    {/* Video Toggle */}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={toggleVideo}
-                      aria-label={isVideoEnabled ? "Turn camera off" : "Turn camera on"}
-                      aria-pressed={!isVideoEnabled}
-                      className={`w-12 h-12 rounded-full transition-all duration-200 ${
-                        isVideoEnabled
-                          ? "bg-white/20 hover:bg-white/30 text-white"
-                          : "bg-red-500 hover:bg-red-600 text-white shadow-lg"
-                      } border-0`}
-                    >
-                      {isVideoEnabled ? <Camera className="w-5 h-5" aria-hidden="true" /> : <CameraOff className="w-5 h-5" aria-hidden="true" />}
-                    </Button>
-
-                    {/* Mic Toggle (Visual only) */}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={toggleMic}
-                      aria-label={isMicEnabled ? "Mute microphone" : "Unmute microphone"}
-                      aria-pressed={!isMicEnabled}
-                      className={`w-12 h-12 rounded-full transition-all duration-200 ${
-                        isMicEnabled
-                          ? "bg-white/20 hover:bg-white/30 text-white"
-                          : "bg-red-500 hover:bg-red-600 text-white shadow-lg"
-                      } border-0`}
-                    >
-                      {isMicEnabled ? <Mic className="w-5 h-5" aria-hidden="true" /> : <MicOff className="w-5 h-5" aria-hidden="true" />}
-                    </Button>
-
-                    {/* Captions Toggle */}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={toggleSubtitles}
-                      aria-label={subtitlesEnabled ? "Hide captions" : "Show captions"}
-                      aria-pressed={subtitlesEnabled}
-                      className={`w-12 h-12 rounded-full transition-all duration-200 ${
-                        subtitlesEnabled
-                          ? "bg-white/20 hover:bg-white/30 text-white"
-                          : "bg-white/5 hover:bg-white/20 text-white/60"
-                      } border-0`}
-                    >
-                      <Captions className="w-5 h-5" aria-hidden="true" />
-                    </Button>
-
-                    {/* Fullscreen Toggle */}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={toggleFullscreen}
-                      aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
-                      aria-pressed={isFullscreen}
-                      className="w-12 h-12 rounded-full bg-white/20 hover:bg-white/30 text-white border-0 transition-all duration-200"
-                    >
-                      {isFullscreen ? <Minimize className="w-5 h-5" aria-hidden="true" /> : <Maximize className="w-5 h-5" aria-hidden="true" />}
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Debug Info (only in development) */}
-                {process.env.NODE_ENV === "development" && (
-                  <div className="absolute bottom-6 left-6">
-                    <div className="px-3 py-2 bg-black/70 backdrop-blur-sm rounded-lg text-white text-xs">
-                      <div>Stream: {localStream ? "✅" : "❌"}</div>
-                      <div>Video Enabled: {isVideoEnabled ? "✅" : "❌"}</div>
-                      <div>Video Ref: {localVideoRef.current ? "✅" : "❌"}</div>
-                      <div>Stream Error: {streamError || "None"}</div>
-                      <div>Agent Speaking: {isAgentSpeaking ? "✅" : "❌"}</div>
-                      <div>Connection: {connectionStatus}</div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+          <Button variant="destructive" onClick={handleEndInterview}>
+            End interview
+          </Button>
         </div>
 
-        <div className="h-[35vh] lg:h-[30vh]">
-          <Card className="h-full shadow-xl border-slate-200/50 dark:border-slate-800/50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm">
-            <CardHeader className="pb-3 border-b border-slate-200/50 dark:border-slate-800/50 px-6 py-4">
-              <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3">
-                <div className="flex items-center gap-4">
-                  <CardTitle className="flex items-center gap-3 text-lg text-foreground">
-                    <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                      <MessageSquare className="w-4 h-4 text-white" />
-                    </div>
-                    Interview Conversation
-                  </CardTitle>
-                  <Badge
-                    variant="secondary"
-                    className="bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800"
-                  >
-                    {conversationHistory.length} messages
-                  </Badge>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-3 text-sm">
-                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-                      <Clock className="w-4 h-4 text-slate-600 dark:text-slate-400" />
-                      <span className="font-mono font-semibold text-foreground">
-                        {minutes}:{seconds.toString().padStart(2, "0")}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hidden sm:flex">
-                      <Zap className="w-4 h-4 text-slate-600 dark:text-slate-400" />
-                      <span className="text-foreground">{questions.length} questions</span>
-                    </div>
-                  </div>
+        {lastError && (
+          <div className="mx-auto mt-3 flex max-w-[760px] items-center justify-between gap-3 rounded-[10px] bg-danger/20 px-3.5 py-2.5">
+            <p className="text-[13px] text-paper">{lastError}</p>
+            <button
+              type="button"
+              onClick={clearErrors}
+              className="shrink-0 font-mono text-[10px] uppercase tracking-[0.1em] text-paper/60 hover:text-paper"
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
+      </footer>
 
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowTextInput(!showTextInput)}
-                    className="flex items-center gap-2 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors duration-200"
-                  >
-                    <Send className="w-4 h-4" />
-                    {showTextInput ? "Hide Input" : "Type Message"}
-                  </Button>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="p-0 h-[calc(100%-5rem)]">
-              <div className="grid grid-cols-1 h-full">
-                <div className="overflow-y-auto p-6 space-y-4 custom-scrollbar">
-                  {conversationHistory.length === 0 ? (
-                    <div className="text-center py-16">
-                      <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-                        <MessageSquare className="w-8 h-8 text-white" />
-                      </div>
-                      <h3 className="text-xl font-semibold text-foreground mb-2">Ready to Begin</h3>
-                      <p className="text-muted-foreground text-lg">
-                        Your conversation with the AI interviewer will appear here
-                      </p>
-                      <p className="text-muted-foreground/70 text-sm mt-2">
-                        Start speaking to begin your interview session
-                      </p>
-                    </div>
-                  ) : (
-                    conversationHistory.map((message, index) => (
-                      <div
-                        key={index}
-                        className={`flex gap-4 ${message.role === "agent" ? "justify-start" : "justify-end"}`}
-                      >
-                        {message.role === "agent" && (
-                          <div className="flex-shrink-0">
-                            <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center shadow-lg border-2 border-white dark:border-slate-800">
-                              <span className="text-white text-sm font-bold">AI</span>
-                            </div>
-                          </div>
-                        )}
+      <audio ref={audioRef} style={{ display: "none" }} />
 
-                        <div className={`max-w-2xl ${message.role === "agent" ? "mr-auto" : "ml-auto"}`}>
-                          <div
-                            className={`p-4 rounded-2xl shadow-md border transition-all duration-200 hover:shadow-lg ${
-                              message.role === "agent"
-                                ? "bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/50 dark:to-purple-950/50 border-blue-200 dark:border-blue-800"
-                                : "bg-gradient-to-r from-emerald-50 to-green-50 dark:from-emerald-950/50 dark:to-green-950/50 border-emerald-200 dark:border-emerald-800"
-                            }`}
-                          >
-                            <div className="flex items-center gap-2 mb-2">
-                              <span
-                                className={`text-sm font-semibold ${
-                                  message.role === "agent"
-                                    ? "text-blue-700 dark:text-blue-300"
-                                    : "text-emerald-700 dark:text-emerald-300"
-                                }`}
-                              >
-                                {message.role === "agent" ? "Sarah (AI Interviewer)" : "You"}
-                              </span>
-                              <span className="text-xs text-muted-foreground">
-                                {message.timestamp.toLocaleTimeString()}
-                              </span>
-                            </div>
-                            <p className="text-foreground leading-relaxed">{message.content}</p>
-                          </div>
-                        </div>
+      {/* ---- Leaving mid-interview ---- */}
+      <Dialog open={showExitDialog} onOpenChange={setShowExitDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Leave the interview?</DialogTitle>
+            <DialogDescription>
+              The session ends here and the credit is spent. You&apos;ll still get the
+              feedback for what you answered so far.
+            </DialogDescription>
+          </DialogHeader>
 
-                        {message.role === "user" && (
-                          <div className="flex-shrink-0">
-                            <div className="w-10 h-10 rounded-full bg-gradient-to-r from-emerald-500 to-green-600 flex items-center justify-center shadow-lg border-2 border-white dark:border-slate-800">
-                              <User className="w-5 h-5 text-white" />
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    ))
-                  )}
-                </div>
-
-                {showTextInput && (
-                  <div className="border-t border-slate-200/50 dark:border-slate-800/50 p-4 bg-slate-50/50 dark:bg-slate-900/50">
-                    <div className="flex gap-3">
-                      <textarea
-                        value={textMessage}
-                        onChange={(e) => setTextMessage(e.target.value)}
-                        placeholder="Type a message to the AI interviewer..."
-                        className="flex-1 p-3 border border-slate-200 dark:border-slate-700 rounded-xl resize-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/50 bg-white dark:bg-slate-800 text-foreground transition-all duration-200"
-                        rows={2}
-                        disabled={connectionStatus !== "connected"}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" && !e.shiftKey) {
-                            e.preventDefault()
-                            handleSendMessage()
-                          }
-                        }}
-                      />
-                      <Button
-                        onClick={handleSendMessage}
-                        disabled={!textMessage.trim() || connectionStatus !== "connected"}
-                        className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 px-6"
-                      >
-                        <Send className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Hidden Audio Element */}
-        <audio ref={audioRef} style={{ display: "none" }} />
-
-        {/* Exit Confirmation Dialog */}
-        <Dialog open={showExitDialog} onOpenChange={setShowExitDialog}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center">
-                  <AlertTriangle className="w-6 h-6 text-amber-600 dark:text-amber-400" />
-                </div>
-                <div>
-                  <DialogTitle>End Interview Session?</DialogTitle>
-                  <DialogDescription className="mt-1">
-                    Your interview session is currently active. Are you sure you want to end it?
-                  </DialogDescription>
-                </div>
-              </div>
-            </DialogHeader>
-            
-            <div className="py-4">
-              <div className="bg-slate-50 dark:bg-slate-900/50 rounded-lg p-4 space-y-2">
-                <h4 className="font-medium text-sm text-foreground">This will:</h4>
-                <ul className="text-sm text-muted-foreground space-y-1">
-                  <li className="flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 bg-red-500 rounded-full" />
-                    End your AI interview session
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 bg-red-500 rounded-full" />
-                    Stop camera and microphone access
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 bg-red-500 rounded-full" />
-                    Close the ElevenLabs connection
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 bg-blue-500 rounded-full" />
-                    Your conversation history will be preserved
-                  </li>
-                </ul>
-              </div>
-            </div>
-
-            <DialogFooter className="gap-2">
-              <Button
-                variant="outline"
-                onClick={handleExitCancel}
-                className="flex-1"
-              >
-                Continue Interview
-              </Button>
-              <Button
-                variant="destructive"
-                onClick={handleExitConfirm}
-                className="flex-1"
-              >
-                End Interview
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      <style jsx>{`
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 6px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: rgba(148, 163, 184, 0.1);
-          border-radius: 3px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: rgba(148, 163, 184, 0.3);
-          border-radius: 3px;
-          transition: background 0.2s ease;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: rgba(148, 163, 184, 0.5);
-        }
-        
-        /* Dark mode scrollbar */
-        .dark .custom-scrollbar::-webkit-scrollbar-track {
-          background: rgba(71, 85, 105, 0.1);
-        }
-        .dark .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: rgba(71, 85, 105, 0.3);
-        }
-        .dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: rgba(71, 85, 105, 0.5);
-        }
-      `}</style>
+          <DialogFooter>
+            <Button variant="outline" onClick={handleExitCancel}>
+              Stay in the interview
+            </Button>
+            <Button variant="destructive" onClick={handleExitConfirm}>
+              Leave
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
-//
+
+/** A control in the live room. On/off is stated in words, not just colour. */
+function RoomToggle({
+  on,
+  onClick,
+  onLabel,
+  offLabel,
+}: {
+  on: boolean
+  onClick: () => void
+  onLabel: string
+  offLabel: string
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={on}
+      className={cn(
+        "rounded-[10px] border px-3.5 py-2 text-[13px] font-medium transition-colors",
+        on
+          ? "border-paper/25 bg-paper/10 text-paper hover:bg-paper/15"
+          : "border-paper/15 bg-transparent text-paper/50 hover:text-paper/80"
+      )}
+    >
+      {on ? onLabel : offLabel}
+    </button>
+  )
+}

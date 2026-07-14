@@ -30,3 +30,6 @@ next-env.d.ts
 # visual verification artifacts
 shot-*.png
 *.mjs.local
+
+# Design handoff reference (kept locally, not in the repo)
+Main pages initial design/

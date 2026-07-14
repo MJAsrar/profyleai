@@ -278,12 +278,30 @@
    ============================================================================= */
 @layer base {
   :root {
-    /* ---- raw design tokens (use directly for bespoke surfaces) ---- */
+    /* ---- raw design tokens ----
+     * Each colour is stored TWICE:
+     *   --x-rgb  : a space-separated RGB triplet, so Tailwind can apply opacity
+     *              modifiers (text-paper/75, bg-brand/12, border-brand/35…).
+     *              A hex in a CSS var cannot do this — it compiles to an invalid
+     *              `rgb(#f6f3ec / 0.75)` and the colour silently disappears.
+     *   --x      : the hex, for direct use in raw CSS and inline styles.
+     */
+    --paper-rgb: 246 243 236;
+    --paper-cool-rgb: 244 244 241;
+    --card-warm-rgb: 255 253 248;
+    --section-tint-rgb: 238 242 234;
+
     --paper: #f6f3ec;
     --paper-cool: #f4f4f1;
     --card-warm: #fffdf8;
     --card-plain: #ffffff;
     --section-tint: #eef2ea;
+
+    --ink-rgb: 33 31 28;
+    --ink-2-rgb: 58 53 46;
+    --ink-muted-rgb: 92 86 77;
+    --ink-faint-rgb: 138 131 122;
+    --ink-faint-2-rgb: 167 159 147;
 
     --ink: #211f1c;
     --ink-2: #3a352e;
@@ -296,11 +314,26 @@
     --hairline-strong: rgba(33, 31, 28, 0.12);
     --hairline-stronger: rgba(33, 31, 28, 0.16);
 
+    --brand-rgb: 46 106 74;
+    --brand-hover-rgb: 38 88 61;
+    --brand-deep-rgb: 34 50 42;
+    --brand-tint-rgb: 231 239 232;
+    --brand-on-dark-rgb: 143 199 163;
+
     --brand: #2e6a4a;
     --brand-hover: #26583d;
     --brand-deep: #22322a;
     --brand-tint: #e7efe8;
     --brand-on-dark: #8fc7a3;
+
+    --clay-rgb: 161 99 60;
+    --clay-tint-rgb: 243 235 228;
+    --danger-rgb: 180 71 47;
+    --danger-tint-rgb: 247 230 224;
+    --indigo-rgb: 54 60 160;
+    --indigo-tint-rgb: 233 235 243;
+    --olive-rgb: 74 107 52;
+    --olive-tint-rgb: 238 240 233;
 
     --clay: #a1633c;
     --clay-tint: #f3ebe4;
@@ -311,6 +344,7 @@
     --olive: #4a6b34;
     --olive-tint: #eef0e9;
 
+    --voice-room-rgb: 22 33 27;
     --voice-room: #16211b;
 
     /* elevation */
@@ -367,6 +401,15 @@
 
   .dark {
     /* Deep evergreen night, matching the voice room — not a generic gray dark. */
+    --paper-rgb: 22 33 27;
+    --card-warm-rgb: 27 39 33;
+    --section-tint-rgb: 31 44 37;
+    --ink-rgb: 234 231 224;
+    --ink-2-rgb: 214 210 202;
+    --ink-muted-rgb: 168 163 154;
+    --ink-faint-rgb: 138 133 124;
+    --ink-faint-2-rgb: 112 107 99;
+
     --paper: #16211b;
     --card-warm: #1b2721;
     --card-plain: #1b2721;

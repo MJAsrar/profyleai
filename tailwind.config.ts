@@ -28,42 +28,44 @@ const config: Config = {
   			mono: ['var(--font-mono)', 'ui-monospace', 'monospace'],
   		},
   		colors: {
-  			// Raw design tokens, for surfaces the shadcn bridge doesn't cover
-  			paper: 'var(--paper)',
-  			'paper-cool': 'var(--paper-cool)',
-  			'card-warm': 'var(--card-warm)',
-  			'section-tint': 'var(--section-tint)',
+  			// Raw design tokens. Declared as rgb(<triplet> / <alpha-value>) so opacity
+  			// modifiers work — text-paper/75, bg-brand/12, border-brand/35 etc. A hex
+  			// inside a CSS var cannot support those and fails silently.
+  			paper: 'rgb(var(--paper-rgb) / <alpha-value>)',
+  			'paper-cool': 'rgb(var(--paper-cool-rgb) / <alpha-value>)',
+  			'card-warm': 'rgb(var(--card-warm-rgb) / <alpha-value>)',
+  			'section-tint': 'rgb(var(--section-tint-rgb) / <alpha-value>)',
   			ink: {
-  				DEFAULT: 'var(--ink)',
-  				2: 'var(--ink-2)',
-  				muted: 'var(--ink-muted)',
-  				faint: 'var(--ink-faint)',
-  				'faint-2': 'var(--ink-faint-2)',
+  				DEFAULT: 'rgb(var(--ink-rgb) / <alpha-value>)',
+  				2: 'rgb(var(--ink-2-rgb) / <alpha-value>)',
+  				muted: 'rgb(var(--ink-muted-rgb) / <alpha-value>)',
+  				faint: 'rgb(var(--ink-faint-rgb) / <alpha-value>)',
+  				'faint-2': 'rgb(var(--ink-faint-2-rgb) / <alpha-value>)',
   			},
   			brand: {
-  				DEFAULT: 'var(--brand)',
-  				hover: 'var(--brand-hover)',
-  				deep: 'var(--brand-deep)',
-  				tint: 'var(--brand-tint)',
-  				'on-dark': 'var(--brand-on-dark)',
+  				DEFAULT: 'rgb(var(--brand-rgb) / <alpha-value>)',
+  				hover: 'rgb(var(--brand-hover-rgb) / <alpha-value>)',
+  				deep: 'rgb(var(--brand-deep-rgb) / <alpha-value>)',
+  				tint: 'rgb(var(--brand-tint-rgb) / <alpha-value>)',
+  				'on-dark': 'rgb(var(--brand-on-dark-rgb) / <alpha-value>)',
   			},
   			clay: {
-  				DEFAULT: 'var(--clay)',
-  				tint: 'var(--clay-tint)',
+  				DEFAULT: 'rgb(var(--clay-rgb) / <alpha-value>)',
+  				tint: 'rgb(var(--clay-tint-rgb) / <alpha-value>)',
   			},
   			danger: {
-  				DEFAULT: 'var(--danger)',
-  				tint: 'var(--danger-tint)',
+  				DEFAULT: 'rgb(var(--danger-rgb) / <alpha-value>)',
+  				tint: 'rgb(var(--danger-tint-rgb) / <alpha-value>)',
   			},
   			indigo: {
-  				DEFAULT: 'var(--indigo)',
-  				tint: 'var(--indigo-tint)',
+  				DEFAULT: 'rgb(var(--indigo-rgb) / <alpha-value>)',
+  				tint: 'rgb(var(--indigo-tint-rgb) / <alpha-value>)',
   			},
   			olive: {
-  				DEFAULT: 'var(--olive)',
-  				tint: 'var(--olive-tint)',
+  				DEFAULT: 'rgb(var(--olive-rgb) / <alpha-value>)',
+  				tint: 'rgb(var(--olive-tint-rgb) / <alpha-value>)',
   			},
-  			'voice-room': 'var(--voice-room)',
+  			'voice-room': 'rgb(var(--voice-room-rgb) / <alpha-value>)',
 
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',

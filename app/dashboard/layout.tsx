@@ -3,10 +3,10 @@
 import type React from "react"
 import { useRouter } from "next/navigation"
 import { useEffect } from "react"
-import { DashboardSidebar } from "@/components/dashboard/dashboard-sidebar"
-import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
+import { AppSidebar } from "@/components/layout/app-sidebar"
 import { useMobileSession } from "@/hooks/use-mobile-session"
 import { useNavigationGuard } from "@/hooks/use-navigation-guard"
+import { Skeleton } from "@/components/ui/skeleton"
 
 export default function DashboardLayout({
   children,
@@ -15,21 +15,35 @@ export default function DashboardLayout({
 }) {
   const { session, isLoading } = useMobileSession()
   const router = useRouter()
-  
-  // Apply navigation guard for interview protection
+
+  // Protects an in-progress interview from being navigated away from.
   useNavigationGuard()
 
   useEffect(() => {
-    if (isLoading) return // Still loading or waiting for mobile session
+    if (isLoading) return
     if (!session) {
       router.push(`/login?callbackUrl=${encodeURIComponent(window.location.pathname)}`)
     }
   }, [session, isLoading, router])
 
+  // Layout-shaped loading rather than a bare centred spinner: the sidebar and
+  // content skeleton hold their place, so nothing jumps when the session lands.
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="flex min-h-screen bg-paper" role="status" aria-label="Loading">
+        <div className="hidden w-64 shrink-0 border-r border-border bg-card p-5 md:block">
+          <Skeleton className="h-8 w-32" />
+          <div className="mt-8 space-y-2">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Skeleton key={i} className="h-8 w-full" />
+            ))}
+          </div>
+        </div>
+        <div className="flex-1 p-8">
+          <Skeleton className="h-8 w-64" />
+          <Skeleton className="mt-3 h-4 w-96" />
+        </div>
+        <span className="sr-only">Loading…</span>
       </div>
     )
   }
@@ -39,11 +53,14 @@ export default function DashboardLayout({
   }
 
   return (
-    <SidebarProvider>
-      <DashboardSidebar />
-      <SidebarInset className="flex flex-col min-h-screen overflow-x-hidden">
+    <div className="flex min-h-screen bg-paper">
+      <div className="sticky top-0 hidden h-screen md:block">
+        <AppSidebar />
+      </div>
+
+      <main className="flex min-w-0 flex-1 flex-col overflow-x-hidden">
         {children}
-      </SidebarInset>
-    </SidebarProvider>
+      </main>
+    </div>
   )
 }

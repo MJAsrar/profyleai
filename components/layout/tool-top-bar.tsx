@@ -2,27 +2,24 @@
 
 import { ReactNode } from "react"
 import Link from "next/link"
-import { LogoMark } from "@/components/ui/logo"
 import { useCredits } from "@/lib/hooks/use-credits"
 import { cn } from "@/lib/utils"
 
-/** The credit chip shown in every focused tool bar. */
+/** The credit chip shown in every tool bar. */
 export function CreditChip({ className }: { className?: string }) {
   const { balance, isLoading } = useCredits()
 
   return (
     <Link
       href="/pricing"
+      title="Buy credits"
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 font-mono text-[11px] tracking-[0.06em] text-ink-muted transition-colors hover:border-brand hover:text-brand",
+        "inline-flex items-center gap-[7px] rounded-[10px] bg-[#e7efe8] px-[13px] py-2 font-mono text-[13px] font-medium text-[#2e6a4a] transition-colors hover:bg-[#dbe7dd]",
         className
       )}
-      title="Buy credits"
     >
-      <span aria-hidden="true" className="text-brand">
-        ◇
-      </span>
-      {isLoading ? "—" : `${balance ?? 0} credits`}
+      <span aria-hidden="true">◇</span>
+      {isLoading ? "—" : (balance ?? 0)}
     </Link>
   )
 }
@@ -36,29 +33,31 @@ interface ToolTopBarProps {
 }
 
 /**
- * The focused top bar used by the builder and every AI tool — a deliberately
- * narrow chrome so the work itself is the page.
+ * The tool bar: a deliberately narrow chrome, so the work itself is the page.
  */
 export function ToolTopBar({ title, backHref = "/dashboard", actions }: ToolTopBarProps) {
   return (
-    <header className="flex h-[60px] shrink-0 items-center justify-between gap-4 border-b border-border bg-card px-5">
+    <header className="flex h-[58px] shrink-0 items-center justify-between gap-4 border-b border-[rgba(33,31,28,.08)] bg-[#fffdf8] px-6">
       <div className="flex min-w-0 items-center gap-3">
         <Link
           href={backHref}
-          aria-label="Back to dashboard"
-          className="rounded-[9px] p-1.5 text-ink-muted transition-colors hover:bg-section-tint hover:text-ink"
+          aria-label="Back"
+          className="flex h-8 w-8 items-center justify-center rounded-[9px] text-[17px] text-[#4b463f] transition-colors hover:bg-[#f1ede4]"
         >
           <span aria-hidden="true">←</span>
         </Link>
 
-        <LogoMark className="h-7 w-7 rounded-[8px] text-[15px]" />
+        <span
+          aria-hidden="true"
+          className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-[7px] bg-[#2e6a4a] font-display text-[16px] font-semibold text-[#f6f3ec]"
+        >
+          P
+        </span>
 
-        <h1 className="truncate font-sans text-[15px] font-bold tracking-normal text-ink">
-          {title}
-        </h1>
+        <h1 className="truncate text-[15px] font-semibold text-[#211f1c]">{title}</h1>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2.5">
         {actions}
         <CreditChip />
       </div>

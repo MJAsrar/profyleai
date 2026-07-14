@@ -357,7 +357,7 @@
     /* ---- shadcn bridge (HSL triplets) ---- */
     --background: 42 36% 95%;          /* paper */
     --foreground: 36 8% 12%;           /* ink */
-    --card: 43 100% 99%;               /* warm white */
+    --card: 43 100% 98.6%;             /* warm white — #fffdf8, the design's card */
     --card-foreground: 36 8% 12%;
     --popover: 43 100% 99%;
     --popover-foreground: 36 8% 12%;

@@ -21,7 +21,10 @@ interface JourneyStepperProps {
 export function JourneyStepper({ progress, current, className }: JourneyStepperProps) {
   return (
     <ol
-      className={cn("flex items-center gap-1.5 font-mono text-[11px] tracking-[0.06em]", className)}
+      className={cn(
+        "flex items-center gap-1.5 font-mono text-[11px] tracking-[0.06em]",
+        className
+      )}
       aria-label="Your progress on this job"
     >
       {JOURNEY_STEPS.map((step, i) => {
@@ -31,7 +34,7 @@ export function JourneyStepper({ progress, current, className }: JourneyStepperP
         return (
           <li key={step.key} className="flex items-center gap-1.5">
             {i > 0 && (
-              <span aria-hidden="true" className="text-ink-faint-2">
+              <span aria-hidden="true" className="text-[#c9c2b6]">
                 —
               </span>
             )}
@@ -39,9 +42,9 @@ export function JourneyStepper({ progress, current, className }: JourneyStepperP
             <span
               className={cn(
                 "inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-1 transition-colors",
-                isCurrent && "bg-brand-tint font-medium text-brand",
-                !isCurrent && isDone && "text-brand",
-                !isCurrent && !isDone && "text-ink-faint-2"
+                isCurrent && "bg-[#2e6a4a] font-medium text-[#f4efe6]",
+                !isCurrent && isDone && "text-[#2e6a4a]",
+                !isCurrent && !isDone && "text-[#a79f93]"
               )}
               aria-current={isCurrent ? "step" : undefined}
             >
@@ -76,19 +79,19 @@ export function JobContextStrip({ job, progress, current, className }: JobContex
     return (
       <div
         className={cn(
-          "flex flex-wrap items-center justify-between gap-3 border-b border-border bg-section-tint px-6 py-3",
+          "flex flex-wrap items-center justify-between gap-3 border-b border-[rgba(33,31,28,.07)] bg-[#eef2ea] px-6 py-[13px]",
           className
         )}
       >
-        <p className="text-[13px] text-ink-muted">
-          <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-ink-faint">
+        <p className="text-[13px] text-[#5c564d]">
+          <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-[#2e6a4a]">
             No job set
           </span>{" "}
           — add the role you&apos;re chasing and it will carry through every step.
         </p>
         <Link
-          href="/dashboard"
-          className="rounded-full border border-brand px-3 py-1 font-mono text-[11px] tracking-[0.06em] text-brand transition-colors hover:bg-brand-tint"
+          href="/dashboard/resume-tailoring"
+          className="rounded-full border border-[#2e6a4a] px-3 py-1 font-mono text-[11px] tracking-[0.06em] text-[#2e6a4a] transition-colors hover:bg-[#e7efe8]"
         >
           Set target job →
         </Link>
@@ -99,25 +102,23 @@ export function JobContextStrip({ job, progress, current, className }: JobContex
   return (
     <div
       className={cn(
-        "flex flex-wrap items-center justify-between gap-x-6 gap-y-2 border-b border-border bg-section-tint px-6 py-2.5",
+        "flex flex-wrap items-center justify-between gap-x-5 gap-y-2 border-b border-[rgba(33,31,28,.07)] bg-[#eef2ea] px-6 py-[13px]",
         className
       )}
     >
       <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5">
-        <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-ink-faint">
+        <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-[#2e6a4a]">
           Job
         </span>
 
-        <span className="truncate text-[14px] font-semibold text-ink">
-          {job.role}
-          <span className="mx-1.5 font-normal text-ink-faint-2">·</span>
-          <span className="font-normal text-ink-muted">{job.company}</span>
+        <span className="truncate text-[14px] font-bold text-[#211f1c]">
+          {job.role} · {job.company}
         </span>
 
         {job.requirements.slice(0, 3).map((req) => (
           <span
             key={req}
-            className="rounded-full bg-brand-tint px-2 py-0.5 text-[11px] font-medium text-brand"
+            className="rounded-full border border-[rgba(33,31,28,.1)] bg-[#fffdf8] px-[9px] py-[3px] text-[12px] text-[#5c564d]"
           >
             {req}
           </span>

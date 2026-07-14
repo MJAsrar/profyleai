@@ -149,7 +149,18 @@ export function TemplateSelector({ onTemplateSelect }: TemplateSelectorProps) {
                   .map((template) => (
                     <Card
                       key={template.id}
-                      className={`cursor-pointer card-elevated group transition-all duration-300 ${
+                      // Keyboard-operable single-select (was a mouse-only clickable card).
+                      role="radio"
+                      aria-checked={selectedTemplate?.id === template.id}
+                      aria-label={`Select ${template.name} template`}
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault()
+                          handleTemplateSelect(template)
+                        }
+                      }}
+                      className={`cursor-pointer card-elevated group transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
                         selectedTemplate?.id === template.id ? "ring-2 ring-primary shadow-medium scale-[1.02]" : "hover:shadow-medium hover:scale-[1.01]"
                       }`}
                       onClick={() => handleTemplateSelect(template)}

@@ -23,6 +23,7 @@ import {
   Maximize,
   Minimize,
   AlertTriangle,
+  Captions,
 } from "lucide-react"
 import {
   Dialog,
@@ -35,7 +36,7 @@ import {
 import { useElevenLabsInterviewStore } from "@/lib/stores/elevenlabs-interview-store"
 import type { PracticeQuestion } from "@/lib/services/interview-service"
 import { AiAvatar } from "./ai-avatar"
-import { useSubtitles } from "./subtitle-overlay"
+import { useSubtitles, SubtitleOverlay } from "./subtitle-overlay"
 
 interface ElevenLabsInterviewRoomProps {
   sessionId: string
@@ -931,6 +932,15 @@ export function ElevenLabsInterviewRoom({
                   </div>
                 </div>
 
+                {/* Live captions for the AI's speech. The overlay existed but was never
+                    rendered, so deaf/hard-of-hearing users got audio-only questions. */}
+                <SubtitleOverlay
+                  currentSubtitle={currentSubtitle}
+                  isVisible={subtitlesEnabled}
+                  position="bottom"
+                  className="pointer-events-none"
+                />
+
                 <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2">
                   <div className="flex items-center gap-3 px-6 py-3 bg-black/70 backdrop-blur-xl rounded-2xl border border-white/20 shadow-2xl">
                     {/* Video Toggle */}
@@ -938,13 +948,15 @@ export function ElevenLabsInterviewRoom({
                       variant="ghost"
                       size="sm"
                       onClick={toggleVideo}
+                      aria-label={isVideoEnabled ? "Turn camera off" : "Turn camera on"}
+                      aria-pressed={!isVideoEnabled}
                       className={`w-12 h-12 rounded-full transition-all duration-200 ${
                         isVideoEnabled
                           ? "bg-white/20 hover:bg-white/30 text-white"
                           : "bg-red-500 hover:bg-red-600 text-white shadow-lg"
                       } border-0`}
                     >
-                      {isVideoEnabled ? <Camera className="w-5 h-5" /> : <CameraOff className="w-5 h-5" />}
+                      {isVideoEnabled ? <Camera className="w-5 h-5" aria-hidden="true" /> : <CameraOff className="w-5 h-5" aria-hidden="true" />}
                     </Button>
 
                     {/* Mic Toggle (Visual only) */}
@@ -952,13 +964,31 @@ export function ElevenLabsInterviewRoom({
                       variant="ghost"
                       size="sm"
                       onClick={toggleMic}
+                      aria-label={isMicEnabled ? "Mute microphone" : "Unmute microphone"}
+                      aria-pressed={!isMicEnabled}
                       className={`w-12 h-12 rounded-full transition-all duration-200 ${
                         isMicEnabled
                           ? "bg-white/20 hover:bg-white/30 text-white"
                           : "bg-red-500 hover:bg-red-600 text-white shadow-lg"
                       } border-0`}
                     >
-                      {isMicEnabled ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
+                      {isMicEnabled ? <Mic className="w-5 h-5" aria-hidden="true" /> : <MicOff className="w-5 h-5" aria-hidden="true" />}
+                    </Button>
+
+                    {/* Captions Toggle */}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={toggleSubtitles}
+                      aria-label={subtitlesEnabled ? "Hide captions" : "Show captions"}
+                      aria-pressed={subtitlesEnabled}
+                      className={`w-12 h-12 rounded-full transition-all duration-200 ${
+                        subtitlesEnabled
+                          ? "bg-white/20 hover:bg-white/30 text-white"
+                          : "bg-white/5 hover:bg-white/20 text-white/60"
+                      } border-0`}
+                    >
+                      <Captions className="w-5 h-5" aria-hidden="true" />
                     </Button>
 
                     {/* Fullscreen Toggle */}
@@ -966,9 +996,11 @@ export function ElevenLabsInterviewRoom({
                       variant="ghost"
                       size="sm"
                       onClick={toggleFullscreen}
+                      aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+                      aria-pressed={isFullscreen}
                       className="w-12 h-12 rounded-full bg-white/20 hover:bg-white/30 text-white border-0 transition-all duration-200"
                     >
-                      {isFullscreen ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
+                      {isFullscreen ? <Minimize className="w-5 h-5" aria-hidden="true" /> : <Maximize className="w-5 h-5" aria-hidden="true" />}
                     </Button>
                   </div>
                 </div>

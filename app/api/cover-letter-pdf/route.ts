@@ -4,6 +4,60 @@ import { getAuthenticatedUser, createAuthError } from "@/lib/auth-utils"
 import { CoverLetterData } from "@/lib/cover-letter-store"
 import { z } from "zod"
 
+interface LibertinusFonts {
+  /** filename -> base64 font data, for pdfmake's virtual file system */
+  vfs: Record<string, string>
+  /** pdfmake variant -> filename, only for variants that actually loaded */
+  variants: Record<string, string>
+}
+
+// Cached across requests on a warm instance: the fonts never change.
+let libertinusFontsCache: Promise<LibertinusFonts> | null = null
+
+/** Read the Libertinus Serif family off local disk (once). */
+function loadLibertinusFonts(): Promise<LibertinusFonts> {
+  if (!libertinusFontsCache) {
+    libertinusFontsCache = (async () => {
+      const { readFile } = await import('fs/promises')
+      const { join } = await import('path')
+
+      const fontFiles: Record<string, string> = {
+        normal: 'LibertinusSerif-Regular.ttf',
+        bold: 'LibertinusSerif-Bold.ttf',
+        italics: 'LibertinusSerif-Italic.ttf',
+        bolditalics: 'LibertinusSerif-BoldItalic.ttf',
+        semibold: 'LibertinusSerif-SemiBold.ttf',
+      }
+
+      const vfs: Record<string, string> = {}
+      const variants: Record<string, string> = {}
+
+      // Read all variants in parallel rather than serially.
+      await Promise.all(
+        Object.entries(fontFiles).map(async ([variant, filename]) => {
+          try {
+            const buffer = await readFile(
+              join(process.cwd(), 'public', 'fonts', 'Libertinus_Serif', filename)
+            )
+            vfs[filename] = buffer.toString('base64')
+            variants[variant] = filename
+          } catch (error) {
+            console.warn(`⚠️ Could not read font ${filename}:`, error)
+          }
+        })
+      )
+
+      return { vfs, variants }
+    })().catch((error) => {
+      // Don't cache a failure — let the next request retry.
+      libertinusFontsCache = null
+      throw error
+    })
+  }
+
+  return libertinusFontsCache
+}
+
 // Validation schema for the request
 const coverLetterPDFSchema = z.object({
   jobDetails: z.object({
@@ -117,42 +171,16 @@ async function generateCoverLetterPDFBlob(data: CoverLetterData): Promise<Buffer
     let actualFont = 'Roboto' // Default fallback
     
     try {
-      // Load Libertinus Serif fonts using HTTP requests (works in all environments)
-      const baseUrl = process.env.NODE_ENV === 'development'
-        ? 'http://localhost:3000'
-        : 'https://www.profyleai.com' // Use production domain for reliable font access
-      
-      const fontFiles = {
-        normal: 'LibertinusSerif-Regular.ttf',
-        bold: 'LibertinusSerif-Bold.ttf',
-        italics: 'LibertinusSerif-Italic.ttf',
-        bolditalics: 'LibertinusSerif-BoldItalic.ttf',
-        semibold: 'LibertinusSerif-SemiBold.ttf'
+      // Load Libertinus Serif from the local filesystem, cached in module scope.
+      // This previously fetched each font over HTTPS from the app's own public domain
+      // on every single cover letter — five network round-trips for files already on
+      // disk. Warm requests now do no font I/O at all.
+      const { vfs, variants: loadedFonts } = await loadLibertinusFonts()
+
+      for (const [filename, base64] of Object.entries(vfs)) {
+        ;(customVfs as any)[filename] = base64
       }
-      
-      // Load each font file via HTTP and add to VFS
-      const loadedFonts: Record<string, string> = {}
-      for (const [variant, filename] of Object.entries(fontFiles)) {
-        try {
-          const fontUrl = `${baseUrl}/fonts/Libertinus_Serif/${filename}`
-          console.log(`🔤 Loading font from: ${fontUrl}`)
-          
-          const response = await fetch(fontUrl)
-          if (!response.ok) {
-            console.warn(`⚠️ Font file not found: ${fontUrl} (${response.status})`)
-            continue
-          }
-          
-          const fontBuffer = await response.arrayBuffer()
-          const base64Font = Buffer.from(fontBuffer).toString('base64')
-          ;(customVfs as any)[filename] = base64Font
-          loadedFonts[variant] = filename
-          console.log(`✅ Loaded ${filename} for LibertinusSerif ${variant}`)
-        } catch (fetchError) {
-          console.warn(`⚠️ Failed to load font ${filename}:`, fetchError)
-        }
-      }
-      
+
       // Set up fonts with Libertinus Serif - ensure we have all required variants
       if (loadedFonts.normal && loadedFonts.bold && loadedFonts.italics && loadedFonts.bolditalics) {
         pdfMake.fonts = {

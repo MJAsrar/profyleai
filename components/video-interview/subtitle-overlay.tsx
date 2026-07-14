@@ -94,8 +94,13 @@ export function SubtitleOverlay({
 
   return (
     <div
+      // Announce new captions to screen readers as they arrive. Without a live region
+      // the text renders silently and assistive tech never reads the AI's speech.
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
       className={`
-        absolute z-40 max-w-full px-6 py-3 
+        absolute z-40 max-w-full px-6 py-3
         rounded-xl backdrop-blur-md border
         text-white text-center shadow-2xl
         transition-all duration-300 ease-in-out

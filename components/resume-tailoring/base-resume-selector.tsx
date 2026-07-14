@@ -163,11 +163,22 @@ export function BaseResumeSelector({ selectedResumeId, onResumeSelect, className
       </CardHeader>
       <CardContent className="space-y-3">
         {resumes.map((resume) => (
-          <Card 
-            key={resume.id} 
-            className={`cursor-pointer transition-all hover:shadow-md ${
-              selectedResumeId === resume.id 
-                ? 'ring-2 ring-primary bg-primary/5' 
+          <Card
+            key={resume.id}
+            // Keyboard-operable single-select (was a mouse-only clickable card).
+            role="radio"
+            aria-checked={selectedResumeId === resume.id}
+            aria-label={`Select resume ${resume.title}`}
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                handleResumeSelect(resume.id)
+              }
+            }}
+            className={`cursor-pointer transition-all hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
+              selectedResumeId === resume.id
+                ? 'ring-2 ring-primary bg-primary/5'
                 : 'hover:bg-muted/50'
             }`}
             onClick={() => handleResumeSelect(resume.id)}

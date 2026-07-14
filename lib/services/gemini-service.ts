@@ -1,5 +1,6 @@
 import { GoogleGenAI } from "@google/genai"
 import { ResumeData } from "@/lib/resume-store"
+import { AiJsonError, generateJson } from "@/lib/services/ai-json"
 
 // Initialize the Gemini API client only when needed (server-side only)
 let genAI: any = null
@@ -331,54 +332,43 @@ export async function tailorResumeWithGemini(
     const prompt = buildTailoringPrompt(resumeData, jobData)
 
     console.log('🤖 Sending request to Gemini API...')
-    
-    // Generate content using the new API
-    const client = getGeminiClient()
-    if (!client) {
-      throw new Error('Gemini client not available')
-    }
-    const result = await client.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: prompt,
-      config: {
+
+    // Ask for JSON via the shared helper: valid JSON by construction, with a timeout,
+    // retries and truncation detection instead of hand-rolled string repair.
+    let parsedResponse: TailoredContent
+    try {
+      parsedResponse = await generateJson<TailoredContent>({
+        prompt,
+        model: "gemini-2.5-flash",
         temperature: 0.3, // Lower temperature for more consistent, professional output
         topP: 0.8,
         topK: 40,
         maxOutputTokens: 4096,
-        thinkingConfig: {
-          thinkingBudget: 0, // Disable thinking for faster responses
+        thinkingBudget: 0, // Disable thinking for faster responses
+      })
+    } catch (aiError) {
+      if (aiError instanceof AiJsonError) {
+        if (aiError.code === 'empty') {
+          console.error('❌ Empty response from Gemini:', aiError)
+          return {
+            success: false,
+            error: "Empty response from AI service"
+          }
+        }
+        if (aiError.code === 'invalid_json' || aiError.code === 'truncated') {
+          console.error('❌ Failed to parse Gemini response:', aiError)
+          return {
+            success: false,
+            error: "Invalid response format from AI service"
+          }
         }
       }
-    })
-    
-    const responseText = result.text || ""
-    
-    if (!responseText) {
-      return {
-        success: false,
-        error: "Empty response from AI service"
-      }
+      // Anything else (not configured, timeout, upstream) falls through to the
+      // existing API_KEY / quota / generic handling below.
+      throw aiError
     }
 
-    console.log('📥 Received response from Gemini:', responseText.substring(0, 200) + '...')
-
-    // Parse JSON response
-    let parsedResponse: any
-    try {
-      // Clean the response text (remove any markdown formatting)
-      const cleanedResponse = responseText
-        .replace(/```json\n?/g, '')
-        .replace(/```\n?/g, '')
-        .trim()
-      
-      parsedResponse = JSON.parse(cleanedResponse)
-    } catch (parseError) {
-      console.error('❌ Failed to parse Gemini response:', parseError)
-      return {
-        success: false,
-        error: "Invalid response format from AI service"
-      }
-    }
+    console.log('📥 Received response from Gemini:', JSON.stringify(parsedResponse).substring(0, 200) + '...')
 
     // Validate response structure
     if (!validateTailoredContent(parsedResponse)) {
@@ -1006,69 +996,43 @@ export async function generateCoverLetterWithGemini(
     const prompt = buildCoverLetterPrompt(jobData, personalInfo, tone)
 
     console.log('🤖 Generating cover letter with Gemini API...')
-    
-    // Generate content using Gemini API
-    const client = getGeminiClient()
-    if (!client) {
-      throw new Error('Gemini client not available')
-    }
-    const result = await client.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: prompt,
-      config: {
+
+    // Ask for JSON via the shared helper: valid JSON by construction, with a timeout,
+    // retries and truncation detection instead of hand-rolled string repair.
+    let parsedResponse: GeneratedCoverLetter
+    try {
+      parsedResponse = await generateJson<GeneratedCoverLetter>({
+        prompt,
+        model: "gemini-2.5-flash",
         temperature: 0.7, // Higher temperature for more creative cover letter writing
         topP: 0.9,
         topK: 40,
         maxOutputTokens: 2048,
-        thinkingConfig: {
-          thinkingBudget: 0, // Disable thinking for faster responses
+        thinkingBudget: 0, // Disable thinking for faster responses
+      })
+    } catch (aiError) {
+      if (aiError instanceof AiJsonError) {
+        if (aiError.code === 'empty') {
+          console.error('❌ Empty cover letter response from Gemini:', aiError)
+          return {
+            success: false,
+            error: "Empty response from AI service"
+          }
+        }
+        if (aiError.code === 'invalid_json' || aiError.code === 'truncated') {
+          console.error('❌ Failed to parse cover letter response:', aiError)
+          return {
+            success: false,
+            error: "Invalid response format from AI service"
+          }
         }
       }
-    })
-    
-    const responseText = result.text || ""
-    
-    if (!responseText) {
-      return {
-        success: false,
-        error: "Empty response from AI service"
-      }
+      // Anything else (not configured, timeout, upstream) falls through to the
+      // existing API_KEY / quota / generic handling below.
+      throw aiError
     }
 
-    console.log('📥 Received cover letter response from Gemini:', responseText.substring(0, 200) + '...')
-
-    // Parse JSON response with improved error handling
-    let parsedResponse: any
-    try {
-      let cleanedResponse = responseText
-        .replace(/```json\n?/g, '')
-        .replace(/```\n?/g, '')
-        .trim()
-      
-      // Remove or escape control characters that break JSON parsing
-      cleanedResponse = cleanedResponse.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, ' ')
-      
-      // Fix common JSON issues
-      cleanedResponse = cleanedResponse.replace(/,(\s*[}\]])/g, '$1')
-      
-      // Extract JSON object if there's extra text
-      const jsonStart = cleanedResponse.indexOf('{')
-      const jsonEnd = cleanedResponse.lastIndexOf('}')
-      
-      if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
-        cleanedResponse = cleanedResponse.substring(jsonStart, jsonEnd + 1)
-      }
-      
-      parsedResponse = JSON.parse(cleanedResponse)
-    } catch (parseError) {
-      console.error('❌ Failed to parse cover letter response:', parseError)
-      console.error('Response length:', responseText.length)
-      console.error('Raw response preview:', responseText.substring(0, 500) + '...')
-      return {
-        success: false,
-        error: "Invalid response format from AI service"
-      }
-    }
+    console.log('📥 Received cover letter response from Gemini:', JSON.stringify(parsedResponse).substring(0, 200) + '...')
 
     // Validate response structure
     if (!validateCoverLetterContent(parsedResponse)) {

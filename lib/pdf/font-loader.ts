@@ -181,26 +181,24 @@ export class FontLoader {
 
       // Check if we're running in Node.js (server-side) or browser (client-side)
       if (typeof window === 'undefined') {
-        // Server-side: Use fetch to get fonts from static assets (works on Vercel)
+        // Server-side: read straight off the local filesystem.
+        //
+        // This used to fetch every font over HTTPS from the app's own public domain —
+        // ~28 serialized network round-trips per resume PDF, on a server that already
+        // has the files on disk. It added seconds of latency and could time the
+        // function out under load.
         try {
-          // Build the full URL for the font
-          // Always use production domain for font loading to avoid auth issues with preview URLs
-          const baseUrl = process.env.NODE_ENV === 'development'
-            ? 'http://localhost:3000'
-            : 'https://www.profyleai.com' // Use production domain for reliable font access
-          
-          const fontUrl = `${baseUrl}${fontPath}`
-          console.log(`🔤 Server-side loading font from: ${fontUrl}`)
-          
-          const response = await fetch(fontUrl)
-          if (!response.ok) {
-            console.warn(`Server-side font fetch failed: ${fontPath} (${response.status})`)
-            return null
-          }
-          arrayBuffer = await response.arrayBuffer()
-          console.log(`✅ Server-side font loaded successfully: ${fontPath}`)
-        } catch (fetchError) {
-          console.warn(`Server-side font loading failed: ${fontPath}`, fetchError)
+          const { readFile } = await import('fs/promises')
+          const { join } = await import('path')
+
+          const absolutePath = join(process.cwd(), 'public', fontPath.replace(/^\/+/, ''))
+          const buffer = await readFile(absolutePath)
+          arrayBuffer = buffer.buffer.slice(
+            buffer.byteOffset,
+            buffer.byteOffset + buffer.byteLength
+          ) as ArrayBuffer
+        } catch (fsError) {
+          console.warn(`Server-side font read failed: ${fontPath}`, fsError)
           return null
         }
       } else {

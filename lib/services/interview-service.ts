@@ -1,15 +1,4 @@
-import { GoogleGenAI } from "@google/genai"
-
-// Initialize the Gemini API client only when needed (server-side only)
-let genAI: any = null
-
-function getGeminiClient() {
-  if (!genAI && typeof window === 'undefined') {
-    // Only initialize on server-side
-    genAI = new GoogleGenAI({})
-  }
-  return genAI
-}
+import { AiJsonError, generateJson } from "./ai-json"
 
 // ===== INTERVIEW PREP FUNCTIONALITY =====
 
@@ -36,13 +25,15 @@ export interface PracticeQuestion {
   keywords: string[]
 }
 
+export interface GeneratedQuestions {
+  questions: PracticeQuestion[]
+  totalGenerated: number
+  categories: string[]
+}
+
 export interface QuestionGenerationResult {
   success: boolean
-  data?: {
-    questions: PracticeQuestion[]
-    totalGenerated: number
-    categories: string[]
-  }
+  data?: GeneratedQuestions
   error?: string
 }
 
@@ -280,65 +271,33 @@ CRITICAL: Every question MUST have category set to exactly one of: "job-specific
 Return ONLY the JSON object. Ensure all questions are unique and relevant to the ${jobData.jobTitle} role.`.trim()
 
     console.log('🤖 Generating practice questions with Gemini API...')
-    
-    const client = getGeminiClient()
-    if (!client) {
-      throw new Error('Gemini client not available')
-    }
 
-    const result = await client.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: prompt,
-      config: {
+    let parsedResponse: GeneratedQuestions
+    try {
+      parsedResponse = await generateJson<GeneratedQuestions>({
+        prompt,
         temperature: 0.3, // Lower temperature for consistent questions
-        topP: 0.8,
-        topK: 40,
         maxOutputTokens: 4096,
-        thinkingConfig: {
-          thinkingBudget: 0, // Disable thinking for faster responses
+        thinkingBudget: 0, // Straightforward generation — thinking disabled for faster responses
+      })
+    } catch (error) {
+      if (error instanceof AiJsonError && error.code === 'empty') {
+        return {
+          success: false,
+          error: "Empty response from AI service"
         }
       }
-    })
-    
-    const responseText = result.text || ""
-    
-    if (!responseText) {
-      return {
-        success: false,
-        error: "Empty response from AI service"
+      if (
+        error instanceof AiJsonError &&
+        (error.code === 'invalid_json' || error.code === 'truncated')
+      ) {
+        console.error('❌ Failed to parse questions response:', error)
+        return {
+          success: false,
+          error: "Invalid response format from AI service"
+        }
       }
-    }
-
-    // Parse JSON response with improved error handling
-    let parsedResponse: any
-    try {
-      let cleanedResponse = responseText
-        .replace(/```json\n?/g, '')
-        .replace(/```\n?/g, '')
-        .trim()
-      
-      // Remove or escape control characters that break JSON parsing
-      cleanedResponse = cleanedResponse.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, ' ')
-      
-      // Fix common JSON issues
-      cleanedResponse = cleanedResponse.replace(/,(\s*[}\]])/g, '$1')
-      
-      // Extract JSON object if there's extra text
-      const jsonStart = cleanedResponse.indexOf('{')
-      const jsonEnd = cleanedResponse.lastIndexOf('}')
-      
-      if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
-        cleanedResponse = cleanedResponse.substring(jsonStart, jsonEnd + 1)
-      }
-      
-      parsedResponse = JSON.parse(cleanedResponse)
-    } catch (parseError) {
-      console.error('❌ Failed to parse questions response:', parseError)
-      console.error('Response length:', responseText.length)
-      return {
-        success: false,
-        error: "Invalid response format from AI service"
-      }
+      throw error
     }
 
     // Validate response structure
@@ -458,72 +417,46 @@ OUTPUT FORMAT:
 Return ONLY the JSON object.`.trim()
 
     console.log('🤖 Evaluating answer with Gemini API...')
-    
-    const client = getGeminiClient()
-    if (!client) {
-      throw new Error('Gemini client not available')
-    }
 
-    const result = await client.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: prompt,
-      config: {
+    let parsedResponse: AnswerFeedback
+    try {
+      // No thinkingBudget here on purpose: this is a judgment/grading task. Disabling
+      // thinking makes the score and feedback shallow and poorly calibrated, so we let
+      // the model reason before it grades.
+      //
+      // Because thinking tokens count against the output budget on Gemini 2.5, the
+      // limit is raised from 2048 so a long chain of thought can't starve the actual
+      // JSON and trip the truncation path.
+      parsedResponse = await generateJson<AnswerFeedback>({
+        prompt,
         temperature: 0.3, // Lower temperature for consistent evaluation
-        topP: 0.8,
-        topK: 40,
-        maxOutputTokens: 2048,
-        thinkingConfig: {
-          thinkingBudget: 0, // Disable thinking for faster responses
+        maxOutputTokens: 8192,
+      })
+    } catch (error) {
+      if (error instanceof AiJsonError && error.code === 'empty') {
+        return {
+          success: false,
+          error: "Empty response from AI service"
         }
       }
-    })
-    
-    const responseText = result.text || ""
-    
-    if (!responseText) {
-      return {
-        success: false,
-        error: "Empty response from AI service"
+      if (
+        error instanceof AiJsonError &&
+        (error.code === 'invalid_json' || error.code === 'truncated')
+      ) {
+        console.error('❌ Failed to parse evaluation response:', error)
+        return {
+          success: false,
+          error: "Invalid response format from AI service"
+        }
       }
-    }
-
-    // Parse JSON response with improved error handling
-    let parsedResponse: any
-    try {
-      let cleanedResponse = responseText
-        .replace(/```json\n?/g, '')
-        .replace(/```\n?/g, '')
-        .trim()
-      
-      // Remove or escape control characters that break JSON parsing
-      cleanedResponse = cleanedResponse.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, ' ')
-      
-      // Fix common JSON issues
-      cleanedResponse = cleanedResponse.replace(/,(\s*[}\]])/g, '$1')
-      
-      // Extract JSON object if there's extra text
-      const jsonStart = cleanedResponse.indexOf('{')
-      const jsonEnd = cleanedResponse.lastIndexOf('}')
-      
-      if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
-        cleanedResponse = cleanedResponse.substring(jsonStart, jsonEnd + 1)
-      }
-      
-      parsedResponse = JSON.parse(cleanedResponse)
-    } catch (parseError) {
-      console.error('❌ Failed to parse evaluation response:', parseError)
-      console.error('Response length:', responseText.length)
-      return {
-        success: false,
-        error: "Invalid response format from AI service"
-      }
+      throw error
     }
 
     console.log(`✅ Successfully evaluated answer with score: ${parsedResponse.score}`)
 
     return {
       success: true,
-      data: parsedResponse as AnswerFeedback
+      data: parsedResponse
     }
 
   } catch (error) {
@@ -626,72 +559,40 @@ OUTPUT FORMAT:
 Return ONLY the JSON object with accurate, interview-relevant information.`.trim()
 
     console.log(`🤖 Researching company ${companyName} with Gemini API...`)
-    
-    const client = getGeminiClient()
-    if (!client) {
-      throw new Error('Gemini client not available')
-    }
 
-    const result = await client.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: prompt,
-      config: {
+    let parsedResponse: CompanyResearch
+    try {
+      parsedResponse = await generateJson<CompanyResearch>({
+        prompt,
         temperature: 0.4, // Balanced creativity for research
-        topP: 0.8,
-        topK: 40,
         maxOutputTokens: 3072,
-        thinkingConfig: {
-          thinkingBudget: 0, // Disable thinking for faster responses
+        thinkingBudget: 0, // Straightforward generation — thinking disabled for faster responses
+      })
+    } catch (error) {
+      if (error instanceof AiJsonError && error.code === 'empty') {
+        return {
+          success: false,
+          error: "Empty response from AI service"
         }
       }
-    })
-    
-    const responseText = result.text || ""
-    
-    if (!responseText) {
-      return {
-        success: false,
-        error: "Empty response from AI service"
+      if (
+        error instanceof AiJsonError &&
+        (error.code === 'invalid_json' || error.code === 'truncated')
+      ) {
+        console.error('❌ Failed to parse research response:', error)
+        return {
+          success: false,
+          error: "Invalid response format from AI service"
+        }
       }
-    }
-
-    // Parse JSON response with improved error handling
-    let parsedResponse: any
-    try {
-      let cleanedResponse = responseText
-        .replace(/```json\n?/g, '')
-        .replace(/```\n?/g, '')
-        .trim()
-      
-      // Remove or escape control characters that break JSON parsing
-      cleanedResponse = cleanedResponse.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, ' ')
-      
-      // Fix common JSON issues
-      cleanedResponse = cleanedResponse.replace(/,(\s*[}\]])/g, '$1')
-      
-      // Extract JSON object if there's extra text
-      const jsonStart = cleanedResponse.indexOf('{')
-      const jsonEnd = cleanedResponse.lastIndexOf('}')
-      
-      if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
-        cleanedResponse = cleanedResponse.substring(jsonStart, jsonEnd + 1)
-      }
-      
-      parsedResponse = JSON.parse(cleanedResponse)
-    } catch (parseError) {
-      console.error('❌ Failed to parse research response:', parseError)
-      console.error('Response length:', responseText.length)
-      return {
-        success: false,
-        error: "Invalid response format from AI service"
-      }
+      throw error
     }
 
     console.log(`✅ Successfully researched company: ${companyName}`)
 
     return {
       success: true,
-      data: parsedResponse as CompanyResearch
+      data: parsedResponse
     }
 
   } catch (error) {
@@ -766,196 +667,30 @@ IMPORTANT: Return ONLY the JSON object above, nothing else.`.trim()
     console.log(`🎯 Generating behavioral coaching for: ${jobTitle} at level: ${experienceLevel}`)
     console.log(`🤖 Generating behavioral coaching for ${jobTitle} with Gemini API...`)
     
-    const client = getGeminiClient()
-    if (!client) {
-      throw new Error('Gemini client not available')
-    }
-
-    const result = await client.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: prompt,
-      config: {
-        temperature: 0.3, // Lower temperature for more consistent output
-        topP: 0.8,
-        topK: 40,
-        maxOutputTokens: 2048, // Increase for complete responses
-        thinkingConfig: {
-          thinkingBudget: 0, // Disable thinking for faster responses
-        }
-      }
-    })
-    
-    const responseText = result.text || ""
-    
-    if (!responseText) {
-      return {
-        success: false,
-        error: "Empty response from AI service"
-      }
-    }
-
-    console.log('📥 Received response from Gemini:', responseText.substring(0, 200) + '...')
-    console.log('📊 Response length:', responseText.length, 'characters')
-
-    // Parse JSON response with better error handling
-    let parsedResponse: any
-    let cleanedResponse: string = ''
-    
+    let parsedResponse: BehavioralCoaching
     try {
-      // Clean the response text more thoroughly
-      cleanedResponse = responseText
-        .replace(/```json\n?/g, '')
-        .replace(/```\n?/g, '')
-        .trim()
-      
-      // Remove control characters more aggressively
-      // First pass: remove non-printable characters but keep essential whitespace
-      cleanedResponse = cleanedResponse.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]/g, '')
-      // Second pass: remove Unicode control characters
-      cleanedResponse = cleanedResponse.replace(/[\u0000-\u001F\u007F-\u009F\u2000-\u200F\u2028-\u202F]/g, '')
-      // Third pass: normalize whitespace but preserve structure
-      cleanedResponse = cleanedResponse.replace(/\r\n/g, '\n').replace(/\r/g, '\n')
-      
-      // Fix common JSON issues
-      // Remove any trailing commas before closing braces/brackets
-      cleanedResponse = cleanedResponse.replace(/,(\s*[}\]])/g, '$1')
-      
-      // Extract only the JSON object - find the first { and matching }
-      const jsonStart = cleanedResponse.indexOf('{')
-      let jsonExtracted = false
-      
-      if (jsonStart !== -1) {
-        let braceCount = 0
-        let jsonEnd = -1
-        let inString = false
-        let escapeNext = false
-        
-        for (let i = jsonStart; i < cleanedResponse.length; i++) {
-          const char = cleanedResponse[i]
-          
-          if (escapeNext) {
-            escapeNext = false
-            continue
-          }
-          
-          if (char === '\\') {
-            escapeNext = true
-            continue
-          }
-          
-          if (char === '"' && !escapeNext) {
-            inString = !inString
-            continue
-          }
-          
-          // Only count braces when not inside a string
-          if (!inString) {
-            if (char === '{') {
-              braceCount++
-            } else if (char === '}') {
-              braceCount--
-              if (braceCount === 0) {
-                jsonEnd = i
-                break
-              }
-            }
-          }
-        }
-        
-        if (jsonEnd !== -1) {
-          const extractedJSON = cleanedResponse.substring(jsonStart, jsonEnd + 1)
-          console.log(`🎯 Extracted JSON object: ${jsonStart} to ${jsonEnd} (${extractedJSON.length} chars)`)
-          console.log(`🔍 Character at jsonEnd (${jsonEnd}): "${cleanedResponse[jsonEnd]}" (${cleanedResponse.charCodeAt(jsonEnd)})`)
-          console.log(`🔍 Before trim - last 50 chars: ...${extractedJSON.slice(-50)}`)
-          console.log(`🔍 Before trim - ends with: "${extractedJSON[extractedJSON.length - 1]}" (${extractedJSON.charCodeAt(extractedJSON.length - 1)})`)
-          
-          const trimmedJSON = extractedJSON.trim()
-          console.log(`🔍 After trim - length changed: ${extractedJSON.length} -> ${trimmedJSON.length}`)
-          console.log(`🔍 After trim - ends with: "${trimmedJSON[trimmedJSON.length - 1]}" (${trimmedJSON.charCodeAt(trimmedJSON.length - 1)})`)
-          
-          cleanedResponse = trimmedJSON
-          jsonExtracted = true
-        } else {
-          console.warn(`⚠️ Could not find matching closing brace. Brace count: ${braceCount}, inString: ${inString}`)
+      parsedResponse = await generateJson<BehavioralCoaching>({
+        prompt,
+        temperature: 0.3, // Lower temperature for more consistent output
+        maxOutputTokens: 2048, // Increase for complete responses
+        thinkingBudget: 0, // Straightforward generation, not judgment - thinking off for faster responses
+      })
+    } catch (error) {
+      if (error instanceof AiJsonError && error.code === 'empty') {
+        return {
+          success: false,
+          error: "Empty response from AI service"
         }
       }
-      //here
-      //
-      // Check if JSON appears to be truncated (only if we didn't successfully extract a complete object)
-      if (!cleanedResponse.trim().endsWith('}') && !jsonExtracted) {
-        console.warn('⚠️ JSON appears to be truncated, attempting to fix...')
-        // Try to close any open structures
-        const openBraces = (cleanedResponse.match(/{/g) || []).length
-        const closeBraces = (cleanedResponse.match(/}/g) || []).length
-        const openBrackets = (cleanedResponse.match(/\[/g) || []).length
-        const closeBrackets = (cleanedResponse.match(/\]/g) || []).length
-        
-        // Add missing closing braces/brackets
-        for (let i = 0; i < (openBrackets - closeBrackets); i++) {
-          cleanedResponse += ']'
-        }
-        for (let i = 0; i < (openBraces - closeBraces); i++) {
-          cleanedResponse += '}'
-        }
+      if (
+        !(error instanceof AiJsonError) ||
+        (error.code !== 'invalid_json' && error.code !== 'truncated')
+      ) {
+        throw error
       }
-      
-      // Skip the unterminated string fixing if we successfully extracted a complete JSON object
-      if (!jsonExtracted) {
-        // Attempt to fix unterminated strings by finding unmatched quotes (only if JSON extraction failed)
-        const lines = cleanedResponse.split('\n')
-        const fixedLines = lines.map((line: string) => {
-          // If line ends with an unescaped quote that's not properly closed, try to fix it
-          if (line.match(/[^\\]"[^"]*$/)) {
-            return line + '"'
-          }
-          return line
-        })
-        cleanedResponse = fixedLines.join('\n')
-      }
-      
-      // Final validation and parsing attempt
-      console.log(`🔍 Before final trim - length: ${cleanedResponse.length}, ends with: "${cleanedResponse[cleanedResponse.length - 1]}"`)
-      cleanedResponse = cleanedResponse.trim()
-      console.log(`🔍 After final trim - length: ${cleanedResponse.length}, ends with: "${cleanedResponse[cleanedResponse.length - 1]}"`)
-      
-      if (!cleanedResponse.startsWith('{') || !cleanedResponse.endsWith('}')) {
-        console.error(`🚨 Invalid JSON structure detected!`)
-        console.error(`🔍 First 10 chars: "${cleanedResponse.substring(0, 10)}"`)
-        console.error(`🔍 Last 10 chars: "${cleanedResponse.slice(-10)}"`)
-        console.error(`🔍 Starts with '{': ${cleanedResponse.startsWith('{')}`)
-        console.error(`🔍 Ends with '}': ${cleanedResponse.endsWith('}')}`)
-        throw new Error(`Invalid JSON structure: starts with "${cleanedResponse[0]}", ends with "${cleanedResponse[cleanedResponse.length - 1]}"`)
-      }
-      
-      console.log('🧹 Cleaned response preview:', cleanedResponse.substring(0, 300) + '...')
-      console.log('🔚 Final JSON ends with:', cleanedResponse.slice(-10))
-      
-      // Try parsing with additional safety
-      try {
-        parsedResponse = JSON.parse(cleanedResponse)
-      } catch (jsonError) {
-        console.error('❌ JSON.parse failed, attempting character-by-character validation...')
-        // If JSON.parse still fails, try to find and remove any problematic characters
-        let safeJSON = cleanedResponse
-        // Remove any characters that might be causing issues after the last }
-        const lastBrace = safeJSON.lastIndexOf('}')
-        if (lastBrace !== -1 && lastBrace < safeJSON.length - 1) {
-          safeJSON = safeJSON.substring(0, lastBrace + 1)
-          console.log('🛠️ Trimmed to last brace, new length:', safeJSON.length)
-        }
-        parsedResponse = JSON.parse(safeJSON)
-      }
-    } catch (parseError) {
-      console.error('❌ Failed to parse coaching response:', parseError)
-      console.error('📏 Response text length:', responseText.length)
-      console.error('🔍 Cleaned response length:', cleanedResponse?.length || 0)
-      console.error('📝 First 300 chars of cleaned:', cleanedResponse?.substring(0, 300))
-      console.error('📝 Characters around position 25:', 
-        cleanedResponse?.substring(Math.max(0, 20), 35)?.split('').map((c: string, i: number) => 
-          `${i + 20}: "${c}" (${c.charCodeAt(0)})`
-        ).join(', ')
-      )
-      
+
+      console.error('❌ Failed to parse coaching response:', error)
+
       // Return a fallback response instead of failing completely
       return {
         success: true,
@@ -1025,7 +760,7 @@ IMPORTANT: Return ONLY the JSON object above, nothing else.`.trim()
 
     return {
       success: true,
-      data: parsedResponse as BehavioralCoaching
+      data: parsedResponse
     }
 
   } catch (error) {

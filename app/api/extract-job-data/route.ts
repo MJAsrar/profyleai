@@ -1,18 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { GoogleGenAI } from "@google/genai"
 import { getAuthenticatedUser, createAuthError } from '@/lib/auth-utils'
 import { rateLimit, rateLimitKey, rateLimitResponse } from '@/lib/rate-limit'
-
-// Initialize Gemini client - same as tailoring service
-function getGeminiClient() {
-  if (typeof window === 'undefined') {
-    return new GoogleGenAI({
-      apiKey: process.env.GEMINI_API_KEY
-    })
-  }
-  return null
-}
+import { generateJson } from '@/lib/services/ai-json'
 
 // Hard cap on page content sent to the model. Without this, a single request can
 // drive unbounded token spend. Longer pages are truncated, not rejected.
@@ -126,11 +116,6 @@ async function extractJobInfoWithGemini(
   url: string
 ): Promise<ExtractedJobInfo> {
   try {
-    const client = getGeminiClient()
-    if (!client) {
-      throw new Error('Gemini client not available')
-    }
-
     if (!process.env.GEMINI_API_KEY) {
       throw new Error('GEMINI_API_KEY not configured')
     }
@@ -176,57 +161,20 @@ Important:
 - If information is not available, use null
 - Ensure the JSON is properly formatted`
 
-    const result = await client.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: [{ parts: [{ text: prompt }] }],
-      config: {
-        temperature: 0.3,
-        topP: 0.8,
-        topK: 40,
-        maxOutputTokens: 4096
-      }
+    // Structured output + retries/timeout, instead of asking for JSON in the prompt
+    // and repairing whatever came back.
+    const extractedInfo = await generateJson<ExtractedJobInfo>({
+      prompt,
+      temperature: 0.3,
+      maxOutputTokens: 4096,
     })
 
-    // Use the same response handling as the existing service
-    const responseText = result.text || ""
-    
-    console.log('🤖 Gemini API response:', {
-      hasText: !!responseText,
-      textLength: responseText.length,
-      preview: responseText.substring(0, 200) + '...'
+    console.log('✅ Successfully parsed job extraction result:', {
+      isJobPosting: extractedInfo.isJobPosting,
+      title: extractedInfo.title,
+      company: extractedInfo.company
     })
-    
-    if (!responseText) {
-      throw new Error('Empty response from Gemini API')
-    }
 
-    // Extract JSON from response - same pattern as existing service
-    let extractedInfo: ExtractedJobInfo
-    try {
-      // Clean the response text (remove any markdown formatting)
-      const cleanedResponse = responseText
-        .replace(/```json\n?/g, '')
-        .replace(/```\n?/g, '')
-        .trim()
-      
-      // Try to extract JSON if it's wrapped in other text
-      const jsonMatch = cleanedResponse.match(/\{[\s\S]*\}/)
-      const jsonString = jsonMatch ? jsonMatch[0] : cleanedResponse
-      
-      extractedInfo = JSON.parse(jsonString) as ExtractedJobInfo
-      
-      console.log('✅ Successfully parsed job extraction result:', {
-        isJobPosting: extractedInfo.isJobPosting,
-        title: extractedInfo.title,
-        company: extractedInfo.company
-      })
-      
-    } catch (parseError) {
-      console.error('❌ Failed to parse Gemini response:', parseError)
-      console.error('📄 Raw response:', responseText)
-      throw new Error('Invalid JSON response from Gemini API')
-    }
-    
     // Validate the response structure
     if (typeof extractedInfo.isJobPosting !== 'boolean') {
       throw new Error('Invalid LLM response structure')

@@ -379,7 +379,19 @@ export function EnhancedInterviewSetup({ onSetupComplete, isLoading = false }: E
                 {resumes.map((resume) => (
                   <div
                     key={resume.id}
-                    className={`group border rounded-xl p-4 cursor-pointer transition-all duration-200 ${
+                    // Single-select list: expose real radio semantics so keyboard and
+                    // screen-reader users can actually choose a resume. This was a
+                    // plain clickable div — unreachable without a mouse.
+                    role="radio"
+                    aria-checked={selectedResumeId === resume.id}
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        setSelectedResumeId(resume.id)
+                      }
+                    }}
+                    className={`group border rounded-xl p-4 cursor-pointer transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
                       selectedResumeId === resume.id
                         ? 'border-primary bg-primary/5 shadow-medium'
                         : 'border-border/50 hover:border-primary/30 hover:shadow-soft bg-card'

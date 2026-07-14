@@ -52,21 +52,21 @@ export class PDFService {
    * Initialize PDFMake with fonts and configuration
    */
   async initialize(): Promise<void> {
+    // Already initialized — reuse it. This used to null the cache and rebuild the
+    // whole font VFS on EVERY generate call, re-reading every font each time.
     if (this.pdfMake) {
-      // Force re-initialization to apply font fixes
-      this.pdfMake = null
-      this.fonts = {}
+      return
     }
 
     try {
       // Dynamic import to avoid SSR issues
       const pdfMakeModule = await import('pdfmake/build/pdfmake')
       const vfs = await import('pdfmake/build/vfs_fonts')
-      
+
       this.pdfMake = pdfMakeModule.default
-      
-      // Initialize custom font loader (force re-initialization)
-      await FontLoader.forceReinitialize()
+
+      // Initialize custom font loader (cached; no-op once warm)
+      await FontLoader.initialize()
       
       // Set up fonts with fallbacks - use only fonts available in PDFMake vfs
       this.fonts = {

@@ -1,78 +1,66 @@
-import { cn } from "@/lib/utils"
-
 /**
- * "Your path" — the six connected steps of the journey, on a gradient rail.
+ * "Your path" — the six steps of the journey on a gradient rail.
  *
- * This is the landing page's thesis made visible: one job description, every step
- * uses it. It replaces a generic feature grid that never explained how the tools
- * related to each other.
+ * Values, sizes and colours are taken directly from the design: the rail runs from pale
+ * sage into evergreen, the first and last markers are filled, and the four in between are
+ * outlined.
  */
 
 const STEPS = [
-  { label: "Paste the job", cost: "Free" },
-  { label: "Build résumé", cost: "Free" },
-  { label: "Tailor it", cost: "2" },
-  { label: "Cover letter", cost: "2" },
-  { label: "Interview prep", cost: "5" },
-  { label: "Voice interview", cost: "50" },
+  { label: "Paste the job", note: "start here", filled: true },
+  { label: "Build résumé", note: "free", filled: false },
+  { label: "Tailor to role", note: "2 credits", filled: false },
+  { label: "Cover letter", note: "2 credits", filled: false },
+  { label: "Interview prep", note: "5 credits", filled: false },
+  { label: "Voice interview", note: "50 credits", filled: true },
 ]
 
-export function PathRail({ className }: { className?: string }) {
+export function PathRail() {
   return (
     <div
-      className={cn(
-        "rounded-panel border border-border bg-[var(--card-plain)] p-8 shadow-card sm:p-10",
-        className
-      )}
+      className="relative rounded-[22px] border border-[rgba(33,31,28,.09)] bg-[#fffdf8] px-6 pb-[30px] pt-9 sm:px-11"
+      style={{
+        boxShadow:
+          "0 1px 2px rgba(30,25,20,.04), 0 30px 70px -34px rgba(30,25,20,.28)",
+      }}
     >
-      <p className="eyebrow">Your path</p>
-      <h2 className="mt-3 max-w-lg font-display text-[30px] leading-tight text-ink sm:text-[34px]">
-        One job description. <em className="text-brand not-italic">Every step uses it.</em>
-      </h2>
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+        <span className="font-mono text-[12px] tracking-[0.14em] text-[#8a837a]">
+          YOUR PATH
+        </span>
+        <span className="text-[14px] text-[#5c564d]">
+          One job description · six steps · nothing re-typed
+        </span>
+      </div>
 
-      <ol className="relative mt-10 grid grid-cols-2 gap-y-9 sm:grid-cols-3 lg:grid-cols-6 lg:gap-y-0">
-        {/* The rail itself — a gradient from pale sage into evergreen. */}
+      <ol className="relative mt-[34px] grid grid-cols-2 gap-y-8 sm:grid-cols-3 lg:flex lg:justify-between lg:gap-y-0">
+        {/* The rail itself. */}
         <div
           aria-hidden="true"
-          className="absolute left-0 right-0 top-[21px] hidden h-[2px] rounded-full lg:block"
-          style={{
-            background: "linear-gradient(90deg, #cdd8ce 0%, #2e6a4a 100%)",
-          }}
+          className="absolute left-[7%] right-[7%] top-5 hidden h-[2px] lg:block"
+          style={{ background: "linear-gradient(90deg,#cdd8ce,#2e6a4a)" }}
         />
 
-        {STEPS.map((step, i) => {
-          const isEndpoint = i === 0 || i === STEPS.length - 1
+        {STEPS.map((step, i) => (
+          <li
+            key={step.label}
+            className="relative z-[1] flex w-full flex-col items-center gap-3 text-center lg:w-[150px]"
+          >
+            <span
+              className={
+                step.filled
+                  ? "flex h-[42px] w-[42px] items-center justify-center rounded-full bg-[#2e6a4a] font-mono text-[15px] font-bold text-[#f4efe6]"
+                  : "flex h-[42px] w-[42px] items-center justify-center rounded-full border-2 border-[#2e6a4a] bg-[#fffdf8] font-mono text-[15px] font-bold text-[#2e6a4a]"
+              }
+            >
+              {i + 1}
+            </span>
 
-          return (
-            <li key={step.label} className="relative flex flex-col items-center text-center">
-              <span
-                className={cn(
-                  "relative z-10 flex h-[42px] w-[42px] items-center justify-center rounded-full border-2 font-mono text-[13px] font-bold",
-                  isEndpoint
-                    ? "border-brand bg-brand text-paper"
-                    : "border-brand/35 bg-[var(--card-plain)] text-brand"
-                )}
-              >
-                {i + 1}
-              </span>
+            <span className="text-[14px] font-semibold text-[#211f1c]">{step.label}</span>
 
-              <span className="mt-3 max-w-[110px] text-[13px] font-semibold leading-snug text-ink">
-                {step.label}
-              </span>
-
-              <span
-                className={cn(
-                  "mt-1.5 rounded-full px-2 py-0.5 font-mono text-[10px] tracking-[0.06em]",
-                  step.cost === "Free"
-                    ? "bg-section-tint text-ink-muted"
-                    : "bg-brand-tint text-brand"
-                )}
-              >
-                {step.cost === "Free" ? "Free" : `${step.cost} credits`}
-              </span>
-            </li>
-          )
-        })}
+            <span className="font-mono text-[11px] text-[#8a837a]">{step.note}</span>
+          </li>
+        ))}
       </ol>
     </div>
   )

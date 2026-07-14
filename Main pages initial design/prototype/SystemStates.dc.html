@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=Hanken+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:#f6f3ec;font-family:'Hanken Grotesk',system-ui,sans-serif;color:#211f1c;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+img{max-width:100%;display:block}
+input{font-family:inherit}
+::selection{background:#2e6a4a;color:#f6f3ec}
+summary{list-style:none;cursor:pointer}
+summary::-webkit-details-marker{display:none}
+.fq-minus{display:none}
+details[open] .fq-plus{display:none}
+details[open] .fq-minus{display:inline-flex}
+</style>
+</helmet>
+<div style="min-height:100vh;background:#f6f3ec">
+<div style="width:960px;overflow:hidden;background:#f6f3ec;padding:40px;margin:0 auto">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;color:#8a837a;margin-bottom:16px">TOASTS</div>
+        <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:36px">
+          <div style="display:flex;align-items:center;gap:13px;background:#fffdf8;border:1px solid rgba(33,31,28,.1);border-left:3px solid #2e6a4a;border-radius:11px;padding:14px 18px;box-shadow:0 12px 30px -22px rgba(30,25,20,.4)"><span style="width:24px;height:24px;border-radius:999px;background:#e7efe8;color:#2e6a4a;display:flex;align-items:center;justify-content:center;font-size:13px">✓</span><div style="flex:1"><div style="font-size:14px;font-weight:600;color:#211f1c">Résumé saved</div><div style="font-size:13px;color:#8a837a">"Product Analyst" · just now</div></div><span style="color:#c9c2b6;cursor:pointer">✕</span></div>
+          <div style="display:flex;align-items:center;gap:13px;background:#fffdf8;border:1px solid rgba(33,31,28,.1);border-left:3px solid #b4472f;border-radius:11px;padding:14px 18px;box-shadow:0 12px 30px -22px rgba(30,25,20,.4)"><span style="width:24px;height:24px;border-radius:999px;background:#f7e6e0;color:#b4472f;display:flex;align-items:center;justify-content:center;font-size:13px">!</span><div style="flex:1"><div style="font-size:14px;font-weight:600;color:#211f1c">Couldn't reach the AI service</div><div style="font-size:13px;color:#8a837a">No credits were spent. Try again in a moment.</div></div><span style="font-size:12px;font-weight:600;color:#b4472f;cursor:pointer">Retry</span></div>
+          <div style="display:flex;align-items:center;gap:13px;background:#fffdf8;border:1px solid rgba(33,31,28,.1);border-left:3px solid #a1633c;border-radius:11px;padding:14px 18px;box-shadow:0 12px 30px -22px rgba(30,25,20,.4)"><span style="width:24px;height:24px;border-radius:999px;background:#f3ebe4;color:#a1633c;display:flex;align-items:center;justify-content:center;font-size:13px">i</span><div style="flex:1"><div style="font-size:14px;font-weight:600;color:#211f1c">2 credits used · 8 remaining</div></div><span style="font-size:12px;font-weight:600;color:#2e6a4a;cursor:pointer">Buy more</span></div>
+          <div style="display:flex;align-items:center;gap:13px;background:#fffdf8;border:1px solid rgba(33,31,28,.1);border-left:3px solid #c9c2b6;border-radius:11px;padding:14px 18px;box-shadow:0 12px 30px -22px rgba(30,25,20,.4)"><span style="width:24px;height:24px;border-radius:999px;border:2px solid #d8d2c6;border-top-color:#2e6a4a"></span><div style="flex:1"><div style="font-size:14px;font-weight:600;color:#211f1c">Tailoring your résumé…</div><div style="font-size:13px;color:#8a837a">This usually takes a few seconds</div></div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+          <div><div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;color:#8a837a;margin-bottom:12px">EMPTY STATE</div><div style="background:#fffdf8;border:1px solid rgba(33,31,28,.09);border-radius:14px;padding:32px;text-align:center"><div style="width:52px;height:52px;border-radius:14px;background:#eef2ea;color:#2e6a4a;display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 14px">◇</div><div style="font-size:16px;font-weight:700;color:#211f1c;margin-bottom:6px">No résumés yet</div><div style="font-size:13.5px;line-height:1.5;color:#8a837a;margin-bottom:18px">Your first one is free — pick a template to start.</div><a href="ResumeBuilder.dc.html" style="display:inline-block;background:#2e6a4a;color:#f4efe6;font-weight:600;font-size:13px;padding:10px 18px;border-radius:9px" style-hover="background:#26583d">Create résumé</a></div></div>
+          <div><div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;color:#8a837a;margin-bottom:12px">LOADING SKELETON</div><div style="background:#fffdf8;border:1px solid rgba(33,31,28,.09);border-radius:14px;padding:24px"><div style="display:flex;gap:14px;margin-bottom:18px"><div style="width:48px;height:48px;border-radius:10px;background:linear-gradient(90deg,#ece7dd,#f3efe7,#ece7dd)"></div><div style="flex:1"><div style="height:12px;width:60%;border-radius:5px;background:linear-gradient(90deg,#ece7dd,#f3efe7,#ece7dd);margin-bottom:9px"></div><div style="height:10px;width:40%;border-radius:5px;background:linear-gradient(90deg,#ece7dd,#f3efe7,#ece7dd)"></div></div></div><div style="height:10px;width:100%;border-radius:5px;background:linear-gradient(90deg,#ece7dd,#f3efe7,#ece7dd);margin-bottom:9px"></div><div style="height:10px;width:88%;border-radius:5px;background:linear-gradient(90deg,#ece7dd,#f3efe7,#ece7dd);margin-bottom:9px"></div><div style="height:10px;width:70%;border-radius:5px;background:linear-gradient(90deg,#ece7dd,#f3efe7,#ece7dd)"></div></div></div>
+        </div>
+        <div style="margin-top:20px"><div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.12em;color:#8a837a;margin-bottom:12px">ERROR STATE</div><div style="background:#fffdf8;border:1px solid rgba(33,31,28,.09);border-radius:14px;padding:28px;display:flex;align-items:center;gap:20px"><div style="width:52px;height:52px;border-radius:14px;background:#f7e6e0;color:#b4472f;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">!</div><div style="flex:1"><div style="font-size:16px;font-weight:700;color:#211f1c;margin-bottom:4px">Something went wrong loading this page</div><div style="font-size:13.5px;color:#8a837a">Your data is safe. Refresh to try again, or contact support if it keeps happening.</div></div><div style="display:flex;gap:10px"><button style="background:#2e6a4a;color:#f4efe6;border:0;border-radius:9px;padding:11px 18px;font-size:13px;font-weight:600;font-family:'Hanken Grotesk',sans-serif;cursor:pointer" style-hover="background:#26583d">Refresh</button><a href="Contact.dc.html" style="border:1px solid rgba(33,31,28,.16);color:#211f1c;font-weight:600;font-size:13px;padding:11px 18px;border-radius:9px" style-hover="border-color:#2e6a4a;color:#2e6a4a">Contact</a></div></div></div>
+      </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { authMode: 'signup', showPw: false, pw: '', agree: false, bannerOpen: true };
+
+  showSignup = () => this.setState({ authMode: 'signup' });
+  showLogin = () => this.setState({ authMode: 'login' });
+  togglePw = () => this.setState(s => ({ showPw: !s.showPw }));
+  onPw = (e) => this.setState({ pw: e.target.value });
+  toggleAgree = () => this.setState(s => ({ agree: !s.agree }));
+  dismissBanner = () => this.setState({ bannerOpen: false });
+
+  strengthScore() {
+    const p = this.state.pw || '';
+    if (!p.length) return 0;
+    let s = 0;
+    if (p.length >= 8) s++;
+    if (/[a-z]/.test(p) && /[A-Z]/.test(p)) s++;
+    if (/\d/.test(p)) s++;
+    if (/[^A-Za-z0-9]/.test(p)) s++;
+    return Math.max(1, s);
+  }
+
+  renderVals() {
+    const isSignup = this.state.authMode === 'signup';
+    const s = this.strengthScore();
+    const colors = ['#c9c2b6', '#b4472f', '#b07a2f', '#4a7a3f', '#2e6a4a'];
+    const labels = ['', 'Weak', 'Fair', 'Good', 'Strong'];
+    const canSubmit = !isSignup || this.state.agree;
+    return {
+      bannerOpen: this.state.bannerOpen,
+      dismissBanner: this.dismissBanner,
+      isSignup,
+      isLogin: !isSignup,
+      showSignup: this.showSignup,
+      showLogin: this.showLogin,
+      pwType: this.state.showPw ? 'text' : 'password',
+      pwToggleLabel: this.state.showPw ? 'Hide' : 'Show',
+      togglePw: this.togglePw,
+      onPw: this.onPw,
+      strengthLabel: labels[s],
+      strengthBarStyle: {
+        height: '100%',
+        width: (s / 4 * 100) + '%',
+        background: colors[s],
+        borderRadius: '999px',
+        transition: 'width .25s ease'
+      },
+      agree: this.state.agree,
+      toggleAgree: this.toggleAgree,
+      submitStyle: {
+        width: '100%',
+        background: '#2e6a4a',
+        color: '#f4efe6',
+        border: '0',
+        borderRadius: '11px',
+        padding: '15px',
+        fontFamily: "'Hanken Grotesk', sans-serif",
+        fontSize: '16px',
+        fontWeight: '700',
+        opacity: canSubmit ? 1 : 0.45,
+        cursor: canSubmit ? 'pointer' : 'not-allowed'
+      },
+      submitLabel: isSignup ? 'Create account — get 10 free credits' : 'Log in',
+      onSubmit: (e) => { if (e && e.preventDefault) e.preventDefault(); }
+    };
+  }
+}
+</script>
+</body>
+</html>

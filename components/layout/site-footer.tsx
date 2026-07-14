@@ -1,42 +1,30 @@
 import Link from "next/link"
-import { LogoMark } from "@/components/ui/logo"
 
 const LINKS = [
-  { href: "/templates", label: "Templates" },
+  { href: "/#product", label: "Product" },
   { href: "/pricing", label: "Pricing" },
+  { href: "/templates", label: "Templates" },
   { href: "/docs", label: "Docs" },
-  { href: "/help", label: "Help" },
-  { href: "/contact", label: "Contact" },
   { href: "/privacy", label: "Privacy" },
-  { href: "/terms", label: "Terms" },
 ]
 
-/** Quiet marketing footer — a single hairline rule, no heavy link farm. */
+/** Quiet marketing footer — a mark, a line of copyright, and five links. */
 export function SiteFooter() {
   return (
-    <footer className="border-t border-border bg-paper">
-      <div className="mx-auto flex max-w-[1200px] flex-wrap items-center justify-between gap-4 px-6 py-6">
-        <div className="flex items-center gap-2.5">
-          <LogoMark className="h-6 w-6 rounded-[7px] text-[13px]" />
-          <span className="font-mono text-[11px] tracking-[0.06em] text-ink-faint">
-            © {new Date().getFullYear()} ProfyleAI
-          </span>
-        </div>
+    <footer className="flex flex-wrap items-center justify-between gap-4 bg-[#f6f3ec] px-6 py-8 sm:px-14">
+      <div className="flex items-center gap-2.5 text-[13px] text-[#8a837a]">
+        <span className="flex h-5 w-5 items-center justify-center rounded-[6px] bg-[#2e6a4a] font-display text-[13px] text-[#f6f3ec]">
+          P
+        </span>
+        © 2026 ProfyleAI
+      </div>
 
-        <nav aria-label="Footer">
-          <ul className="flex flex-wrap items-center gap-x-5 gap-y-2">
-            {LINKS.map((link) => (
-              <li key={link.href}>
-                <Link
-                  href={link.href}
-                  className="text-[13px] text-ink-muted transition-colors hover:text-brand"
-                >
-                  {link.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </nav>
+      <div className="flex flex-wrap gap-[22px] text-[13px] text-[#6f685f]">
+        {LINKS.map((link) => (
+          <Link key={link.label} href={link.href} className="hover:text-[#2e6a4a]">
+            {link.label}
+          </Link>
+        ))}
       </div>
     </footer>
   )

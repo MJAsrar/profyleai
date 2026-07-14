@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=Hanken+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:#f6f3ec;font-family:'Hanken Grotesk',system-ui,sans-serif;color:#211f1c;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+img{max-width:100%;display:block}
+input{font-family:inherit}
+::selection{background:#2e6a4a;color:#f6f3ec}
+summary{list-style:none;cursor:pointer}
+summary::-webkit-details-marker{display:none}
+.fq-minus{display:none}
+details[open] .fq-plus{display:none}
+details[open] .fq-minus{display:inline-flex}
+</style>
+</helmet>
+<div style="min-height:100vh;background:#f6f3ec">
+<div style="width:1240px;height:100vh;display:flex;overflow:hidden;margin:0 auto">
+        <div style="width:48%;background:#22322a;padding:52px 48px;display:flex;flex-direction:column;justify-content:space-between">
+          <a href="Landing.dc.html" style="display:flex;align-items:center;gap:11px">
+            <span style="width:32px;height:32px;border-radius:9px;background:#2e6a4a;display:flex;align-items:center;justify-content:center;font-family:'Newsreader',serif;font-size:21px;color:#f6f3ec;font-weight:600">P</span>
+            <span style="font-size:20px;font-weight:700;color:#f4efe6">Profyle<span style="color:#8fc7a3">AI</span></span>
+          </a>
+          <div>
+            <h2 style="font-family:'Newsreader',serif;font-weight:500;font-size:44px;line-height:1.1;color:#f4efe6;margin:0 0 20px">Ten free credits, and a plan for the whole hunt.</h2>
+            <p style="font-size:17px;line-height:1.6;color:#a9b7ad;margin:0 0 34px;max-width:400px">Create one profile and carry it through your résumé, cover letters, and interview practice.</p>
+            <div style="display:flex;flex-direction:column;gap:14px">
+              <div style="display:flex;align-items:center;gap:12px;color:#cddccf;font-size:15px"><span style="width:22px;height:22px;border-radius:6px;background:#2e6a4a;color:#f4efe6;display:flex;align-items:center;justify-content:center;font-size:12px">✓</span>Build an ATS-ready résumé for free</div>
+              <div style="display:flex;align-items:center;gap:12px;color:#cddccf;font-size:15px"><span style="width:22px;height:22px;border-radius:6px;background:#2e6a4a;color:#f4efe6;display:flex;align-items:center;justify-content:center;font-size:12px">✓</span>Tailor it to any job with AI</div>
+              <div style="display:flex;align-items:center;gap:12px;color:#cddccf;font-size:15px"><span style="width:22px;height:22px;border-radius:6px;background:#2e6a4a;color:#f4efe6;display:flex;align-items:center;justify-content:center;font-size:12px">✓</span>Rehearse interviews before they happen</div>
+            </div>
+          </div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#6f8a7a;letter-spacing:.04em">Trusted by early-career job seekers</div>
+        </div>
+
+        <div style="width:52%;background:#f6f3ec;padding:52px 60px;display:flex;flex-direction:column;justify-content:center">
+          <div style="max-width:420px;width:100%;margin:0 auto">
+            <div style="display:flex;gap:28px;border-bottom:1px solid rgba(33,31,28,.12);margin-bottom:30px">
+              <button onclick="{{ showSignup }}" style="background:none;border:0;padding:0 0 14px;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:16px;font-weight:600;color:#211f1c;position:relative">
+                Create account
+                <sc-if value="{{ isSignup }}" hint-placeholder-val="{{ true }}"><span style="position:absolute;left:0;right:0;bottom:-1px;height:2px;background:#2e6a4a"></span></sc-if>
+              </button>
+              <button onclick="{{ showLogin }}" style="background:none;border:0;padding:0 0 14px;cursor:pointer;font-family:'Hanken Grotesk',sans-serif;font-size:16px;font-weight:600;color:#211f1c;position:relative">
+                Log in
+                <sc-if value="{{ isLogin }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;left:0;right:0;bottom:-1px;height:2px;background:#2e6a4a"></span></sc-if>
+              </button>
+            </div>
+
+            <button style="width:100%;display:flex;align-items:center;justify-content:center;gap:10px;background:#fff;border:1px solid rgba(33,31,28,.16);border-radius:11px;padding:13px;font-size:15px;font-weight:600;color:#211f1c;cursor:pointer;margin-bottom:20px" style-hover="border-color:rgba(33,31,28,.3)">
+              <span style="width:18px;height:18px;border-radius:999px;background:conic-gradient(#ea4335 0 25%,#fbbc05 0 50%,#34a853 0 75%,#4285f4 0 100%)"></span>
+              Continue with Google
+            </button>
+            <div style="display:flex;align-items:center;gap:14px;margin-bottom:22px"><span style="flex:1;height:1px;background:rgba(33,31,28,.12)"></span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#9a9186;letter-spacing:.1em">OR</span><span style="flex:1;height:1px;background:rgba(33,31,28,.12)"></span></div>
+
+            <sc-if value="{{ isSignup }}" hint-placeholder-val="{{ true }}">
+              <div style="margin-bottom:16px">
+                <label style="display:block;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.08em;color:#8a837a;margin-bottom:7px">FULL NAME</label>
+                <input type="text" placeholder="Alex Rivera" style="width:100%;padding:13px 14px;border:1px solid rgba(33,31,28,.16);border-radius:10px;background:#fff;font-size:15px;color:#211f1c" style-focus="border-color:#2e6a4a;outline:none;box-shadow:0 0 0 3px rgba(46,106,74,.12)">
+              </div>
+            </sc-if>
+
+            <div style="margin-bottom:16px">
+              <label style="display:block;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.08em;color:#8a837a;margin-bottom:7px">EMAIL</label>
+              <input type="email" placeholder="you@school.edu" style="width:100%;padding:13px 14px;border:1px solid rgba(33,31,28,.16);border-radius:10px;background:#fff;font-size:15px;color:#211f1c" style-focus="border-color:#2e6a4a;outline:none;box-shadow:0 0 0 3px rgba(46,106,74,.12)">
+            </div>
+
+            <div style="margin-bottom:16px">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px">
+                <label style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.08em;color:#8a837a">PASSWORD</label>
+                <sc-if value="{{ isLogin }}" hint-placeholder-val="{{ false }}"><a href="SignUp.dc.html" style="font-size:12px;color:#2e6a4a;font-weight:600">Forgot?</a></sc-if>
+              </div>
+              <div style="position:relative">
+                <input type="{{ pwType }}" onchange="{{ onPw }}" placeholder="At least 8 characters" style="width:100%;padding:13px 62px 13px 14px;border:1px solid rgba(33,31,28,.16);border-radius:10px;background:#fff;font-size:15px;color:#211f1c" style-focus="border-color:#2e6a4a;outline:none;box-shadow:0 0 0 3px rgba(46,106,74,.12)">
+                <button onclick="{{ togglePw }}" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:0;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.06em;color:#8a837a;padding:4px 6px">{{ pwToggleLabel }}</button>
+              </div>
+              <sc-if value="{{ isSignup }}" hint-placeholder-val="{{ true }}">
+                <div style="display:flex;align-items:center;gap:12px;margin-top:10px">
+                  <div style="flex:1;height:5px;border-radius:999px;background:rgba(33,31,28,.1);overflow:hidden"><div style="{{ strengthBarStyle }}"></div></div>
+                  <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#8a837a;min-width:44px">{{ strengthLabel }}</span>
+                </div>
+              </sc-if>
+            </div>
+
+            <sc-if value="{{ isSignup }}" hint-placeholder-val="{{ true }}">
+              <div style="margin-bottom:18px">
+                <label style="display:block;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.08em;color:#8a837a;margin-bottom:7px">CONFIRM PASSWORD</label>
+                <input type="{{ pwType }}" placeholder="Re-enter password" style="width:100%;padding:13px 14px;border:1px solid rgba(33,31,28,.16);border-radius:10px;background:#fff;font-size:15px;color:#211f1c" style-focus="border-color:#2e6a4a;outline:none;box-shadow:0 0 0 3px rgba(46,106,74,.12)">
+              </div>
+              <button onclick="{{ toggleAgree }}" style="display:flex;align-items:flex-start;gap:10px;background:none;border:0;cursor:pointer;text-align:left;padding:0;margin-bottom:22px">
+                <span style="width:20px;height:20px;border-radius:6px;border:1.5px solid #2e6a4a;background:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px">
+                  <sc-if value="{{ agree }}" hint-placeholder-val="{{ false }}"><span style="width:20px;height:20px;border-radius:5px;background:#2e6a4a;color:#f4efe6;display:flex;align-items:center;justify-content:center;font-size:12px">✓</span></sc-if>
+                </span>
+                <span style="font-size:13px;line-height:1.5;color:#5c564d">I agree to the <a href="SignUp.dc.html" style="color:#2e6a4a;font-weight:600">Terms of Service</a> and <a href="SignUp.dc.html" style="color:#2e6a4a;font-weight:600">Privacy Policy</a>.</span>
+              </button>
+            </sc-if>
+
+            <button onclick="{{ onSubmit }}" style="{{ submitStyle }}">{{ submitLabel }}</button>
+
+            <p style="text-align:center;font-size:13px;color:#8a837a;margin:18px 0 0;font-family:'JetBrains Mono',monospace;letter-spacing:.02em">Free forever plan · 10 credits on sign-up</p>
+          </div>
+        </div>
+      </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { authMode: 'signup', showPw: false, pw: '', agree: false, bannerOpen: true };
+
+  showSignup = () => this.setState({ authMode: 'signup' });
+  showLogin = () => this.setState({ authMode: 'login' });
+  togglePw = () => this.setState(s => ({ showPw: !s.showPw }));
+  onPw = (e) => this.setState({ pw: e.target.value });
+  toggleAgree = () => this.setState(s => ({ agree: !s.agree }));
+  dismissBanner = () => this.setState({ bannerOpen: false });
+
+  strengthScore() {
+    const p = this.state.pw || '';
+    if (!p.length) return 0;
+    let s = 0;
+    if (p.length >= 8) s++;
+    if (/[a-z]/.test(p) && /[A-Z]/.test(p)) s++;
+    if (/\d/.test(p)) s++;
+    if (/[^A-Za-z0-9]/.test(p)) s++;
+    return Math.max(1, s);
+  }
+
+  renderVals() {
+    const isSignup = this.state.authMode === 'signup';
+    const s = this.strengthScore();
+    const colors = ['#c9c2b6', '#b4472f', '#b07a2f', '#4a7a3f', '#2e6a4a'];
+    const labels = ['', 'Weak', 'Fair', 'Good', 'Strong'];
+    const canSubmit = !isSignup || this.state.agree;
+    return {
+      bannerOpen: this.state.bannerOpen,
+      dismissBanner: this.dismissBanner,
+      isSignup,
+      isLogin: !isSignup,
+      showSignup: this.showSignup,
+      showLogin: this.showLogin,
+      pwType: this.state.showPw ? 'text' : 'password',
+      pwToggleLabel: this.state.showPw ? 'Hide' : 'Show',
+      togglePw: this.togglePw,
+      onPw: this.onPw,
+      strengthLabel: labels[s],
+      strengthBarStyle: {
+        height: '100%',
+        width: (s / 4 * 100) + '%',
+        background: colors[s],
+        borderRadius: '999px',
+        transition: 'width .25s ease'
+      },
+      agree: this.state.agree,
+      toggleAgree: this.toggleAgree,
+      submitStyle: {
+        width: '100%',
+        background: '#2e6a4a',
+        color: '#f4efe6',
+        border: '0',
+        borderRadius: '11px',
+        padding: '15px',
+        fontFamily: "'Hanken Grotesk', sans-serif",
+        fontSize: '16px',
+        fontWeight: '700',
+        opacity: canSubmit ? 1 : 0.45,
+        cursor: canSubmit ? 'pointer' : 'not-allowed'
+      },
+      submitLabel: isSignup ? 'Create account — get 10 free credits' : 'Log in',
+      onSubmit: (e) => { if (e && e.preventDefault) e.preventDefault(); }
+    };
+  }
+}
+</script>
+</body>
+</html>

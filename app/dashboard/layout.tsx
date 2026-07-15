@@ -7,6 +7,7 @@ import { AppSidebar } from "@/components/layout/app-sidebar"
 import { BuyCreditsHost } from "@/components/credits/buy-credits-host"
 import { useMobileSession } from "@/hooks/use-mobile-session"
 import { useNavigationGuard } from "@/hooks/use-navigation-guard"
+import { useHideSidebar } from "@/lib/hooks/use-app-chrome"
 import { Skeleton } from "@/components/ui/skeleton"
 
 export default function DashboardLayout({
@@ -16,6 +17,7 @@ export default function DashboardLayout({
 }) {
   const { session, isLoading } = useMobileSession()
   const router = useRouter()
+  const hideSidebar = useHideSidebar()
 
   // Protects an in-progress interview from being navigated away from.
   useNavigationGuard()
@@ -55,9 +57,11 @@ export default function DashboardLayout({
 
   return (
     <div className="flex min-h-screen bg-paper">
-      <div className="sticky top-0 hidden h-screen md:block">
-        <AppSidebar />
-      </div>
+      {!hideSidebar && (
+        <div className="sticky top-0 hidden h-screen md:block">
+          <AppSidebar />
+        </div>
+      )}
 
       <main className="flex min-w-0 flex-1 flex-col overflow-x-hidden">
         {children}

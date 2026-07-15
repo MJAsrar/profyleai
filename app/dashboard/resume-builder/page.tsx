@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/button"
 import { ListSkeleton } from "@/components/ui/states"
 
 import { useResumeStore, useAutoSave } from "@/lib/resume-store"
+import { setHideSidebar } from "@/lib/hooks/use-app-chrome"
 import {
   RESUME_SECTIONS,
   nextIncompleteSection,
@@ -68,6 +69,14 @@ export default function ResumeBuilderPage() {
   const [showTemplateSelector, setShowTemplateSelector] = useState(false)
 
   useAutoSave()
+
+  // The editing view is a focused, full-width three-pane layout — hide the main app
+  // sidebar while it's up, and restore it on the selection/template screens and on exit.
+  const inEditor = !isLoading && isInitialized && !showResumeSelection && !showTemplateSelector
+  useEffect(() => {
+    setHideSidebar(inEditor)
+    return () => setHideSidebar(false)
+  }, [inEditor])
 
   useEffect(() => {
     if (templatesLoaded) return

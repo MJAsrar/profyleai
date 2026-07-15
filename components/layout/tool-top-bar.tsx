@@ -3,15 +3,17 @@
 import { ReactNode } from "react"
 import Link from "next/link"
 import { useCredits } from "@/lib/hooks/use-credits"
+import { openBuyCredits } from "@/lib/hooks/use-buy-credits"
 import { cn } from "@/lib/utils"
 
-/** The credit chip shown in every tool bar. */
+/** The credit chip shown in every tool bar. Click to top up. */
 export function CreditChip({ className }: { className?: string }) {
   const { balance, isLoading } = useCredits()
 
   return (
-    <Link
-      href="/pricing"
+    <button
+      type="button"
+      onClick={() => openBuyCredits()}
       title="Buy credits"
       className={cn(
         "inline-flex items-center gap-[7px] rounded-[10px] bg-[#e7efe8] px-[13px] py-2 font-mono text-[13px] font-medium text-[#2e6a4a] transition-colors hover:bg-[#dbe7dd]",
@@ -20,7 +22,7 @@ export function CreditChip({ className }: { className?: string }) {
     >
       <span aria-hidden="true">◇</span>
       {isLoading ? "—" : (balance ?? 0)}
-    </Link>
+    </button>
   )
 }
 

@@ -4,6 +4,7 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useSession, signOut } from "next-auth/react"
 import { useCredits } from "@/lib/hooks/use-credits"
+import { openBuyCredits } from "@/lib/hooks/use-buy-credits"
 import { cn } from "@/lib/utils"
 
 /**
@@ -69,12 +70,13 @@ function CreditsCard() {
         />
       </div>
 
-      <Link
-        href="/pricing"
-        className="block rounded-[9px] bg-[#2e6a4a] py-[9px] text-center text-[13px] font-semibold text-[#f4efe6] hover:bg-[#357a56]"
+      <button
+        type="button"
+        onClick={() => openBuyCredits()}
+        className="block w-full rounded-[9px] bg-[#2e6a4a] py-[9px] text-center text-[13px] font-semibold text-[#f4efe6] hover:bg-[#357a56]"
       >
         Buy credits
-      </Link>
+      </button>
     </div>
   )
 }

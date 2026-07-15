@@ -1,6 +1,6 @@
-import Link from "next/link"
 import { PublicNav } from "@/components/layout/public-nav"
 import { SiteFooter } from "@/components/layout/site-footer"
+import { BuyPackButton } from "@/components/pricing/buy-pack-button"
 import { CREDIT_COSTS, CREDIT_PACKAGES } from "@/lib/types/credits"
 import { generateMetadata } from "@/lib/seo-config"
 import { cn } from "@/lib/utils"
@@ -145,17 +145,7 @@ export default function PricingPage() {
                     ≈ ${perCredit.toFixed(2)} / credit
                   </p>
 
-                  <Link
-                    href="/signup"
-                    className={cn(
-                      "mt-auto rounded-[10px] py-[11px] text-center text-[14px]",
-                      popular
-                        ? "bg-[#f4efe6] font-bold text-[#22322a] hover:bg-white"
-                        : "border border-[#2e6a4a] font-semibold text-[#2e6a4a] hover:bg-[#2e6a4a] hover:text-[#f4efe6]"
-                    )}
-                  >
-                    Buy credits
-                  </Link>
+                  <BuyPackButton packageId={pack.id} popular={popular} />
                 </div>
               )
             })}

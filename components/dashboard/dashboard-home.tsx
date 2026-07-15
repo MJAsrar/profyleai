@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { ContinueJourney } from "@/components/dashboard/continue-journey"
 import { useTargetJob } from "@/lib/hooks/use-target-job"
 import { useCredits } from "@/lib/hooks/use-credits"
+import { openBuyCredits } from "@/lib/hooks/use-buy-credits"
 import { isJourneyComplete } from "@/lib/journey"
 import { CREDIT_COSTS } from "@/lib/types/credits"
 import { cn } from "@/lib/utils"
@@ -203,12 +204,13 @@ export function DashboardHome() {
             value={balance ?? 0}
             isLoading={creditsLoading}
             action={
-              <Link
-                href="/pricing"
+              <button
+                type="button"
+                onClick={() => openBuyCredits()}
                 className="text-[13px] font-semibold text-[#2e6a4a] hover:text-[#26583d]"
               >
                 Buy more →
-              </Link>
+              </button>
             }
           />
           <Stat

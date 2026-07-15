@@ -4,6 +4,7 @@ import type React from "react"
 import { useRouter } from "next/navigation"
 import { useEffect } from "react"
 import { AppSidebar } from "@/components/layout/app-sidebar"
+import { BuyCreditsHost } from "@/components/credits/buy-credits-host"
 import { useMobileSession } from "@/hooks/use-mobile-session"
 import { useNavigationGuard } from "@/hooks/use-navigation-guard"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -61,6 +62,9 @@ export default function DashboardLayout({
       <main className="flex min-w-0 flex-1 flex-col overflow-x-hidden">
         {children}
       </main>
+
+      {/* One purchase modal for every "Buy credits" surface below the dashboard. */}
+      <BuyCreditsHost />
     </div>
   )
 }

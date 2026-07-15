@@ -1,0 +1,29 @@
+{
+  "manifest_version": 3,
+  "name": "Profyle – Job Tailoring Assistant",
+  "description": "Tailor your résumé to the job posting you're viewing, and download it in a click.",
+  "version": "1.1.2",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAt4TV/cUeerFlxxjdwcym2mED+b3udBcqKfGdhVNFQPvBnAMjufY2AvVjdNOaUlyH3sqQlhQfbFf/IRW5kbtFa/NQgM/VInJvZJiPjjUcibZKdzqbQ8LTMnzgJnBMUnHFyd1EwzHKd3TDsJlGdXW2W9ZF9s11g6xUhPDPGTL9AtrZTvAiTfEJFjpOnzEznymapLRYd715WJlnxYoC66nshHAoGcLBREJyQhN4VILBhttTcvaEe1XnjoFOqvTz7P7zcaAPeayTiReck5bdwtUWKQy9Woax7p50gO0Ew2ZVyJ9qZw9LxQ6ujhppaHrjvlFbz2kF6gLxF1mPOK6qJOdguQIDAQAB",
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Profyle — tailor your résumé",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "background": {
+    "service_worker": "service-worker.js",
+    "type": "module"
+  },
+  "permissions": ["activeTab", "storage", "downloads", "scripting"],
+  "host_permissions": ["https://www.profyleai.com/*"]
+}

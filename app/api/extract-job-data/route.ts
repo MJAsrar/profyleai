@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { getAuthenticatedUser, createAuthError } from '@/lib/auth-utils'
 import { rateLimit, rateLimitKey, rateLimitResponse } from '@/lib/rate-limit'
-import { generateJson } from '@/lib/services/ai-json'
+import { generateJson, AiJsonError } from '@/lib/services/ai-json'
 
 // Hard cap on page content sent to the model. Without this, a single request can
 // drive unbounded token spend. Longer pages are truncated, not rejected.
@@ -92,7 +92,7 @@ export async function POST(req: NextRequest) {
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { 
+        {
           error: "Invalid request data",
           details: error.errors,
           code: "VALIDATION_ERROR"
@@ -101,8 +101,22 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    // A failed AI call is NOT the same as "this isn't a job". Reporting it as
+    // NOT_A_JOB_POSTING (which the old code did by returning isJobPosting:false on any
+    // error) hid a dead API key / exhausted quota behind a misleading message for the user.
+    if (error instanceof AiJsonError) {
+      return NextResponse.json(
+        {
+          error:
+            "The AI service is temporarily unavailable, so we couldn't read this job. Please try again shortly.",
+          code: "AI_UNAVAILABLE",
+        },
+        { status: 503 }
+      )
+    }
+
     return NextResponse.json(
-      { 
+      {
         error: "Failed to extract job data",
         code: "EXTRACTION_FAILED"
       },
@@ -184,19 +198,10 @@ Important:
 
   } catch (error) {
     console.error('Error extracting job info with Gemini:', error)
-    
-    // Return a fallback response
-    return {
-      isJobPosting: false,
-      title: '',
-      company: '',
-      description: '',
-      location: null,
-      salary: null,
-      jobType: null,
-      requirements: null,
-      benefits: null
-    }
+    // Propagate — the POST handler turns an AI failure into an honest AI_UNAVAILABLE
+    // response. Swallowing it into `isJobPosting:false` is what made a dead key look like
+    // "not a job posting".
+    throw error
   }
 }
 

@@ -690,69 +690,12 @@ IMPORTANT: Return ONLY the JSON object above, nothing else.`.trim()
       }
 
       console.error('❌ Failed to parse coaching response:', error)
-
-      // Return a fallback response instead of failing completely
+      // A malformed AI response is a failure, not a result. The old code returned a
+      // hardcoded generic coaching template with success:true here — fabricated content
+      // presented as if the model wrote it for this role.
       return {
-        success: true,
-        data: {
-          commonQuestions: [
-            {
-              question: "Tell me about a time when you had to work with a difficult team member.",
-              category: "Teamwork",
-              modelAnswer: "In my previous role, I encountered a situation where a team member was consistently missing deadlines, which was affecting our project timeline. I approached them privately to understand if there were any challenges they were facing. It turned out they were overwhelmed with their workload. I worked with them to prioritize tasks and offered to help with some of their responsibilities. As a result, we were able to get back on track and deliver the project successfully. This experience taught me the importance of open communication and supporting team members when they're struggling.",
-              tips: [
-                "Focus on your communication and problem-solving skills",
-                "Show empathy and understanding",
-                "Highlight positive outcomes and what you learned",
-                "Demonstrate your ability to work collaboratively"
-              ]
-            },
-            {
-              question: "Describe a time when you had to learn something new quickly.",
-              category: "Learning & Adaptability",
-              modelAnswer: "When I joined my current role, I needed to quickly learn a new programming framework that was critical to our project. I dedicated extra time outside of work hours to take online courses and practice coding exercises. I also reached out to colleagues who were experienced with the framework for guidance. Within two weeks, I was able to contribute meaningfully to the project and even identified a more efficient approach to implement one of the features. This experience reinforced my ability to quickly adapt and learn new technologies.",
-              tips: [
-                "Emphasize your learning methodology",
-                "Show initiative and resourcefulness",
-                "Mention specific actions you took",
-                "Highlight the positive outcome"
-              ]
-            },
-            {
-              question: "Tell me about a time when you had to deal with a challenging deadline.",
-              category: "Time Management",
-              modelAnswer: "Our team was given a project with a very tight deadline due to a client's urgent need. I immediately broke down the project into smaller, manageable tasks and created a detailed timeline. I identified which tasks could be done in parallel and which team members had the right skills for each task. I also set up daily check-ins to monitor progress and address any blockers quickly. Despite the challenging timeline, we delivered the project on time and the client was very satisfied with the quality of our work.",
-              tips: [
-                "Demonstrate your project management skills",
-                "Show how you handle pressure",
-                "Mention specific strategies you used",
-                "Highlight successful outcomes"
-              ]
-            }
-          ],
-          situationalScenarios: [
-            {
-              scenario: "You're given a project with an unrealistic deadline",
-              approach: "Assess scope, communicate constraints, propose alternatives",
-              keyPoints: [
-                "Demonstrate project management skills",
-                "Show communication with stakeholders",
-                "Highlight problem-solving approach",
-                "Emphasize collaboration and negotiation"
-              ]
-            },
-            {
-              scenario: "A team member disagrees with your approach",
-              approach: "Listen to their concerns, discuss alternatives, find common ground",
-              keyPoints: [
-                "Show emotional intelligence",
-                "Demonstrate conflict resolution skills",
-                "Highlight collaborative decision-making",
-                "Emphasize respect for different perspectives"
-              ]
-            }
-          ]
-        }
+        success: false,
+        error: "Invalid response format from AI service"
       }
     }
 

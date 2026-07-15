@@ -1,0 +1,17 @@
+{
+  "name": "profyle-extension",
+  "version": "1.1.0",
+  "private": true,
+  "description": "Profyle browser extension — tailor your résumé to the job you're viewing.",
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "dev": "node build.mjs --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.0.287",
+    "esbuild": "^0.24.0",
+    "typescript": "^5.6.3"
+  }
+}

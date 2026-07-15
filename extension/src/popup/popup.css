@@ -1,0 +1,392 @@
+/* Fonts — bundled locally; MV3's CSP blocks remote @font-face. Latin subsets only. */
+@font-face {
+  font-family: "Hanken Grotesk";
+  font-weight: 400;
+  font-display: swap;
+  src: url("fonts/hanken-400.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Hanken Grotesk";
+  font-weight: 500;
+  font-display: swap;
+  src: url("fonts/hanken-500.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Hanken Grotesk";
+  font-weight: 600;
+  font-display: swap;
+  src: url("fonts/hanken-600.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Hanken Grotesk";
+  font-weight: 700;
+  font-display: swap;
+  src: url("fonts/hanken-700.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Newsreader";
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+  src: url("fonts/newsreader-500.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Newsreader";
+  font-weight: 500;
+  font-style: italic;
+  font-display: swap;
+  src: url("fonts/newsreader-500-italic.woff2") format("woff2");
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  font-weight: 400;
+  font-display: swap;
+  src: url("fonts/jetbrains-400.woff2") format("woff2");
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  font-weight: 500;
+  font-display: swap;
+  src: url("fonts/jetbrains-500.woff2") format("woff2");
+}
+
+:root {
+  --paper: #f6f3ec;
+  --card: #fffdf8;
+  --ink: #211f1c;
+  --ink-2: #3a352e;
+  --ink-muted: #5c564d;
+  --ink-faint: #8a837a;
+  --ink-faint-2: #a79f93;
+  --brand: #2e6a4a;
+  --brand-hover: #26583d;
+  --brand-deep: #22322a;
+  --brand-tint: #e7efe8;
+  --brand-on-dark: #8fc7a3;
+  --clay: #a1633c;
+  --clay-tint: #f3ebe4;
+  --danger: #b4472f;
+  --danger-tint: #f7e6e0;
+  --hairline: rgba(33, 31, 28, 0.08);
+  --hairline-strong: rgba(33, 31, 28, 0.12);
+  --hairline-stronger: rgba(33, 31, 28, 0.16);
+
+  --font-sans: "Hanken Grotesk", system-ui, sans-serif;
+  --font-display: "Newsreader", Georgia, serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+html,
+body {
+  margin: 0;
+}
+body {
+  width: 400px;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+a {
+  color: inherit;
+}
+
+/* ---- layout ---- */
+.root {
+  display: flex;
+  flex-direction: column;
+  min-height: 220px;
+}
+.body {
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ---- header ---- */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 14px 18px;
+  background: var(--brand-deep);
+  color: #f4efe6;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 15px;
+  font-weight: 700;
+}
+.brand .mark {
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  background: var(--brand);
+  color: #f6f3ec;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+}
+.brand .mark-accent {
+  color: var(--brand-on-dark);
+}
+.chip-credits {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--brand-on-dark);
+  border-radius: 8px;
+  padding: 5px 10px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+.header .signout {
+  background: none;
+  border: 0;
+  color: rgba(244, 239, 230, 0.6);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.header .signout:hover {
+  color: #f4efe6;
+}
+
+/* ---- text ---- */
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin: 0;
+}
+.title-serif {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 22px;
+  line-height: 1.15;
+  color: var(--ink);
+  margin: 0;
+}
+.muted {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink-muted);
+  margin: 0;
+}
+
+/* ---- card ---- */
+.card {
+  background: var(--card);
+  border: 1px solid var(--hairline);
+  border-radius: 14px;
+  padding: 16px;
+}
+.job-card .role {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 6px 0 2px;
+}
+.job-card .company {
+  font-size: 13px;
+  color: var(--ink-muted);
+  margin: 0;
+}
+.reqs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
+}
+.req {
+  border: 1px solid var(--hairline-strong);
+  background: var(--paper);
+  color: var(--ink-muted);
+  border-radius: 999px;
+  padding: 3px 9px;
+  font-size: 12px;
+}
+
+/* ---- field ---- */
+.field-label {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-bottom: 6px;
+}
+select {
+  width: 100%;
+  height: 42px;
+  padding: 0 12px;
+  border: 1px solid var(--hairline-stronger);
+  border-radius: 10px;
+  background: #fff;
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--ink);
+}
+select:focus-visible {
+  outline: none;
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px rgba(46, 106, 74, 0.12);
+}
+
+/* ---- buttons ---- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  border: 0;
+  border-radius: 11px;
+  padding: 13px;
+  font-size: 14px;
+  font-weight: 700;
+  transition: background 0.15s ease;
+}
+.btn-primary {
+  background: var(--brand);
+  color: #f4efe6;
+}
+.btn-primary:hover {
+  background: var(--brand-hover);
+}
+.btn-ghost {
+  background: transparent;
+  border: 1px solid var(--hairline-stronger);
+  color: var(--ink);
+}
+.btn-ghost:hover {
+  border-color: var(--brand);
+  color: var(--brand);
+}
+.btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.cost {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  background: rgba(255, 255, 255, 0.18);
+  padding: 2px 7px;
+  border-radius: 6px;
+}
+.btn-ghost .cost {
+  background: var(--brand-tint);
+  color: var(--brand);
+}
+
+/* ---- match ring ---- */
+.match {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.ring {
+  width: 62px;
+  height: 62px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.ring > span {
+  width: 48px;
+  height: 48px;
+  border-radius: 999px;
+  background: var(--card);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 18px;
+  color: var(--ink);
+}
+.match .verdict {
+  font-size: 15px;
+  font-weight: 700;
+  margin: 0;
+}
+.match .verdict.good {
+  color: var(--brand);
+}
+.match .verdict.ok {
+  color: var(--clay);
+}
+
+/* ---- states / notices ---- */
+.notice {
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.notice-error {
+  background: var(--danger-tint);
+  color: #7c2d1a;
+}
+.notice-credits {
+  background: var(--clay-tint);
+  color: var(--ink-2);
+}
+.notice-credits .btn {
+  margin-top: 10px;
+}
+.center {
+  text-align: center;
+  padding: 8px 0;
+}
+.spinner {
+  width: 26px;
+  height: 26px;
+  border: 3px solid var(--brand-tint);
+  border-top-color: var(--brand);
+  border-radius: 999px;
+  margin: 8px auto;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.link {
+  color: var(--brand);
+  font-weight: 600;
+  text-decoration: none;
+}
+.link:hover {
+  text-decoration: underline;
+}
+.foot {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: var(--ink-faint-2);
+  text-align: center;
+  margin: 0;
+}

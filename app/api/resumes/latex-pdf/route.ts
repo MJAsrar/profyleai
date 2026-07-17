@@ -24,6 +24,9 @@ const styleSchema = z.object({
 const bodySchema = z.object({
   resumeData: createResumeSchema,
   style: styleSchema.optional(),
+  // The seeded Template.name the user picked; selects the LaTeX design. Unknown names fall
+  // back to Modern, so this can never fail a compile.
+  templateName: z.string().max(120).optional(),
 })
 
 const COMPILE_URL = process.env.LATEX_COMPILER_URL
@@ -81,7 +84,7 @@ export async function POST(req: NextRequest) {
   }
 
   const style: LatexStyle = { ...DEFAULT_LATEX_STYLE, ...(parsed.style ?? {}) }
-  const tex = resumeToLatex(parsed.resumeData as ResumeData, style)
+  const tex = resumeToLatex(parsed.resumeData as ResumeData, style, parsed.templateName)
 
   let compileRes: Response
   try {

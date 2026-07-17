@@ -1,0 +1,78 @@
+% GENERATED FILE - DO NOT EDIT BY HAND.
+% Produced by scripts/generate-latex-warmup.ts from lib/latex/templates.
+% Rebuild + redeploy the compile service after regenerating (npm run latex:warmup).
+\documentclass{article}
+\usepackage{fontspec}
+\setmainfont{texgyreheros-regular.otf}[
+  BoldFont = texgyreheros-bold.otf,
+  ItalicFont = texgyreheros-italic.otf,
+  BoldItalicFont = texgyreheros-bolditalic.otf
+]
+\newfontfamily\namefont{texgyreadventor-bold.otf}[LetterSpace=-2.0]
+\newfontfamily\headingfont{texgyreadventor-bold.otf}[LetterSpace=18.0]
+\usepackage[margin=0.9in]{geometry}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage[hidelinks]{hyperref}
+\usepackage{microtype}
+\definecolor{accent}{HTML}{2E6A4A}
+\setlength{\parindent}{0pt}
+\pagestyle{empty}
+\raggedbottom
+\raggedright
+\definecolor{muted}{HTML}{6F6F6F}
+
+\titleformat{\section}{\headingfont\scriptsize\color{accent}}{}{0em}{}
+\titlespacing*{\section}{0pt}{16pt}{6pt}
+
+\AtBeginDocument{\fontsize{10.5pt}{13.1pt}\selectfont}
+
+\begin{document}
+\noindent{\namefont\huge Alex Rivera}\\[4pt]{\color{accent}\large Product Analyst \& Data Lead}\\[8pt]{\small\color{muted} Boston, MA  ·  (555) 018-2245  ·  \href{mailto:alex@example.com}{alex@example.com}  ·  \href{https://linkedin.com/in/alexrivera}{linkedin.com/in/alexrivera}  ·  \href{https://github.com/arivera}{github.com/arivera}  ·  \href{https://alexrivera.dev}{alexrivera.dev}  ·  \href{https://portfolio.example.com}{portfolio.example.com}}
+\vspace{6pt}
+
+\section*{PROFILE}
+Analyst who turns messy data into decisions.
+
+Cut reporting time by 50\% \& shipped A/B tests worth \$2M.
+
+\section*{EXPERIENCE}
+\noindent \textbf{Senior Analyst}\hfill{\small\color{muted} Jun 2023 \textendash\ Present}\par
+\noindent{\small\color{muted} Brightline \& Co., Boston, MA}\par
+\vspace{3pt}Owned the growth analytics stack (100\% coverage).\par
+\begin{itemize}[leftmargin=1em, itemsep=2pt, topsep=4pt, parsep=0pt, label={\color{accent}\textendash}]
+  \item Cut weekly reporting time by \textasciitilde{}50\% using SQL\_dashboards
+  \item Ran A/B tests; shipped winners
+\end{itemize}
+\vspace{2pt}{\small\color{muted} SQL  ·  Python  ·  dbt}\par
+\vspace{7pt}
+\noindent \textbf{Analyst}\hfill{\small\color{muted} Jan 2021 \textendash\ May 2023}\par
+\noindent{\small\color{muted} Acme, NYC}\par
+\begin{itemize}[leftmargin=1em, itemsep=2pt, topsep=4pt, parsep=0pt, label={\color{accent}\textendash}]
+  \item Built C\# tooling
+\end{itemize}
+
+\section*{PROJECTS}
+\noindent \textbf{Churn Model 2.0}\hfill{\small\color{muted} Jan 2024 \textendash\ Jun 2024}\par
+\noindent{\small \href{https://demo.example.com}{demo.example.com}  ·  \href{https://github.com/arivera/churn}{github.com/arivera/churn}}\par
+\vspace{2pt}Predicts churn \textasciitilde{}2 weeks out.\par
+\begin{itemize}[leftmargin=1em, itemsep=2pt, topsep=4pt, parsep=0pt, label={\color{accent}\textendash}]
+  \item Lifted retention 12\%
+\end{itemize}
+\vspace{2pt}{\small\color{muted} Python  ·  scikit-learn}\par
+
+\section*{SKILLS}
+\noindent {\small\color{muted} Languages}\par\vspace{1pt}SQL  ·  Python  ·  C\#\par
+\vspace{5pt}
+\noindent {\small\color{muted} Tools}\par\vspace{1pt}Tableau  ·  dbt\par
+
+\section*{EDUCATION}
+\noindent \textbf{B.S., Statistics}\hfill{\small\color{muted} Sep 2017 \textendash\ May 2021}\par
+\noindent{\small\color{muted} Boston University, Boston, MA}\par
+{\small\color{muted} GPA 3.8  ·  Cum Laude  ·  Econometrics, Machine Learning}\par
+
+\section*{CERTIFICATIONS}
+\noindent \textbf{AWS Solutions Architect}\hfill{\small\color{muted} Apr 2023}\par
+\noindent{\small\color{muted} Amazon  ·  ID ABC\_123}\par
+\end{document}

@@ -22,8 +22,13 @@ interface LatexPdfState {
   errorMessage: string | null
   log: string | null
   warm: () => Promise<void>
-  compile: (resumeData: ResumeData, style: LatexStyle) => Promise<void>
-  download: (filename: string, resumeData: ResumeData, style: LatexStyle) => Promise<void>
+  compile: (resumeData: ResumeData, style: LatexStyle, templateName?: string | null) => Promise<void>
+  download: (
+    filename: string,
+    resumeData: ResumeData,
+    style: LatexStyle,
+    templateName?: string | null
+  ) => Promise<void>
   dispose: () => void
 }
 
@@ -59,7 +64,7 @@ export const useLatexPdfStore = create<LatexPdfState>((set, get) => ({
     }
   },
 
-  compile: async (resumeData, style) => {
+  compile: async (resumeData, style, templateName) => {
     const token = ++activeToken
     set({ status: "compiling", errorMessage: null })
 
@@ -67,7 +72,7 @@ export const useLatexPdfStore = create<LatexPdfState>((set, get) => ({
       const res = await fetch("/api/resumes/latex-pdf", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ resumeData, style }),
+        body: JSON.stringify({ resumeData, style, templateName }),
       })
       if (token !== activeToken) return // superseded by a newer edit
 
@@ -95,14 +100,14 @@ export const useLatexPdfStore = create<LatexPdfState>((set, get) => ({
     }
   },
 
-  download: async (filename, resumeData, style) => {
+  download: async (filename, resumeData, style, templateName) => {
     const existing = get().pdfBytes
     if (existing) {
       triggerDownload(existing, filename)
       return
     }
     // Nothing compiled yet (or the last compile failed) — compile once, then download.
-    await get().compile(resumeData, style)
+    await get().compile(resumeData, style, templateName)
     const bytes = get().pdfBytes
     if (bytes) triggerDownload(bytes, filename)
   },

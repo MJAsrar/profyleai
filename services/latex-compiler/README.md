@@ -67,18 +67,27 @@ curl -sS -X POST http://localhost:8080/compile \
   -o out.pdf && echo "wrote out.pdf"
 ```
 
-## warmup.tex is generated — keep it that way
+## warmup/ is generated — keep it that way
 
-`warmup.tex` is real output from `resumeToLatex` (`lib/latex/resume-template.ts`), not a
-hand-written sample. The build compiles it so every file the template needs (packages, fonts,
-and the class's `size10.clo`) is cached into the image; runtime then uses `--only-cached` and
-never touches the network.
+`warmup/*.tex` is one real `resumeToLatex` document **per LaTeX template**, generated from
+`lib/latex/templates/` — not hand-written samples. The Docker build compiles every one of them,
+which pulls each template's packages, fonts and class files (including the class's
+`size10.clo`) into the image's Tectonic cache. Runtime then uses `--only-cached` and never
+touches the network.
 
-**If you change the template's preamble** (documentclass, packages, font), regenerate
-`warmup.tex` from the template's output and rebuild — otherwise the first real compile fails on
-a file that was never cached (e.g. `LaTeX Error: File 'size10.clo' not found`).
+**After changing any template preamble — or adding a template — regenerate and redeploy:**
 
-Note on fonts: the template loads Latin Modern Sans **by filename** (`lmsans10-regular.otf`),
-not by family name. Family-name lookup goes through system fontconfig, which knows nothing
-about Tectonic's bundled fonts and fails in this image. Any font swap must use the filename
-form and be present in the Tectonic bundle.
+```bash
+npm run latex:warmup     # from the repo root
+# then redeploy this service (see above)
+```
+
+Skipping this means the first real compile fails on a file that was never cached. That has
+already happened once: a hand-written warmup said `\documentclass[11pt]` while the template
+emitted `\documentclass`, so `size10.clo` was missing and every compile 400'd. Generating the
+warmup from the templates is what makes that class of bug impossible.
+
+Note on fonts: templates load faces **by filename** (`lmsans10-regular.otf`,
+`texgyreheros-regular.otf`, …), never by family name. Family-name lookup goes through system
+fontconfig, which knows nothing about Tectonic's bundled fonts and fails in this image. Any
+font swap must use the filename form and be present in the Tectonic bundle.

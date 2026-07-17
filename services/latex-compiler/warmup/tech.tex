@@ -1,0 +1,97 @@
+% GENERATED FILE - DO NOT EDIT BY HAND.
+% Produced by scripts/generate-latex-warmup.ts from lib/latex/templates.
+% Rebuild + redeploy the compile service after regenerating (npm run latex:warmup).
+\documentclass{article}
+\usepackage{fontspec}
+\setmainfont{texgyreheros-regular.otf}[
+  BoldFont = texgyreheros-bold.otf,
+  ItalicFont = texgyreheros-italic.otf,
+  BoldItalicFont = texgyreheros-bolditalic.otf
+]
+\newfontfamily\headingfont{texgyreheros-bold.otf}[LetterSpace=6.0]
+\usepackage[margin=0.55in]{geometry}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage[hidelinks]{hyperref}
+\usepackage{microtype}
+\definecolor{accent}{HTML}{2E6A4A}
+\setlength{\parindent}{0pt}
+\pagestyle{empty}
+\raggedbottom
+\raggedright
+\setlength{\tabcolsep}{0in}
+
+\titleformat{\section}{\headingfont\normalsize\color{accent}}{}{0em}{}[\vspace{-3pt}\color{accent}\titlerule\vspace{-2pt}]
+\titlespacing*{\section}{0pt}{11pt}{5pt}
+
+\newcommand{\entry}[4]{%
+  \vspace{1pt}\noindent
+  \begin{tabular*}{\textwidth}[t]{l@{\extracolsep{\fill}}r}
+    \textbf{#1} & {\small #2} \\
+    {\small\itshape #3} & {\small\itshape #4} \\
+  \end{tabular*}\vspace{-4pt}%
+}
+\newcommand{\project}[3]{%
+  \vspace{1pt}\noindent
+  \begin{tabular*}{\textwidth}[t]{l@{\extracolsep{\fill}}r}
+    \textbf{#1} \hspace{2pt} {\small\itshape #2} & {\small #3} \\
+  \end{tabular*}\vspace{-4pt}%
+}
+\newlist{bullets}{itemize}{1}
+\setlist[bullets]{leftmargin=0.2in, itemsep=2pt, topsep=3pt, parsep=0pt, label=$\bullet$, font=\small}
+
+\AtBeginDocument{\fontsize{10.5pt}{13.1pt}\selectfont}
+
+\begin{document}
+\begin{center}
+{\LARGE\bfseries Alex Rivera}\\[3pt]{\small\color{accent}\itshape Product Analyst \& Data Lead}\\[4pt]{\small Boston, MA $|$ (555) 018-2245 $|$ \href{mailto:alex@example.com}{alex@example.com} $|$ \href{https://linkedin.com/in/alexrivera}{linkedin.com/in/alexrivera} $|$ \href{https://github.com/arivera}{github.com/arivera} $|$ \href{https://alexrivera.dev}{alexrivera.dev} $|$ \href{https://portfolio.example.com}{portfolio.example.com}}
+\end{center}
+\vspace{-2pt}
+
+\section*{SUMMARY}
+{\small Analyst who turns messy data into decisions.
+
+Cut reporting time by 50\% \& shipped A/B tests worth \$2M.}
+
+\section*{TECHNICAL SKILLS}
+\begin{itemize}[leftmargin=0.1in, label={}, itemsep=1pt, topsep=2pt, parsep=0pt]
+  \item {\small \textbf{Languages:} SQL, Python, C\#}
+  \item {\small \textbf{Tools:} Tableau, dbt}
+\end{itemize}
+
+\section*{EXPERIENCE}
+\entry{Senior Analyst}{Jun 2023 -- Present}{Brightline \& Co.}{Boston, MA}
+{\small Owned the growth analytics stack (100\% coverage).}\par
+\begin{bullets}
+  \item {\small Cut weekly reporting time by \textasciitilde{}50\% using SQL\_dashboards}
+  \item {\small Ran A/B tests; shipped winners}
+\end{bullets}
+{\small\textbf{Stack:} SQL, Python, dbt}\par
+\vspace{7pt}
+\entry{Analyst}{Jan 2021 -- May 2023}{Acme}{NYC}
+\begin{bullets}
+  \item {\small Built C\# tooling}
+\end{bullets}
+
+\section*{PROJECTS}
+\project{Churn Model 2.0}{Python, scikit-learn}{Jan 2024 -- Jun 2024}
+{\small \href{https://demo.example.com}{demo.example.com} $|$ \href{https://github.com/arivera/churn}{github.com/arivera/churn}}\par
+{\small Predicts churn \textasciitilde{}2 weeks out.}\par
+\begin{bullets}
+  \item {\small Lifted retention 12\%}
+\end{bullets}
+
+\section*{EDUCATION}
+\entry{B.S., Statistics}{Sep 2017 -- May 2021}{Boston University}{Boston, MA}
+\begin{bullets}
+  \item {\small GPA: 3.8}
+  \item {\small Cum Laude}
+  \item {\small Coursework: Econometrics, Machine Learning}
+\end{bullets}
+
+\section*{CERTIFICATIONS}
+\begin{itemize}[leftmargin=0.1in, label={}, itemsep=1pt, topsep=2pt, parsep=0pt]
+  \item {\small \textbf{AWS Solutions Architect} --- Amazon --- Apr 2023 --- ID: ABC\_123}
+\end{itemize}
+\end{document}

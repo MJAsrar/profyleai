@@ -311,6 +311,7 @@ export default function ResumeBuilderPage() {
  */
 function DownloadPdfButton() {
   const resumeData = useResumeStore((s) => s.resumeData)
+  const templateName = useResumeStore((s) => s.selectedTemplate?.name ?? null)
   const style = useLatexStyle()
   const download = useLatexPdfStore((s) => s.download)
   const pdfBytes = useLatexPdfStore((s) => s.pdfBytes)
@@ -320,7 +321,7 @@ function DownloadPdfButton() {
     setDownloading(true)
     try {
       const name = (resumeData.title || "resume").trim().replace(/[^\w.-]+/g, "_") || "resume"
-      await download(`${name}.pdf`, resumeData, style)
+      await download(`${name}.pdf`, resumeData, style, templateName)
     } finally {
       setDownloading(false)
     }

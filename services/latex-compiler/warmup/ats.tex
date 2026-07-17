@@ -1,0 +1,81 @@
+% GENERATED FILE - DO NOT EDIT BY HAND.
+% Produced by scripts/generate-latex-warmup.ts from lib/latex/templates.
+% Rebuild + redeploy the compile service after regenerating (npm run latex:warmup).
+\documentclass{article}
+\usepackage{fontspec}
+\setmainfont{texgyreheros-regular.otf}[
+  BoldFont = texgyreheros-bold.otf,
+  ItalicFont = texgyreheros-italic.otf,
+  BoldItalicFont = texgyreheros-bolditalic.otf
+]
+\usepackage[margin=0.8in]{geometry}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage[hidelinks]{hyperref}
+\usepackage{microtype}
+\definecolor{accent}{HTML}{2E6A4A}
+\setlength{\parindent}{0pt}
+\pagestyle{empty}
+\raggedbottom
+\raggedright
+
+\titleformat{\section}{\large\bfseries\color{accent}}{}{0em}{}
+\titlespacing*{\section}{0pt}{11pt}{5pt}
+
+\AtBeginDocument{\fontsize{10.5pt}{13.1pt}\selectfont}
+
+\begin{document}
+\noindent{\LARGE\bfseries Alex Rivera}\par
+\noindent Product Analyst \& Data Lead\par
+\noindent Boston, MA | (555) 018-2245 | alex@example.com\par
+\noindent linkedin.com/in/alexrivera | github.com/arivera | alexrivera.dev | portfolio.example.com\par
+\vspace{4pt}
+
+\section*{SUMMARY}
+Analyst who turns messy data into decisions.
+
+Cut reporting time by 50\% \& shipped A/B tests worth \$2M.
+
+\section*{SKILLS}
+\noindent Languages: SQL, Python, C\#\par
+\vspace{2pt}
+\noindent Tools: Tableau, dbt\par
+
+\section*{WORK EXPERIENCE}
+\noindent\textbf{Senior Analyst}\par
+\noindent Brightline \& Co., Boston, MA | Jun 2023 -- Present\par
+Owned the growth analytics stack (100\% coverage).\par
+\begin{itemize}[leftmargin=1.5em, itemsep=2pt, topsep=2pt, parsep=0pt]
+  \item Cut weekly reporting time by \textasciitilde{}50\% using SQL\_dashboards
+  \item Ran A/B tests; shipped winners
+\end{itemize}
+\noindent Technologies: SQL, Python, dbt\par
+\vspace{7pt}
+\noindent\textbf{Analyst}\par
+\noindent Acme, NYC | Jan 2021 -- May 2023\par
+\begin{itemize}[leftmargin=1.5em, itemsep=2pt, topsep=2pt, parsep=0pt]
+  \item Built C\# tooling
+\end{itemize}
+
+\section*{EDUCATION}
+\noindent\textbf{B.S., Statistics}\par
+\noindent Boston University, Boston, MA | Sep 2017 -- May 2021\par
+\noindent GPA: 3.8\par
+\noindent Honors: Cum Laude\par
+\noindent Relevant Coursework: Econometrics, Machine Learning\par
+
+\section*{PROJECTS}
+\noindent\textbf{Churn Model 2.0}\par
+\noindent Jan 2024 -- Jun 2024\par
+Predicts churn \textasciitilde{}2 weeks out.\par
+\begin{itemize}[leftmargin=1.5em, itemsep=2pt, topsep=2pt, parsep=0pt]
+  \item Lifted retention 12\%
+\end{itemize}
+\noindent Technologies: Python, scikit-learn\par
+\noindent demo.example.com | github.com/arivera/churn\par
+
+\section*{CERTIFICATIONS}
+\noindent\textbf{AWS Solutions Architect}\par
+\noindent Amazon | Apr 2023 | Credential ID: ABC\_123\par
+\end{document}

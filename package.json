@@ -14,6 +14,7 @@
     "db:migrate": "prisma migrate dev",
     "db:seed": "npx tsx prisma/seed.ts",
     "db:studio": "prisma studio",
+    "latex:warmup": "esbuild scripts/generate-latex-warmup.ts --bundle --platform=node --outfile=node_modules/.cache/latex-warmup.cjs --log-level=error && node node_modules/.cache/latex-warmup.cjs",
     "fonts:download": "node scripts/download-fonts.js",
     "fonts:setup": "echo 'See FONT_SETUP.md for font installation instructions'"
   },

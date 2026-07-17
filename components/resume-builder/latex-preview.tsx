@@ -26,6 +26,8 @@ const STATUS_LABEL: Record<string, string> = {
 
 export function LatexPreview({ className }: { className?: string }) {
   const resumeData = useResumeStore((s) => s.resumeData)
+  // The picked template's name selects the LaTeX design, so switching template recompiles.
+  const templateName = useResumeStore((s) => s.selectedTemplate?.name ?? null)
   const style = useLatexStyle()
 
   const status = useLatexPdfStore((s) => s.status)
@@ -43,16 +45,16 @@ export function LatexPreview({ className }: { className?: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Compile immediately on first mount, then debounce every edit / style change.
+  // Compile immediately on first mount, then debounce every edit / style / template change.
   const firstRun = useRef(true)
   useEffect(() => {
     const delay = firstRun.current ? 0 : DEBOUNCE_MS
     firstRun.current = false
     const timer = setTimeout(() => {
-      compile(resumeData, style)
+      compile(resumeData, style, templateName)
     }, delay)
     return () => clearTimeout(timer)
-  }, [resumeData, style, compile])
+  }, [resumeData, style, templateName, compile])
 
   const busy = status === "compiling" || status === "warming"
 

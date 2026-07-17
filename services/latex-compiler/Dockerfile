@@ -1,0 +1,46 @@
+# Tectonic LaTeX compile service for Cloud Run.
+#
+# The whole point of Tectonic (vs the client-side SwiftLaTeX path that failed): it bundles a
+# complete TeX Live distribution. We fetch that bundle ONCE at build time (the `warmup` compile
+# below) so it's baked into the image layer — runtime compiles need no network and cold starts
+# are fast.
+
+FROM node:20-bookworm-slim
+
+# ca-certificates + curl only needed to fetch Tectonic + its bundle at build time.
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends ca-certificates curl \
+ && rm -rf /var/lib/apt/lists/*
+
+# Install Tectonic from the pinned musl release: a statically-linked binary with no shared-library
+# deps. (Do NOT use the drop-sh installer — it fetches the *gnu* build, which needs libgraphite2,
+# libharfbuzz, libicu and friends that aren't in this slim image.)
+ARG TECTONIC_VERSION=0.16.9
+RUN curl --proto '=https' --tlsv1.2 -fsSL \
+      "https://github.com/tectonic-typesetting/tectonic/releases/download/tectonic%40${TECTONIC_VERSION}/tectonic-${TECTONIC_VERSION}-x86_64-unknown-linux-musl.tar.gz" \
+      | tar -xz -C /usr/local/bin tectonic \
+ && chmod +x /usr/local/bin/tectonic \
+ && tectonic --version
+
+# Fixed cache dir so the bundle we warm at build time is the same one used at runtime
+# (a per-user default cache dir would diverge between root@build and appuser@runtime).
+ENV TECTONIC_CACHE_DIR=/opt/tectonic-cache
+
+# Warm the bundle: this downloads the format + every package/font the template uses and caches
+# it under TECTONIC_CACHE_DIR. If a font name is wrong this build fails here — fail fast.
+COPY warmup.tex /tmp/warmup.tex
+RUN mkdir -p "$TECTONIC_CACHE_DIR" \
+ && tectonic --outdir /tmp --chatter minimal /tmp/warmup.tex \
+ && rm -f /tmp/warmup.* \
+ && chmod -R a+rX "$TECTONIC_CACHE_DIR"
+
+WORKDIR /app
+COPY package.json server.mjs ./
+
+# Run as a non-root user.
+RUN useradd --create-home appuser
+USER appuser
+
+ENV PORT=8080
+EXPOSE 8080
+CMD ["node", "server.mjs"]

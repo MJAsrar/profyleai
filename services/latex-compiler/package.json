@@ -1,0 +1,11 @@
+{
+  "name": "latex-compiler",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Tectonic LaTeX compile service (Cloud Run) for the ProfyleAI résumé builder.",
+  "main": "server.mjs",
+  "scripts": {
+    "start": "node server.mjs"
+  }
+}

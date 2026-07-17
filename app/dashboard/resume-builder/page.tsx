@@ -7,7 +7,7 @@ import { toast } from "sonner"
 import Link from "next/link"
 import { ToolTopBar, CreditChip } from "@/components/layout/tool-top-bar"
 import { SectionsRail } from "@/components/resume-builder/sections-rail"
-import { LivePreview } from "@/components/resume-builder/live-preview"
+import { LatexPreview } from "@/components/resume-builder/latex-preview"
 import { ResumeSelection } from "@/components/resume-builder/resume-selection"
 import { TemplateSelector } from "@/components/resume-builder/template-selector"
 
@@ -23,6 +23,8 @@ import { Button } from "@/components/ui/button"
 import { ListSkeleton } from "@/components/ui/states"
 
 import { useResumeStore, useAutoSave } from "@/lib/resume-store"
+import { useLatexStyle } from "@/lib/latex/style-store"
+import { useLatexPdfStore } from "@/lib/latex/pdf-store"
 import { setHideSidebar } from "@/lib/hooks/use-app-chrome"
 import {
   RESUME_SECTIONS,
@@ -254,9 +256,7 @@ export default function ResumeBuilderPage() {
             {isSaving ? "Saving…" : "Save"}
           </Button>
 
-          <Button asChild size="sm">
-            <Link href="/dashboard/preview">Preview &amp; export</Link>
-          </Button>
+          <DownloadPdfButton />
         </div>
       </header>
 
@@ -299,9 +299,39 @@ export default function ResumeBuilderPage() {
         </div>
 
         {/* Preview */}
-        <LivePreview />
+        <LatexPreview />
       </div>
     </div>
+  )
+}
+
+/**
+ * Downloads the compiled LaTeX PDF. Reuses the PDF the live preview already compiled; if none is
+ * ready yet (or the last compile failed), it compiles once on click before saving.
+ */
+function DownloadPdfButton() {
+  const resumeData = useResumeStore((s) => s.resumeData)
+  const style = useLatexStyle()
+  const download = useLatexPdfStore((s) => s.download)
+  const pdfBytes = useLatexPdfStore((s) => s.pdfBytes)
+  const [downloading, setDownloading] = useState(false)
+
+  async function handleDownload() {
+    setDownloading(true)
+    try {
+      const name = (resumeData.title || "resume").trim().replace(/[^\w.-]+/g, "_") || "resume"
+      await download(`${name}.pdf`, resumeData, style)
+    } finally {
+      setDownloading(false)
+    }
+  }
+
+  const preparing = downloading && !pdfBytes
+
+  return (
+    <Button size="sm" onClick={handleDownload} disabled={downloading}>
+      {preparing ? "Preparing…" : "Download PDF"}
+    </Button>
   )
 }
 

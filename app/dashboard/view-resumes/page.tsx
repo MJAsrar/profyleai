@@ -10,7 +10,6 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { EmptyState, ErrorState, ListSkeleton } from "@/components/ui/states"
 import { Monogram } from "@/components/ui/monogram"
-import { useFontConfig } from "@/lib/font-config-store"
 import { cn } from "@/lib/utils"
 
 interface BaseResume {
@@ -39,7 +38,6 @@ function formatDate(iso: string): string {
 
 export default function ViewResumesPage() {
   const router = useRouter()
-  const fontConfig = useFontConfig()
 
   const [resumes, setResumes] = useState<BaseResume[]>([])
   const [tailored, setTailored] = useState<TailoredResume[]>([])
@@ -82,7 +80,7 @@ export default function ViewResumesPage() {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ fontConfig }),
+          body: JSON.stringify({}),
         }
       )
       if (!res.ok) throw new Error()
@@ -185,7 +183,6 @@ export default function ViewResumesPage() {
                       onEdit={() =>
                         router.push(`/dashboard/resume-builder?resumeId=${resume.id}`)
                       }
-                      onPreview={() => router.push("/dashboard/preview")}
                       onDownload={() => download(resume.id, resume.title, false)}
                       onAskDelete={() => setConfirmingId(resume.id)}
                       onCancelDelete={() => setConfirmingId(null)}

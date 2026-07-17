@@ -70,7 +70,6 @@
     "next-auth": "^4.24.11",
     "next-themes": "^0.4.4",
     "openai": "^4.63.0",
-    "pdfmake": "^0.2.12",
     "react": "^19",
     "react-day-picker": "9.8.0",
     "react-dom": "^19",
@@ -88,7 +87,6 @@
   },
   "devDependencies": {
     "@types/node": "^22",
-    "@types/pdfmake": "^0.2.9",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9.32.0",

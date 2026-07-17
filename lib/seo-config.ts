@@ -355,7 +355,6 @@ function getPagePath(page: keyof typeof pageMetadata): string {
     coverLetter: '/dashboard/cover-letter',
 
     interview: '/dashboard/interview',
-    preview: '/dashboard/preview',
     contact: '/contact',
     faq: '/faq',
     privacy: '/privacy',
@@ -551,7 +550,7 @@ export const resumeBuildingHowToSchema = {
       '@type': 'HowToStep',
       name: 'Review and Download',
       text: 'Preview your resume, make final adjustments, and download as a professional PDF.',
-      url: `${siteConfig.url}/dashboard/preview`
+      url: `${siteConfig.url}/dashboard/resume-builder`
     }
   ]
 }

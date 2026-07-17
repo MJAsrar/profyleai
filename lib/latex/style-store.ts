@@ -6,8 +6,7 @@ import { DEFAULT_LATEX_STYLE, type Density, type LatexStyle } from "./resume-tem
 
 /**
  * The handful of real knobs the LaTeX preview exposes — body font size, vertical density, and
- * an accent colour. Kept deliberately small (the old 20-knob font-config feeds the legacy
- * pdfmake renderer, not this). Persisted so a user's choices survive a reload.
+ * an accent colour. Deliberately small. Persisted so a user's choices survive a reload.
  */
 
 export const FONT_SIZE_OPTIONS = [9.5, 10, 10.5, 11, 11.5] as const

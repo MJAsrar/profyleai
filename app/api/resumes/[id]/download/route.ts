@@ -1,126 +1,90 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { getAuthenticatedUser, createAuthError, checkResourceOwnership, createOwnershipError } from "@/lib/auth-utils"
-import { generateResumePDFBlob } from "@/lib/pdf-export-utils"
-import { FontSizeConfig } from "@/lib/font-config"
-import { SpacingConfig } from "@/lib/spacing-config"
+import {
+  getAuthenticatedUser,
+  createAuthError,
+  checkResourceOwnership,
+  createOwnershipError,
+} from "@/lib/auth-utils"
+import { resumeToLatex, DEFAULT_LATEX_STYLE, type LatexStyle } from "@/lib/latex/resume-template"
+import { compileLatexToPdf } from "@/lib/latex/compile-client"
+import type { ResumeData } from "@/lib/resume-store"
 
 interface RouteParams {
-  params: Promise<{
-    id: string
-  }>
+  params: Promise<{ id: string }>
 }
 
 /**
- * GET /api/resumes/[id]/download - Download resume as PDF (legacy)
- * POST /api/resumes/[id]/download - Download resume as PDF with font configuration
+ * GET/POST /api/resumes/[id]/download — download a résumé as a PDF, compiled from LaTeX by the
+ * Tectonic service. The design follows the résumé's own template (`template.name`); an optional
+ * `style` in the POST body overrides the defaults. The old pdfmake `fontConfig`/`spacingConfig`
+ * body is accepted and ignored, so existing callers (My résumés, the extension) keep working.
  */
-async function handleDownload(req: NextRequest, { params }: RouteParams, fontConfig?: FontSizeConfig, spacingConfig?: SpacingConfig) {
-  try {
-    // Check authentication
-    const user = await getAuthenticatedUser(req)
-    if (!user) {
-      return createAuthError()
-    }
+async function handleDownload(req: NextRequest, { params }: RouteParams, style: LatexStyle) {
+  const user = await getAuthenticatedUser(req)
+  if (!user) return createAuthError()
 
-    const { id } = await params
+  const { id } = await params
 
-    // Fetch resume with template information
-    const resume = await prisma.resume.findUnique({
-      where: { id },
-      include: {
-        template: {
-          select: {
-            id: true,
-            name: true,
-            category: true,
-            previewUrl: true,
-            cssData: true
-          }
-        }
-      }
-    })
+  const resume = await prisma.resume.findUnique({
+    where: { id },
+    include: { template: { select: { name: true } } },
+  })
 
-    if (!resume) {
-      return NextResponse.json(
-        { error: "Resume not found" },
-        { status: 404 }
-      )
-    }
-
-    // Check ownership (user can only download their own resumes)
-    if (!checkResourceOwnership(resume.userId, user.id)) {
-      return createOwnershipError()
-    }
-
-    console.log(`📄 Generating PDF for resume: ${resume.title} (ID: ${resume.id})`)
-
-    // Convert resume data to proper format
-    const resumeData = {
-      id: resume.id,
-      title: resume.title,
-      templateId: resume.templateId,
-      personalInfo: resume.personalInfo as any,
-      summary: resume.summary || "",
-      experience: resume.experience as any,
-      education: resume.education as any,
-      skills: resume.skills as any,
-      projects: resume.projects as any,
-      certifications: resume.certifications as any,
-      isPublic: resume.isPublic,
-      template: resume.template
-    }
-
-    // Generate PDF using the same method as Resume Builder
-    const pdfBlob = await generateResumePDFBlob(resumeData, {
-      templateId: resume.template?.id || 'modern',
-      pageSize: 'LETTER', // Same as Resume Builder
-      margins: [40, 20, 40, 20], // Fixed: Match cover letter margins (no header gap)
-      fontConfig, // Pass through the user's font configuration
-      spacingConfig // Pass through the user's spacing configuration
-    })
-    const pdfBuffer = Buffer.from(await pdfBlob.arrayBuffer())
-
-    // Create a safe filename
-    const safeTitle = resume.title.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_').substring(0, 50)
-    const filename = `${safeTitle}_Resume.pdf`
-
-    // Return PDF as download. Wrap in a plain Uint8Array: a Node Buffer is not a
-    // valid BodyInit under current @types/node (Buffer<ArrayBufferLike>). Same bytes.
-    return new NextResponse(new Uint8Array(pdfBuffer), {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="${filename}"`,
-        'Content-Length': pdfBuffer.length.toString(),
-      },
-    })
-
-  } catch (error) {
-    console.error("API /api/resumes/[id]/download error:", error)
-    return NextResponse.json(
-      { error: "Failed to generate resume PDF" },
-      { status: 500 }
-    )
+  if (!resume) {
+    return NextResponse.json({ error: "Resume not found" }, { status: 404 })
   }
+  if (!checkResourceOwnership(resume.userId, user.id)) {
+    return createOwnershipError()
+  }
+
+  const resumeData: ResumeData = {
+    id: resume.id,
+    title: resume.title,
+    templateId: resume.templateId,
+    personalInfo: resume.personalInfo as ResumeData["personalInfo"],
+    summary: resume.summary || "",
+    experience: resume.experience as ResumeData["experience"],
+    education: resume.education as ResumeData["education"],
+    skills: resume.skills as ResumeData["skills"],
+    projects: resume.projects as ResumeData["projects"],
+    certifications: resume.certifications as ResumeData["certifications"],
+    isPublic: resume.isPublic,
+  }
+
+  const tex = resumeToLatex(resumeData, style, resume.template?.name)
+  const result = await compileLatexToPdf(tex)
+
+  if (!result.ok || !result.pdf) {
+    if (result.status === "compile_failed") {
+      console.error("❌ resume download: LaTeX compile failed:", result.log?.slice(-800))
+    }
+    const status = result.status === "not_configured" ? 503 : result.status === "unreachable" ? 502 : 500
+    return NextResponse.json({ error: "Failed to generate resume PDF" }, { status })
+  }
+
+  const safeTitle = resume.title.replace(/[^a-zA-Z0-9\s]/g, "").replace(/\s+/g, "_").substring(0, 50) || "Resume"
+  return new NextResponse(result.pdf, {
+    status: 200,
+    headers: {
+      "Content-Type": "application/pdf",
+      "Content-Disposition": `attachment; filename="${safeTitle}_Resume.pdf"`,
+      "Content-Length": result.pdf.length.toString(),
+    },
+  })
 }
 
-export async function GET(req: NextRequest, { params }: RouteParams) {
-  return handleDownload(req, { params })
+export async function GET(req: NextRequest, ctx: RouteParams) {
+  return handleDownload(req, ctx, DEFAULT_LATEX_STYLE)
 }
 
-export async function POST(req: NextRequest, { params }: RouteParams) {
+export async function POST(req: NextRequest, ctx: RouteParams) {
+  let style: LatexStyle = DEFAULT_LATEX_STYLE
   try {
-    const body = await req.json()
-    const fontConfig = body.fontConfig as FontSizeConfig | undefined
-    const spacingConfig = body.spacingConfig as SpacingConfig | undefined
-    
-    return handleDownload(req, { params }, fontConfig, spacingConfig)
-  } catch (error) {
-    console.error("POST /api/resumes/[id]/download error:", error)
-    return NextResponse.json(
-      { error: "Failed to generate resume PDF" },
-      { status: 500 }
-    )
+    const body = await req.json().catch(() => ({}))
+    if (body?.style) style = { ...DEFAULT_LATEX_STYLE, ...body.style }
+  } catch {
+    /* tolerate an empty/invalid body — defaults are fine */
   }
+  return handleDownload(req, ctx, style)
 }

@@ -2,6 +2,7 @@ import { mkdirSync, readdirSync, rmSync, writeFileSync } from "fs"
 import path from "path"
 
 import { LATEX_TEMPLATES, DEFAULT_LATEX_STYLE } from "../lib/latex/resume-template"
+import { coverLetterToLatex } from "../lib/latex/cover-letter-template"
 import type { ResumeData } from "../lib/resume-store"
 
 /**
@@ -129,4 +130,25 @@ for (const template of LATEX_TEMPLATES) {
   console.log(`wrote warmup/${template.key}.tex  (${template.label})`)
 }
 
-console.log(`\n${LATEX_TEMPLATES.length} warmup document(s) generated.`)
+// The cover letter is a separate document type with its own preamble; warm it too.
+const coverLetterTex =
+  BANNER +
+  coverLetterToLatex({
+    jobDetails: { jobTitle: "Product Analyst", companyName: "Brightline & Co.", hiringManager: "Dr. Lee" },
+    personalInfo: {
+      fullName: "Alex Rivera",
+      email: "alex@example.com",
+      phone: "(555) 018-2245",
+      address: "Boston, MA",
+    },
+    content: {
+      opening: "I am excited to apply for the Product Analyst role.",
+      body: "At my last role I cut reporting time by 50%.\n\nI thrive turning data into decisions.",
+      closing: "Thank you for your consideration.",
+    },
+    dateLabel: "January 1, 2026",
+  })
+writeFileSync(path.join(OUT_DIR, "cover-letter.tex"), coverLetterTex, "utf8")
+console.log("wrote warmup/cover-letter.tex  (Cover Letter)")
+
+console.log(`\n${LATEX_TEMPLATES.length + 1} warmup document(s) generated.`)
